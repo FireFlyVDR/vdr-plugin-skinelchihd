@@ -1,0 +1,145 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the vdr-skinelchihd package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: vdr-skinelchihd 0.5.0\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2020-08-22 15:00+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "left channel"
+msgstr ""
+
+msgid "right channel"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Video"
+msgstr ""
+
+msgid "Audio"
+msgstr ""
+
+msgid "Subtitle"
+msgstr ""
+
+msgid "Length"
+msgstr ""
+
+msgid "cutted"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "format"
+msgstr ""
+
+msgid "bit rate"
+msgstr ""
+
+msgid "additional information"
+msgstr ""
+
+msgid "channel"
+msgstr ""
+
+msgid "search pattern"
+msgstr ""
+
+msgid " timer conflicts! "
+msgstr ""
+
+msgid "Next recording"
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "don't show"
+msgstr ""
+
+msgid "size and format"
+msgstr ""
+
+msgid "Timer-Conflict"
+msgstr ""
+
+msgid "all"
+msgstr ""
+
+msgid "EPG+Details"
+msgstr ""
+
+msgid "EPG+Details+Genre"
+msgstr ""
+
+msgid "scroll text"
+msgstr ""
+
+msgid "show timer and conflict in menu"
+msgstr ""
+
+msgid "show recording details"
+msgstr ""
+
+msgid "show EPG details"
+msgstr ""
+
+msgid "show video format info (if available)"
+msgstr ""
+
+msgid "use graphical progressbar"
+msgstr ""
+
+msgid "show symbols"
+msgstr ""
+
+msgid "EPG picture size"
+msgstr ""
+
+#. TRANSLATORS: note the two leading spaces
+msgid "  duration of each EPG image [s]"
+msgstr ""
+
+msgid "Channel Display"
+msgstr ""
+
+msgid "only when recording"
+msgstr ""
+
+msgid "always"
+msgstr ""
+
+msgid "show audio Info"
+msgstr ""
+
+msgid "show recording Info"
+msgstr ""
+
+msgid "show channel logos"
+msgstr ""
+
+msgid "show signal bars"
+msgstr ""
+
+msgid "write logo messages to syslog"
+msgstr ""
+
+msgid "ElchiHD skin"
+msgstr ""
+
+msgid "ElchiHD"
+msgstr ""

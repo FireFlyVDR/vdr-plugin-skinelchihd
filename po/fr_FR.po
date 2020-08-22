@@ -1,0 +1,144 @@
+# VDR plugin language source file.
+# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
+# This file is distributed under the same license as the VDR package.
+# Klaus Schmidinger <kls@cadsoft.de>, 2000
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: VDR 2.4.0\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2020-08-08 14:57+0200\n"
+"PO-Revision-Date: 2007-11-04 15:38+0100\n"
+"Last-Translator: Patrice Staudt <see README>\n"
+"Language-Team: <vdr@linuxtv.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "left channel"
+msgstr "Canal gauche"
+
+msgid "right channel"
+msgstr "Canal droit"
+
+msgid "Duration"
+msgstr ""
+
+msgid "Video"
+msgstr "Vidéo"
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "Subtitle"
+msgstr "Sous-titres"
+
+msgid "Length"
+msgstr "Longueur"
+
+msgid "cutted"
+msgstr "coupé"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "format"
+msgstr ""
+
+msgid "bit rate"
+msgstr "bit-rate"
+
+msgid "additional information"
+msgstr ""
+
+msgid "channel"
+msgstr "Canal"
+
+msgid "search pattern"
+msgstr ""
+
+msgid " timer conflicts! "
+msgstr " conflits de programmation! "
+
+msgid "Next recording"
+msgstr "Prochain enregistrement"
+
+msgid "General"
+msgstr "Général"
+
+msgid "don't show"
+msgstr "ne rien afficher"
+
+msgid "size and format"
+msgstr ""
+
+msgid "Timer-Conflict"
+msgstr "Conflit de programmation"
+
+msgid "all"
+msgstr "tous"
+
+msgid "EPG+Details"
+msgstr "Détails EPG"
+
+msgid "EPG+Details+Genre"
+msgstr "Détails EPG et genre"
+
+msgid "scroll text"
+msgstr "Texte défillant"
+
+msgid "show timer and conflict in menu"
+msgstr ""
+
+msgid "show recording details"
+msgstr ""
+
+msgid "show EPG details"
+msgstr "Afficher Détails EPG"
+
+msgid "show video format info (if available)"
+msgstr ""
+
+msgid "use graphical progressbar"
+msgstr "Utiliser la barre d'avancement graphique"
+
+msgid "show symbols"
+msgstr "Afficher symboles"
+
+msgid "EPG picture size"
+msgstr "EPG taille image"
+
+#. TRANSLATORS: note the two leading spaces
+msgid "  duration of each EPG image [s]"
+msgstr "  durée par image [s]"
+
+msgid "Channel Display"
+msgstr "Chaîne affichée"
+
+msgid "only when recording"
+msgstr "seulement pendant l'enregistrement"
+
+msgid "always"
+msgstr "toujours"
+
+msgid "show audio Info"
+msgstr ""
+
+msgid "show recording Info"
+msgstr "afficher info d'enregistrement"
+
+msgid "show channel logos"
+msgstr "Logos chaîne visible"
+
+msgid "show signal bars"
+msgstr ""
+
+msgid "write logo messages to syslog"
+msgstr "écrire les messages logo dans syslog"
+
+msgid "ElchiHD skin"
+msgstr "Interface ElchiHD"
+
+msgid "ElchiHD"
+msgstr "ElchiHD"

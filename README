@@ -1,0 +1,144 @@
+This is a "plugin" for the Video Disk Recorder (VDR).
+
+Written by:                  Christoph Haubrich <christoph1.haubrich (AT) arcor.de>
+Project's homepage:          http://firefly.vdr-developer.org/skinelchihd/
+Latest version available at: http://firefly.vdr-developer.org/skinelchihd/
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+See the file COPYING for more information.
+
+
+Description:
+------------
+This plugin for Klaus Schmidinger's Video Disc Recorder VDR adds the "Elchi HD"
+skin. It is based on the Elchi skin with major refactoring to make use of newer
+VDR features like True Color support.
+
+
+Requirements:
+-------------
+VDR  2.4.3+
+libMagick++ 6.6.4+, 7.x recommended
+
+
+Features:
+---------
+- True Color Support
+- shaded surface look
+- SD, HD and UHD Support (OSD, Channel Logos, Video stream info)
+- SVG channel logo support (True Color, scaled to required OSD resolution)
+- EPG image support (True Color) for EPG and recordings
+- displays type of recording in Recordings Menu (HD, UHD)
+- multithreaded scrolling and image loading
+- if VDR is recording a REC symbols is displayed highlighted in red and white the channel display and replay display
+- if VDR is cutting or moving recordings a scissor symbols is highlighted in the channel display and replay display
+
+Installation
+------------
+The skinElchiHD plugin is compiled and installed the same way as any other plugin:
+- cd <VDR>/PLUGINS/src
+- tar xf vdr-skinelchihd-<version>.tar.bz2
+- ln -s skinelchihd-<version> skinelchihd
+- cd ../..
+- make plugins
+
+Copy the provided 50-skinelchihd.conf file to your VDR args dir (e.g. /etc/vdr/conf.d)
+and adapt it if required or use the parameters on the VDR commandline.
+
+Copy the theme files in the themes subdirectory to the VDR theme directory
+  <configdir>/themes 
+
+
+Usage:
+------
+Channel logos:
+For displaying channel logos skinElchiHD requires SVG logo files. SkinElchiHD
+does not provide logo files but there are several sets floating around in the
+internet. The logos should have no background (=transparent) as it is added by
+skinElchiHD.
+
+The path to the logo files can be set with a command line parameter: 
+
+  -l <LogoPath>,  --logopath=<LogoPath>     path to SVG channel logos
+                                            (default: <ResourceDir>/plugins/skinelchihd/logos)
+
+
+Images of EPG and recordings: 
+SkinElchiHD can display EPG images in JPEG format for both EPG view and recordings.
+The path to EPG images can be set with:
+  -e <EPGImageDir>, --epgimages=<ImageDir>  path to EPG images
+                                            (default: <CacheDir>/plugins/skinelchihd/epgimages)
+
+For the EPG the images need to follow the format "<SOURCE>_<EPGID>[_<No].jpg" 
+where <SOURCE> is the DVB source (e.g. S19.2E-1-1019-10301) and <EPGID> the ID
+of the EPG event. If there is more than one image then for the second and 
+further images an ascending Number <No> beginning with '1' is appended and
+skinElchiHD can display up to 5 images sequentially. The time until the next
+images is dispalyed can be set via OSD in the Setup of the plugin.
+
+For recording images they have to reside in the folder of the recording and
+need to end with ".jpg".
+
+
+Setup Options:
+--------------
+The following settings are available in the setup -> plugins -> skinElchiHD setup menu:
+
+General:
+- scroll text:                      yes / no
+  enable / disable scrolling of text
+
+- Show timer and conflicts in menu: no / next recording / Timer-Conflict / all
+  displays selected info in menus below header line 
+
+- Show recording details:           EPG / EPG + details  / EPG + details + genre
+  select detail range of recordings
+
+- Show EPG details:                 EPG / EPG + details  / EPG + details + genre
+  select details range of EPG entries
+
+- Show video format info (if availabel): no / format / size and format
+  shows size and format of current diesplayed stream in channel and replay menus
+
+- use graphical progressbar:        yes/no
+  convert ascii symbols [||||  ] to a graphical progress bar 
+
+- show symbols:                     yes / no   
+  shows VDR indicators as symbols instead of characters
+
+- EPG picture size:                 don't show / small / medium / large / extra large
+  select size of images in EPG and recordings menu
+
+  - duration of each EPG image [s]: 5
+    select time until next images is displayed
+
+
+Channel Display
+- show audio info:                  yes / no  
+  select if info about available audio sreams is displayed
+
+- show recording info:              no / only when recording / always
+  this displays an additional line with the DVB device number 
+  and name and infos about ongoing recurdings
+     no:                   the additional line is never displayed
+     only when recording:  the additional line is displayed only during recordings
+     always:               the additional line is always shown even if it's empty
+
+- show channel logos:               yes / no
+  choose if channel logos should be displayed
+
+- show signal bars:                 yes / no
+  choose if signal bars should be displayed (upper: signal strength, lower: signal qualitiy)
+
+- write logo messages to syslog:    yes / no
+  write a message (found / not found) for each requested channel logo in the syslog
+  this can be helpful to find missing logos or to verify the logopath  
+
+
+Tips & Hints:
+-------------
+- use a script like vdr_copy_epimage.sh with VDR's '--record' parameter to copy
+  the EPG images in the recording folder directly after it has been created
