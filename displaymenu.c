@@ -781,11 +781,11 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
 
    DSYSLOG("skinelchiHD: DisplayMenu::SetItemRecording(\"%s\",%d,%s,%s) %s %d-%d-%d-%d-%d-%d", "-", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5) )
    
-   SetItemBackground(Index, Current, Selectable, x1 + Tab(3));
    const cFont *font = cFont::GetFont(fontOsd);
    tColor ColorFg;
    int lh = font->Height();
    int y = menuTop + Index * lh;
+   SetItemBackground(Index, Current, Selectable, x1 + Tab(3) + 2*symbolGap);
    
    if (Total) {  // folder
       const char* tmp = Recording->Title(' ', true, Level);
@@ -798,7 +798,7 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
       }
       else { // non-current
          ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-         pmMenu->DrawText(cPoint(x1 + Tab(3), y), name, ColorFg, clrTransparent, font, x5 - lh/2- Tab(3));
+         pmMenu->DrawText(cPoint(x1 + Tab(3) + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- Tab(3) - 2*symbolGap);
       }
       // both
       pmMenu->DrawText(cPoint(x1 + Tab(0), y), cString::sprintf("%d", Total), ColorFg, clrTransparent, font, Tab(2) - Tab(0));
@@ -806,20 +806,21 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
       free (name);
    }
    else { // recording
-      // find H.264/H.265 videos
-      bool is_H264 = false;
-      bool is_H265 = false;
-      if (Recording->Info() && Recording->Info()->Components()) {
-         const cComponents *Components = Recording->Info()->Components();
-         for (int i = 0; i < Components->NumComponents(); i++) {
-            const tComponent *p = Components->Component(i);
-            if (p->stream == sc_video_H264_AVC) {
-               is_H264 = true;
-               break;
-            }
-            if (p->stream == sc_video_H265_HEVC) {
-               is_H265 = true;
-               break;
+      bool is_H264 = false, is_H265 = false;
+      if (ElchiConfig.showRecHD) {
+         // find H.264/H.265 videos
+         if (Recording->Info() && Recording->Info()->Components()) {
+            const cComponents *Components = Recording->Info()->Components();
+            for (int i = 0; i < Components->NumComponents(); i++) {
+               const tComponent *p = Components->Component(i);
+               if (p->stream == sc_video_H264_AVC) {
+                  is_H264 = true;
+                  break;
+               }
+               if (p->stream == sc_video_H265_HEVC) {
+                  is_H265 = true;
+                  break;
+               }
             }
          }
       }
@@ -849,18 +850,19 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
          }
          else { // non-current
             ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-            pmMenu->DrawText(cPoint(x1 + Tab(3), y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- Tab(3));
+            pmMenu->DrawText(cPoint(x1 + Tab(3) + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- Tab(3) - 2*symbolGap);
          }
          // both
          pmMenu->DrawText(cPoint(x1 + Tab(0), y), cString::sprintf("%02d.%02d.%02d", t->tm_mday, t->tm_mon + 1, t->tm_year % 100), ColorFg, clrTransparent, font, Tab(1) - Tab(0));
          pmMenu->DrawText(cPoint(x1 + Tab(1), y), cString::sprintf("%02d:%02d", t->tm_hour, t->tm_min), ColorFg, clrTransparent, font, Tab(2) - Tab(1));
-         if (Recording->IsNew())
-            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) - symbolGap - elchiSymbols.Width(SYM_NEWSML) - symbolGap - elchiSymbols.Width(SYM_AR_HD), y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
-         if (is_H264)
-            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) - symbolGap - elchiSymbols.Width(SYM_AR_HD), y + center(lh, elchiSymbols.Height(SYM_AR_HD))), elchiSymbols.Get(SYM_AR_HD, ColorFg, clrTransparent));
-         if (is_H265)
-            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) - symbolGap - elchiSymbols.Width(SYM_AR_UHD), y + center(lh, elchiSymbols.Height(SYM_AR_UHD))), elchiSymbols.Get(SYM_AR_UHD, ColorFg, clrTransparent));
          pmMenu->DrawText(cPoint(x1 + Tab(2), y), *Length, ColorFg, clrTransparent, font, Tab(3) - Tab(2));
+         
+         if (Recording->IsNew())
+            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) + symbolGap - elchiSymbols.Width(SYM_NEWSML) - symbolGap - elchiSymbols.Width(SYM_AR_HD), y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
+         if (is_H264)
+            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) + symbolGap - elchiSymbols.Width(SYM_AR_HD), y + center(lh, elchiSymbols.Height(SYM_AR_HD))), elchiSymbols.Get(SYM_AR_HD, ColorFg, clrTransparent));
+         if (is_H265)
+            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) + symbolGap - elchiSymbols.Width(SYM_AR_UHD), y + center(lh, elchiSymbols.Height(SYM_AR_UHD))), elchiSymbols.Get(SYM_AR_UHD, ColorFg, clrTransparent));
       }
    }
    changed = true;

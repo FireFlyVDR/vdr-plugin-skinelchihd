@@ -33,6 +33,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    isCutting = false;
    rectitle = NULL;
    title = NULL;
+   marks = NULL;
    oldCurrent = NULL;
    old_ar = ar_unknown;
    old_width = -1;
@@ -222,8 +223,8 @@ void cSkinElchiHDDisplayReplay::SetScrollTitle(const char *Title)
    int h = font->Height() - smallFont->Height();
    w = min(w, x4 - x0 - h);
 
-   LOCK_PIXMAPS;
    DELETENULL(spmTitle);
+   LOCK_PIXMAPS;
    pmTitleBG->Clear();
    pmTitleBG->SetLayer(LYR_BG);
    spmTitle = new cScrollingPixmap(osd, cRect(x0, y0, w, smallFont->Height()),

@@ -121,7 +121,8 @@ cScrollingPixmap::cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Fo
    colorBg = ColorBg;
    centered = Centered;
    alignment = Alignment;
-   maxwidth = max_char * Font->Width("M"); // assuming M is widest character
+   cSize const maxSize = osd->MaxPixmapSize();  //TODO  create and scroll multiples pixmaps if one is not sufficient
+   maxwidth = std::min(maxSize.Width(), max_char * Font->Width("M")); // assuming M is widest character
    direction = 0;
    text = cString(NULL);
    
@@ -265,7 +266,7 @@ bool cScrollingPixmap::Update()
          }
       }
 
-      if (changed) {
+      if (changed) {    // SetDrawPortPoint sets LOCK_PIXMAP
          pixmap->SetDrawPortPoint(cPoint(-xoffset, 0));
       }
    }

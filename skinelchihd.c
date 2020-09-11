@@ -52,7 +52,7 @@
 #error THIS VERSION OF THE SKINELCHIHD-PLUGIN REQUIRES AT LEAST VDR 2.4.3
 #endif
 
-static const char *VERSION      = "0.5.0" ;
+static const char *VERSION      = "0.5.1" ;
 static const char *DESCRIPTION  = trNOOP("ElchiHD skin");
 const char *OSDSKIN             = "ElchiHD";
 
@@ -165,7 +165,11 @@ const char *cPluginSkinElchiHD::CommandLineHelp(void)
    return
           "  -e <EPGImageDir>, --epgimages=<ImageDir>  path to EPG images\n"
           "                                            (default: '<CacheDir>/plugins/skinelchi/epgimages')\n"
-          "  -l <LogoPath>,  --logopath=<LogoPath>     path to SVG channel logos\n"
+#ifdef GRAPHICSMAGICK
+          "  -l <LogoPath>,  --logopath=<LogoPath>     path to channel logos (PNG format)\n"
+#else
+          "  -l <LogoPath>,  --logopath=<LogoPath>     path to channel logos (SVG or PNG format)\n"
+#endif
           "                                            (default: '<ResourceDir>/plugins/skinelchi/logos')\n";
 }
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2020-08-08 14:57+0200\n"
+"POT-Creation-Date: 2020-09-11 16:50+0200\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Patrice Staudt <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -91,6 +91,9 @@ msgstr "Texte défillant"
 msgid "show timer and conflict in menu"
 msgstr ""
 
+msgid "show logo if recording is HD/UHD"
+msgstr ""
+
 msgid "show recording details"
 msgstr ""
 
@@ -122,6 +125,12 @@ msgstr "seulement pendant l'enregistrement"
 msgid "always"
 msgstr "toujours"
 
+msgid "normal size"
+msgstr ""
+
+msgid "large size"
+msgstr ""
+
 msgid "show audio Info"
 msgstr ""
 
@@ -130,6 +139,9 @@ msgstr "afficher info d'enregistrement"
 
 msgid "show channel logos"
 msgstr "Logos chaîne visible"
+
+msgid "search logos first as"
+msgstr ""
 
 msgid "show signal bars"
 msgstr ""

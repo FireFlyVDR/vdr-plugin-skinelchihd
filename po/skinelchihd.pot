@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: vdr-skinelchihd 0.5.0\n"
+"Project-Id-Version: vdr-skinelchihd 0.5.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2020-08-22 15:00+0200\n"
+"POT-Creation-Date: 2020-09-11 20:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -92,6 +92,9 @@ msgstr ""
 msgid "show timer and conflict in menu"
 msgstr ""
 
+msgid "show logo if recording is HD/UHD"
+msgstr ""
+
 msgid "show recording details"
 msgstr ""
 
@@ -123,6 +126,12 @@ msgstr ""
 msgid "always"
 msgstr ""
 
+msgid "normal size"
+msgstr ""
+
+msgid "large size"
+msgstr ""
+
 msgid "show audio Info"
 msgstr ""
 
@@ -130,6 +139,9 @@ msgid "show recording Info"
 msgstr ""
 
 msgid "show channel logos"
+msgstr ""
+
+msgid "search logos first as"
 msgstr ""
 
 msgid "show signal bars"

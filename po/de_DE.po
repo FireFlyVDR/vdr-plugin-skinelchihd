@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2020-08-08 14:57+0200\n"
+"POT-Creation-Date: 2020-09-11 16:31+0200\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Christoph Haubrich <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -91,6 +91,9 @@ msgstr "rollender Text"
 msgid "show timer and conflict in menu"
 msgstr "zeige Timer und Konflikte im Menü"
 
+msgid "show logo if recording is HD/UHD"
+msgstr "zeige HD/UHD-Logo vor Aufnahmen"
+
 msgid "show recording details"
 msgstr "zeige Aufnahmedetails"
 
@@ -122,6 +125,12 @@ msgstr "nur während Aufnahme"
 msgid "always"
 msgstr "immer"
 
+msgid "normal size"
+msgstr "normale Größe"
+
+msgid "large size"
+msgstr "vergrößert"
+
 msgid "show audio Info"
 msgstr "Audio-Info anzeigen"
 
@@ -130,6 +139,9 @@ msgstr "Aufnahme-Info anzeigen"
 
 msgid "show channel logos"
 msgstr "Kanal-Logos anzeigen"
+
+msgid "search logos first as"
+msgstr "suche Logo zuerst als"
 
 msgid "show signal bars"
 msgstr "Signalstärke anzeigen"
@@ -142,15 +154,3 @@ msgstr "ElchiHD Oberfläche"
 
 msgid "ElchiHD"
 msgstr "ElchiHD"
-
-#~ msgid "Digital"
-#~ msgstr "Digital"
-
-#~ msgid "Stereo"
-#~ msgstr "Stereo"
-
-#~ msgid "Left channel"
-#~ msgstr "Linker Kanal"
-
-#~ msgid "Right channel"
-#~ msgstr "Rechter Kanal"

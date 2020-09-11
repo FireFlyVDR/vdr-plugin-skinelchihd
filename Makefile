@@ -12,12 +12,12 @@
 
 PLUGIN = skinelchihd
 
+# External image lib to use: imagemagick or graphicsmagick
+IMAGELIB ?= imagemagick
+
 ### The version number of this plugin (taken from the main source file):
 
 VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).c | awk '{ print $$6 }' | sed -e 's/[";]//g')
-
-### The directory environment:
-#VDRDIR=../../..
 
 # Use package data if installed...otherwise assume we're under the VDR source directory:
 PKG_CONFIG ?= pkg-config
@@ -54,7 +54,18 @@ SOFILE = libvdr-$(PLUGIN).so
 
 ### Includes and Defines (add further entries here):
 
+ifeq ($(IMAGELIB), imagemagick)
+$(warning Compiling with ImageMagick++)
 INCLUDES += $(shell pkg-config --cflags Magick++)
+LIBS += $(shell pkg-config --libs Magick++)
+else ifeq ($(IMAGELIB), graphicsmagick)
+$(warning Compiling with GraphicsMagick++)
+INCLUDES += $(shell pkg-config --cflags GraphicsMagick++)
+LIBS += $(shell pkg-config --libs GraphicsMagick++)
+DEFINES += -DGRAPHICSMAGICK
+else 
+$(error ERROR: IMAGELIB must be either imagemagick or graphicsmagick)
+endif
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
@@ -62,8 +73,6 @@ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
 OBJS = $(PLUGIN).o displaychannel.o displaymenu.o displayreplay.o displayvolume.o displaytracks.o displaymessage.o
 OBJS += config.o background.o vdrstatus.o setup.o symbols.o image.o
-
-LIBS += $(shell pkg-config --libs Magick++)
 
 ### The main target:
 
@@ -135,4 +144,4 @@ dist: $(I18Npo) clean
 
 clean:
 	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
-	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+	@-rm -f $(OBJS) $(DEPFILE) *.so *.tar.bz2 *.tgz core* *~

@@ -42,7 +42,6 @@ private:
    int recordingchange;
    bool changed;
    cString lastdate;
-   cString audiostring;
    bool hasVideo;
    int old_width;
    int old_height;
@@ -51,7 +50,7 @@ private:
    int LastSignalStrength;
    int LastSignalQuality; 
    int presentLastOffset, followingLastOffset;
-   cPixmap *pmBG, *AudioPixmap, *pmChannelNameBg, *pmChDateTime, *pmVideoSize, *pmSymbols, *pmMessageBG;
+   cPixmap *pmBG, *pmLogo, *pmChannelNameBg, *pmChDateTime, *pmVideoSize, *pmSymbols, *pmMessageBG;
    cScrollingPixmap *spmChannelName, *spmPresentTitle, *spmPresentShort, *spmFollowingTitle, *spmFollowingShort, *spmAudio, *spmRecording, *spmMessage;
 
    void DrawBackground();

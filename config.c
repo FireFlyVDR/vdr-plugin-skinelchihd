@@ -20,6 +20,7 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    // general
    useScrolling = 1;
    showTimer = 0;
+   showRecHD = 1;
    showRecDetails = 1;
    showEPGDetails = 0;
    showVideoInfo = 0;
@@ -33,9 +34,11 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    strcpy(epgimageDir, "");
    showAudioInfo = 1;
    showRecInfo = 0;
+   showLogo = 1;
+   LogoSVGFirst = 0;
    showSignalBars = 1;
    LogoMessages = 0;
-
+   
    // clr dialog
    //clrdlgActive = false;
 }
@@ -65,6 +68,7 @@ bool cSkinElchiHDConfig::SetupParse(const char *Name, const char *Value)
 {
    if      (strcmp(Name, "useScrolling") == 0)                 useScrolling = atoi(Value);
    else if (strcmp(Name, "showTimer") == 0)                    showTimer = atoi(Value);
+   else if (strcmp(Name, "showRecHD") == 0)                    showRecHD = atoi(Value);
    else if (strcmp(Name, "showRecDetails") == 0)               showRecDetails = atoi(Value);
    else if (strcmp(Name, "showEPGDetails") == 0)               showEPGDetails = atoi(Value);
    else if (strcmp(Name, "showVideoInfo") == 0)                showVideoInfo = atoi(Value);
@@ -76,6 +80,7 @@ bool cSkinElchiHDConfig::SetupParse(const char *Name, const char *Value)
    else if (strcmp(Name, "showAudioInfo") == 0)                showAudioInfo = atoi(Value);
    else if (strcmp(Name, "showRecInfo") == 0)                  showRecInfo = atoi(Value);
    else if (strcmp(Name, "showLogo") == 0)                     showLogo = atoi(Value);
+   else if (strcmp(Name, "LogoSVGFirst") == 0)                 LogoSVGFirst = atoi(Value);
    else if (strcmp(Name, "showSignalBars") == 0)               showSignalBars = atoi(Value);
    else if (strcmp(Name, "LogoMessages") == 0)                 LogoMessages = atoi(Value);
 

@@ -284,6 +284,7 @@ void cSkinElchiHDSetupGeneral::Setup(void)
 {
    Add(new cMenuEditBoolItem(tr("scroll text"), &tmpconfig->useScrolling));
    Add(new cMenuEditStraItem(tr("show timer and conflict in menu"), &tmpconfig->showTimer, 4, TimerCheckItems));
+   Add(new cMenuEditBoolItem(tr("show logo if recording is HD/UHD"), &tmpconfig->showRecHD));
    Add(new cMenuEditStraItem(tr("show recording details"), &tmpconfig->showRecDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show EPG details"), &tmpconfig->showEPGDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show video format info (if available)"), &tmpconfig->showVideoInfo, 3, VideoFormatItems));
@@ -329,7 +330,9 @@ class cSkinElchiHDSetupChannelDisplay : public cOsdMenu
 private:
    cSkinElchiHDConfig *tmpconfig;
    void Setup(void);
-   const char * RecInfoItems[3];
+   const char *RecInfoItems[3];
+   const char *ShowLogoItems[3];
+   const char *LogoTypeItems[2];
 
 protected:
    virtual eOSState ProcessKey(eKeys Key);
@@ -350,6 +353,13 @@ cSkinElchiHDSetupChannelDisplay::cSkinElchiHDSetupChannelDisplay(cSkinElchiHDCon
    RecInfoItems[1] = tr("only when recording");
    RecInfoItems[2] = tr("always");
 
+   ShowLogoItems[0] = trVDR("no");
+   ShowLogoItems[1] = tr("normal size");
+   ShowLogoItems[2] = tr("large size");
+   
+   LogoTypeItems[0] = "SVG";
+   LogoTypeItems[1] = "PNG";
+
    Setup();
 }
 
@@ -361,7 +371,10 @@ void cSkinElchiHDSetupChannelDisplay::Setup(void)
 {
    Add(new cMenuEditBoolItem(tr("show audio Info"), &tmpconfig->showAudioInfo));
    Add(new cMenuEditStraItem(tr("show recording Info"), &tmpconfig->showRecInfo, 3, RecInfoItems));
-   Add(new cMenuEditBoolItem(tr("show channel logos"), &tmpconfig->showLogo));
+   Add(new cMenuEditStraItem(tr("show channel logos"), &tmpconfig->showLogo, 3, ShowLogoItems));
+#ifndef GRAPHICSMAGICK   
+   Add(new cMenuEditStraItem(tr("search logos first as"), &tmpconfig->LogoSVGFirst, 2, LogoTypeItems));
+#endif   
    Add(new cMenuEditBoolItem(tr("show signal bars"), &tmpconfig->showSignalBars));
    Add(new cMenuEditBoolItem(tr("write logo messages to syslog"), &tmpconfig->LogoMessages));
 }
@@ -399,7 +412,13 @@ void cSkinElchiHDSetup::Setup(void)
 {
    Add(new cOsdItem(tr("General"), osUser1));
    Add(new cOsdItem(tr("Channel Display"), osUser2));
- 
+
+#ifdef GRAPHICSMAGICK
+   Add(new cOsdItem("image lib: GraphicsMagick", osUnknown, false));
+#else
+   Add(new cOsdItem("image lib: ImageMagick", osUnknown, false));
+#endif   
+   
    /* disable Color menu for now
    if (Skins.Current()->Name() && !strcmp(OSDSKIN, Skins.Current()->Name()))
       Add(new cOsdItem(tr("Colors"), osUser3));
@@ -443,6 +462,7 @@ void cSkinElchiHDSetup::Store(void)
    // general values
    SetupStore("useScrolling", ElchiConfig.useScrolling);
    SetupStore("showTimer", ElchiConfig.showTimer);
+   SetupStore("showRecHD", ElchiConfig.showRecHD);
    SetupStore("showRecDetails", ElchiConfig.showRecDetails);
    SetupStore("showEPGDetails", ElchiConfig.showEPGDetails);
    SetupStore("showVideoInfo", ElchiConfig.showVideoInfo);
@@ -455,6 +475,7 @@ void cSkinElchiHDSetup::Store(void)
    SetupStore("showAudioInfo", ElchiConfig.showAudioInfo);
    SetupStore("showRecInfo", ElchiConfig.showRecInfo);
    SetupStore("showLogo", ElchiConfig.showLogo);
+   SetupStore("LogoSVGFirst", ElchiConfig.LogoSVGFirst);
    SetupStore("showSignalBars", ElchiConfig.showSignalBars);
    SetupStore("LogoMessages", ElchiConfig.LogoMessages);
 }

@@ -21,7 +21,8 @@ VDR features like True Color support.
 Requirements:
 -------------
 VDR  2.4.3+
-libMagick++ 6.6.4+, 7.x recommended
+ImageMagick++ 7.x or GraphicsMagick++
+for SVG channel logos ImageMagick++ is required
 
 
 Features:
@@ -43,7 +44,10 @@ The skinElchiHD plugin is compiled and installed the same way as any other plugi
 - tar xf vdr-skinelchihd-<version>.tar.bz2
 - ln -s skinelchihd-<version> skinelchihd
 - cd ../..
-- make plugins
+- make plugins  [IMAGELIB=graphicsmagick]
+
+Append "IMAGELIB=imagemagick" or "IMAGELIB=graphicsmagick" to themake command to build with the respective library. 
+Default (e.g. witout parameter) is ImageMagick++.
 
 Copy the provided 50-skinelchihd.conf file to your VDR args dir (e.g. /etc/vdr/conf.d)
 and adapt it if required or use the parameters on the VDR commandline.
@@ -62,9 +66,9 @@ skinElchiHD.
 
 The path to the logo files can be set with a command line parameter: 
 
-  -l <LogoPath>,  --logopath=<LogoPath>     path to SVG channel logos
+  -l <LogoPath>,  --logopath=<LogoPath>     path to PNG and SVG channel logos
                                             (default: <ResourceDir>/plugins/skinelchihd/logos)
-
+For displaying SVG channel logos ImagMagick++ is required.
 
 Images of EPG and recordings: 
 SkinElchiHD can display EPG images in JPEG format for both EPG view and recordings.
@@ -100,7 +104,7 @@ General:
 - Show EPG details:                 EPG / EPG + details  / EPG + details + genre
   select details range of EPG entries
 
-- Show video format info (if availabel): no / format / size and format
+- Show video format info (if available): no / format / size and format
   shows size and format of current diesplayed stream in channel and replay menus
 
 - use graphical progressbar:        yes/no
@@ -127,8 +131,11 @@ Channel Display
      only when recording:  the additional line is displayed only during recordings
      always:               the additional line is always shown even if it's empty
 
-- show channel logos:               yes / no
-  choose if channel logos should be displayed
+- show channel logos:               no / normal size / large size
+  choose if channel logos should be displayed and which size
+
+- search logos first as             SVG / PNG 
+  search the logo files first with extension .svg or .png. This option is only available when compiled with ImageMagick++
 
 - show signal bars:                 yes / no
   choose if signal bars should be displayed (upper: signal strength, lower: signal qualitiy)
@@ -142,3 +149,32 @@ Tips & Hints:
 -------------
 - use a script like vdr_copy_epimage.sh with VDR's '--record' parameter to copy
   the EPG images in the recording folder directly after it has been created
+- to convert SVG channel logs to png (including the links) call the following script in the channel logo folder:
+
+!/bin/bash
+#
+# convert all SVG files and links in the current directory to png
+  
+OLDIFS=$IFS
+IFS=$'\n'
+
+for svgfile in $(find . -iname "*.svg" -type f);
+do
+   pngfile=${svgfile%%.svg}.png
+   if [ ! -e "$pngfile" ]; then
+      echo "converting $svgfile -> $pngfile"
+      convert -background none "$svgfile" "$pngfile"
+   fi
+done
+
+for lnk in $(find . -lname "*.svg" );
+do
+   source="$(basename -s "svg" $lnk)png"
+   target=$(realpath --relative-to=. "$lnk")
+   target="${target%%.svg}.png"
+   if [ ! -e "$source" ]; then
+      echo "symlinking $source -> $target"
+      ln -s "${target}" "${source}"
+   fi
+done
+IFS=$OLDIFS

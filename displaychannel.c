@@ -91,10 +91,18 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
       SymbolGap      = 3;
    }
 
+   if (ElchiConfig.showLogo == 2)
+   {
+      wLogo += wLogo/2;
+      hLogo += hLogo/2;
+      bLogo += bLogo/2;
+   }
    elchiSymbols.Refresh(OSDHeight);
       
-   if (!ElchiConfig.showLogo)
+   if (!ElchiConfig.showLogo) {
       wLogo = hLogo = 0;
+      pmLogo = NULL;
+   }
 
    xLogo = 0;
    xLeft = ElchiConfig.showLogo ? (wLogo/4) : 0;
@@ -129,7 +137,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    wChName = xSymbolStart - xChName -lh;
    
    yLogo = 0;                      // Logo Top
-   yChDateTime = (ElchiConfig.showLogo &&  hLogo >= lh) ?  (hLogo - lh)/2 : 0;  // Date Time Top
+   yChDateTime = (ElchiConfig.showLogo &&  hLogo >= lh) ?  hLogo - 3*lh2 : 0;  // Date Time Top
    yChName = yChDateTime + lh + SymbolGap;    //Channel Name Top
    ySymbols = (lh - elchiSymbols.Height(SYM_VPS)) / 2;  // Symbols Top (centered in Channel Name Bar)
    ySymbolARRec = (lh - elchiSymbols.Height(SYM_REC)) / 2;  // Symbols Top (centered in Channel Name Bar)
@@ -152,6 +160,8 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
 
    pmBG = osd->CreatePixmap(LYR_BG, cRect(0, 0, xRight, withInfo ? yBottom : yRecordings));
    pmChannelNameBg = osd->CreatePixmap(LYR_TEXTBG, cRect(xLeft, yChName, xSymbolStart - xLeft, lh));
+   if (ElchiConfig.showLogo)
+      pmLogo = osd->CreatePixmap(LYR_TEXT, cRect(xLogo, yLogo, wLogo, hLogo));
    
    DrawBackground();
 
@@ -314,26 +324,49 @@ cString cSkinElchiHDDisplayChannel::CheckLogoFile(const cChannel *Channel, const
    if (!Channel || !Channel->Name())
       return NULL;
 
+   cString ext[2];
+#ifdef GRAPHICSMAGICK
+#define MAX_LOGO_FMT 1   
+   ext[0] = cString("png");
+#else   
+#define MAX_LOGO_FMT 2   
+   if (ElchiConfig.LogoSVGFirst == 0)
+   {
+      ext[0] = cString("svg");
+      ext[1] = cString("png");
+   } else {
+      ext[0] = cString("png");
+      ext[1] = cString("svg");
+   }
+#endif
+      
    cString filename;
    char *lowerFilename = strdup(Channel->Name());
    toLowerCase(lowerFilename);
-   cString ChannelName  = cString(strreplace(lowerFilename, '/', '~'), true);
-   if (const char *s = strrchr(ChannelName, '('))
-      ChannelName = cString(ChannelName, --s);
-   cString ChannelName_ = cString(strreplace(strdup(*ChannelName), ' ', '_'), true);
+   cString ChannelNameLC = cString(strreplace(lowerFilename, '/', '~'), true);
+   if (const char *s = strrchr(ChannelNameLC, '('))
+      ChannelNameLC = cString(ChannelNameLC, --s);
+   cString ChannelNameLC_ = cString(strreplace(strdup(*ChannelNameLC), ' ', '_'), true);
 
-   filename = cString::sprintf("%s/%s.svg", path, *ChannelName);
-   if (access(filename, F_OK) == 0) // the file exists
-      return filename;
-   else {
-      filename = cString::sprintf("%s/%s.svg", path, *ChannelName_);
+   for (int e = 0; e < MAX_LOGO_FMT; e++)
+   {
+      filename = cString::sprintf("%s/%s.%s", path, Channel->Name(), *ext[e]);
       if (access(filename, F_OK) == 0) // the file exists
          return filename;
-      else
-      {
-         filename = cString::sprintf("%s/%s.svg", path, *Channel->GetChannelID().ToString());
+      else {
+         filename = cString::sprintf("%s/%s.%s", path, *ChannelNameLC, *ext[e]);
          if (access(filename, F_OK) == 0) // the file exists
             return filename;
+         else {
+            filename = cString::sprintf("%s/%s.%s", path, *ChannelNameLC_, *ext[e]);
+            if (access(filename, F_OK) == 0) // the file exists
+               return filename;
+            else {
+               filename = cString::sprintf("%s/%s.%s", path, *Channel->GetChannelID().ToString(), *ext[e]);
+               if (access(filename, F_OK) == 0) // the file exists
+                  return filename;
+            }
+         }
       }
    }
 
@@ -367,22 +400,10 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
    {
       if (Channel->GroupSep()) {
          snprintf(Channelnumber, sizeof(Channelnumber), " ");
-         if (AudioPixmap) {
-            osd->DestroyPixmap(AudioPixmap);
-            AudioPixmap = NULL;
-         }
          hasVideo = false;
       }
       else  // Channel is not a group separator
       {
-         audiostring = NULL;
-
-         if (AudioPixmap) {
-            LOCK_PIXMAPS;
-            osd->DestroyPixmap(AudioPixmap);
-            AudioPixmap = NULL;
-         }
-
          // clear and redraw complete display
          DrawBackground();
 
@@ -426,30 +447,29 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
       // load Logo
       if (ElchiConfig.showLogo)
       {
-         if (!Channel || !Channel->Name()) {
-            // no channel or channel without name: draw empty rectangle
-            pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
-         }
-         else
+         pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
+         if (NULL != Channel && NULL != Channel->Name())
          {
             cString filename;
             filename = CheckLogoFile(Channel, ElchiConfig.GetLogoBaseDir());
             
+            pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
             if (isempty(filename)) {
                if (ElchiConfig.LogoMessages) {
                   esyslog("skinElchiHD: no logo found for \"%s\" (%s) in %s", *cString(strreplace(strdup(Channel->Name()), '/', '~'), true), *Channel->GetChannelID().ToString(), ElchiConfig.GetLogoBaseDir());
                }
-               pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
+               pmLogo->SetLayer(LYR_HIDDEN);
             }
             else {
-               cOSDImage *imgLogo = new cOSDImage(filename, wLogo, hLogo, Theme.Color(clrChannelDateBg), bLogo);
+               cOSDImage *imgLogo = new cOSDImage(filename, wLogo, hLogo, bLogo);
                if (imgLogo && imgLogo->GetImage()) {
-                  pmBG->DrawImage(cPoint(0, 0), *imgLogo->GetImage());
+                  pmLogo->DrawImage(cPoint(0, 0), *imgLogo->GetImage());
                   if (ElchiConfig.LogoMessages)
                      isyslog("skinElchiHD: logo loaded %s", *filename);
+                  pmLogo->SetLayer(LYR_TEXT);
                }
                else {
-                  pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
+                  pmLogo->SetLayer(LYR_HIDDEN);
                }
             }
          }
@@ -740,8 +760,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
             }
          }
          
-         audiostring = newaudiostring;
-         spmAudio->SetText(audiostring, cFont::GetFont(fontSml));
+         spmAudio->SetText(newaudiostring, cFont::GetFont(fontSml));
       }
       
       

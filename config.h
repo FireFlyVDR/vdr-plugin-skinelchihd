@@ -35,6 +35,7 @@ public:
    // general
    int useScrolling;
    int showTimer;
+   int showRecHD;
    int showRecDetails;
    int showEPGDetails;
    int showVideoInfo;
@@ -46,6 +47,7 @@ public:
    int showAudioInfo;
    int showRecInfo;
    int showLogo;
+   int LogoSVGFirst;
    int showSignalBars;
    int LogoMessages;
 

@@ -4,3 +4,20 @@ VDR Plugin 'skinelchiHD' Revision History
 2020-08-22 Version 0.5.0
 - initial release of skinElchiHD
 
+2020-09-11 Version 0.5.1
+- limited scrolling pixmap to MaxPixmapSize() (reported by mamomoz @VDR-Portal)
+- fixed plugin path in 50-skinelchihd.conf (thanks to Dr. Seltsam @VDR-Portal)
+- added support for PNG channel logos, select in the plugin channel settings if the search starts with SVG or PNG (suggested by mamomoz @VDR-Portal)
+- added support for channel logo names with upper/lower case like the channel name appears in channels.conf (suggested by mamomoz @VDR-Portal)
+- added selectable larger logo size (suggested by Uwe @VDR-Portal)
+- fixed initialisation of marks in replay dialog (reported by lnj @VDR-Portal)
+- fixed deadlock in replay
+- minor code cleanup
+- added support for GraphicsMagick++ as alternative for ImageMagick++. Select graphicsmagick or imagemagick by setting IMAGELIB 
+  in the Makefile or add IMAGELIB=... as parameter to make. As GraphicsMagick cannot read SVG properly only PNG channel 
+  logos are available with GraphicsMagick++
+- dropped support for IamgeMagick++ 6.x as it has problems with transparency which won't be solved. So for ImageMAGick++ version 7.x is required
+  (thanks to Uwe @vdrportal.de for testing v6 and v7)
+- fixed cutting symbol darkness
+- made HD/UHD logo in front of recordings optional
+
