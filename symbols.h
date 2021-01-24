@@ -18,17 +18,31 @@ enum eSymbols
    SYM_AR_43,
    SYM_AR_HD,
    SYM_AR_UHD,
-   SYM_ARROW_DOWN,
    SYM_ARROW_TURN,
+   SYM_ARROW_TURN_REMOTE,
+   SYM_CLOCK,
+   SYM_CLOCK_INACTIVE,
+   SYM_CLOCKSML,
+   SYM_CLOCKSML_INACTIVE,
+   SYM_CLOCK_REMOTE,
+   SYM_CLOCK_REMOTE_INACTIVE,
+   SYM_CUTTING,
+   SYM_DOLBYDIGITAL,
+   SYM_ENCRYPTED,
+   SYM_NEWSML,
+   SYM_RADIO,
+   SYM_REC,
+   SYM_REC_REMOTE,
+   SYM_RECSML,
+   SYM_VPSSML,
+   SYM_VPS,
+   
+   SYM_ARROW_DOWN,
    SYM_ARROW_UP,
    SYM_AUDIO_LEFT,
    SYM_AUDIO_RIGHT,
    SYM_AUDIO_STEREO,
    SYM_AUDIO,
-   SYM_CLOCKSML,
-   SYM_CLOCK,
-   SYM_DOLBYDIGITAL,
-   SYM_ENCRYPTED,
    SYM_FFWD1,
    SYM_FFWD2,
    SYM_FFWD3,
@@ -48,12 +62,8 @@ enum eSymbols
    SYM_FREW8,
    SYM_FREW,
    SYM_MUTE,
-   SYM_NEWSML,
    SYM_PAUSE,
    SYM_PLAY,
-   SYM_RADIO,
-   SYM_REC,
-   SYM_RECSML,
    SYM_SFWD1,
    SYM_SFWD2,
    SYM_SFWD3,
@@ -74,29 +84,27 @@ enum eSymbols
    SYM_SREW8,
    SYM_SREW,
    SYM_TELETEXT,
-   SYM_CUTTING,
    SYM_UNMUTE,
    SYM_VOLUME,
-   SYM_VPSSML,
-   SYM_VPS,
    SYM_MAX_COUNT
 };
 
 class cSymbolCache
 {
+private:
+   int OsdHeight;
+   cBitmap *cache[SYM_MAX_COUNT];
+   void clearCache();
+   cBitmap *ScaleBitmap(cBitmap *Bitmap, double FactorX, double FactorY);
+   tColor Multiply(tColor Color, uint8_t Alpha);
+
 public:
    cSymbolCache();
    ~cSymbolCache();
-   void Refresh(int Height);
-   int Width(eSymbols symbol) { return height ? cache[symbol]->Width() : 0; }
-   int Height(eSymbols symbol) { return height ? cache[symbol]->Height() : 0; }
+   void Refresh(int OSDHeight);
+   int Width(eSymbols symbol) { return OsdHeight ? cache[symbol]->Width() : 0; }
+   int Height(eSymbols symbol) { return OsdHeight ? cache[symbol]->Height() : 0; }
    cBitmap& Get(eSymbols Symbol, tColor clrSymbol = clrWhite, tColor clrBackground = clrTransparent);
-
-private:
-   int height;
-   cBitmap *cache[SYM_MAX_COUNT];
-   void clearCache();
-   tColor Multiply(tColor Color, uint8_t Alpha);
 };
 
 extern cSymbolCache elchiSymbols;

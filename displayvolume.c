@@ -19,7 +19,7 @@
 
 cSkinElchiHDDisplayVolume::cSkinElchiHDDisplayVolume(void)
 {
-   changed = showMessage = false;
+   changed = false;
    const cFont *font = cFont::GetFont(fontOsd);
    lh = font->Height();
    lh2 = lh / 2;
@@ -50,12 +50,11 @@ cSkinElchiHDDisplayVolume::cSkinElchiHDDisplayVolume(void)
    
    isMuted = -1;
    currentVolume = -1;
-   spmMessage = NULL;
 }
 
 cSkinElchiHDDisplayVolume::~cSkinElchiHDDisplayVolume()
 {
-   changed = showMessage = true;
+   changed = true;
    ElchiBackground->SetOSD(NULL);
    DELETENULL(osd);
 }

@@ -1,0 +1,11 @@
+--- menu_whatson.c.orig	2019-04-11 14:13:08.000000000 +0200
++++ menu_whatson.c	2021-01-12 11:49:43.150419832 +0100
+@@ -162,7 +162,7 @@
+ #endif
+             }
+         } else {
+-            t[0] = event && hasMatch ? (timerMatch == tmFull) ? ((timer && timer->Recording()) ? 'R' : (timerActive ? 'T' : 'i')) : (timerActive ? 't' : ' ') : ' ';
++            t[0] = event && hasMatch ? (timerMatch == tmFull) ? ((timer && timer->Recording() && timer->Local()) ? 'R' : (timer && timer->Local()? (timerActive ? 'T' : 'I') : (timerActive ? 'S' : ' '))): (timerActive && timer && timer->Local() ? 't' : ' ') : ' ';
+             v[0] = event && event->Vps() && (event->Vps() - event->StartTime()) ? 'V' : ' ';
+             r[0] = event && event->IsRunning() ? '*' : ' ';
+         }

@@ -43,6 +43,8 @@ public:
    int showIcons;
    int EpgImageSize;
    int EpgImageDisplayTime;
+   int EpgImageEventIdOnly;
+   int EpgShowRemoteTimers;
 
    int showAudioInfo;
    int showRecInfo;
@@ -50,6 +52,7 @@ public:
    int LogoSVGFirst;
    int showSignalBars;
    int LogoMessages;
+   int ShowRemoteTimers;
 
    // clr dialog
    //bool clrdlgActive;

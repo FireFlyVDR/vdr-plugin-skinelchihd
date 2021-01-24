@@ -161,18 +161,14 @@ bool cOSDImage::LoadImage(bool isLogo)
 #endif
 
 #ifdef GRAPHICSMAGICK
-         union uColor {
-            tColor clr;
-            unsigned char RGBA[4];
-         };
          union uColor *cvrt, buffer;
 
          cvrt = (union uColor *)image->Data();
          for(int i=0; i<wImg*hImg; i++, cvrt++)
          {
             buffer.clr = cvrt->clr;
-            cvrt->RGBA[0] = buffer.RGBA[2];
-            cvrt->RGBA[2] = buffer.RGBA[0];
+            cvrt->c.B = buffer.c.R;
+            cvrt->c.R = buffer.c.B;
          }
 #endif         
       }

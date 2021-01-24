@@ -14,11 +14,10 @@
 
 class cRecordingEntry : public cListObject
 {
-   //friend class cRecordingList;
 private:
    const cDevice *device;
-   char *name;
-   char *filename;
+   cString name;
+   cString filename;
 public:
    cRecordingEntry(const cDevice *Device, const char *Name, const char *FileName);
    ~cRecordingEntry();
@@ -26,8 +25,8 @@ public:
       cRecordingEntry *entry = (cRecordingEntry *) & listObj;
       return strcmp (entry->filename, filename);
    }
-   const char *GetFilename() { return filename; }
-   const char *GetName() { return name; }
+   const char *GetFilename() { return *filename; }
+   const char *GetName() { return *name; }
    const cDevice *GetDevice() { return device; }
 };
 

@@ -7,23 +7,23 @@
  * $Id$
  */
 
+//#define DEBUG
+//#define DEBUG2
 #include "common.h"
 #include "background.h"
 #include "config.h"
 
-#define DELAY 20   // 20ms = 50 updates per second
+#define DELAY 20   // 20ms = 50 updates per second (fps)
 
-//
-// ================================== class cElchiBackground ===================================================
-// calls regular update tasks in background
-// tasks are maintained in a list
-// requires valid cOsd to update OSD, so call SetOSD whenever OSD is created/destroyed 
-
+///
+/// ================================== class cElchiBackground ===================================================
+/// calls regular update tasks in background
+/// tasks are maintained in a list
+/// requires valid cOsd to update OSD, so call SetOSD whenever OSD is created/destroyed 
 cElchiBackground::cElchiBackground(void)
 :cThread("skinelchiHD-BG")
 {
    osd = NULL;
-   bgObjectList.Clear();
 }
 
 
@@ -31,11 +31,13 @@ cElchiBackground::~cElchiBackground()
 {
    Stop();
 
-   cMutexLock(mtxBg);
-   ///bgObjectList.Clear();
-   for (cBgObject *bgObj = bgObjectList.First(); bgObj; bgObj = bgObjectList.Next(bgObj)) {
-      Del(bgObj, false);
+   int cnt = 0;
+   mtxBg.Lock();
+   while (bgObjectList.Count() > 0) {
+      cvBlock.TimedWait(mtxBg, 2);
+      cnt++;
    }
+   mtxBg.Unlock(); 
 }
 
 
@@ -58,18 +60,17 @@ void cElchiBackground::Stop()
 
 void cElchiBackground::Add(cBgObject* bgObject)
 {
-   cMutexLock(mtxBg);
+   cMutexLock mtxBgLock(&mtxBg);
    bgObjectList.Add(bgObject);
    cvBlock.Broadcast();
 }
 
 
-void cElchiBackground::Del(cBgObject* bgObject, bool delObject)
+void cElchiBackground::Del(cBgObject* bgObject)
 {
-   mtxBg.Lock();
-   bgObjectList.Del(bgObject, delObject);
+   cMutexLock mtxBgLock(&mtxBg);
+   bgObjectList.Del(bgObject, false);
    cvBlock.Broadcast();
-   mtxBg.Unlock();
 }
 
 
@@ -88,7 +89,7 @@ void cElchiBackground::Action(void)
 
       // check each object if update is needed
       for (cBgObject *bgObj = bgObjectList.First(); bgObj; bgObj = bgObjectList.Next(bgObj)) {
-         // LOCK_PIXMAPS; // locking needs to be done in each Update() function, not globally
+         // pixmap locking needs to be done in each Update() function, not globally
          doFlush |= bgObj->Update();
       }
       
@@ -108,11 +109,11 @@ void cElchiBackground::Action(void)
 
 
 
-//
-// ================================== class cScrollingPixmap ===================================================
-//
-// create a pixmap and add it to the background thread for scrolling
-//
+///
+/// ================================== class cScrollingPixmap ===================================================
+///
+/// create a pixmap and add it to the background thread for scrolling
+///
 cScrollingPixmap::cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Font, int max_char, tColor ColorFg, tColor ColorBg, bool Centered, int Alignment)
 {
    osd = Osd;
@@ -121,9 +122,10 @@ cScrollingPixmap::cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Fo
    colorBg = ColorBg;
    centered = Centered;
    alignment = Alignment;
-   cSize const maxSize = osd->MaxPixmapSize();  //TODO  create and scroll multiples pixmaps if one is not sufficient
+   cSize const maxSize = osd->MaxPixmapSize();  //TODO  create and scroll multiple pixmaps if one is not sufficient
    maxwidth = std::min(maxSize.Width(), max_char * Font->Width("M")); // assuming M is widest character
    direction = 0;
+   active = false;
    text = cString(NULL);
    
    if ((alignment & taBorder) != 0)
@@ -134,27 +136,30 @@ cScrollingPixmap::cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Fo
    
    pixmap = osd->CreatePixmap(LYR_SCROLL, vPort, cRect(0, 0, maxwidth, Font->Height()));
    pixmap->Clear();
-
-   ElchiBackground->Add(this);
 }
 
 
 cScrollingPixmap::~cScrollingPixmap()
 /// caller must not lock pixmaps before calling destructor
 {
-   ElchiBackground->Del(this, false);
+   if (active)
+      ElchiBackground->Del(this);
    osd->DestroyPixmap(pixmap);
 }
 
 
-void cScrollingPixmap::SetText(const char * Text, const cFont * Font)
+void cScrollingPixmap::SetText(const char *Text, const cFont *Font)
 {  
-   //skip if Text is identical
+   //skip on identical or no Text
    if ((NULL == Text) && (NULL ==  *text))
       return;
    if ((NULL != *text) && (NULL != Text) && !strcmp(*text, Text))
       return;
-   
+
+   if (active) {
+      ElchiBackground->Del(this);
+      active = false;
+   }
    text = cString(Text);
    if (Text)
       textWidth = min(maxwidth, Font->Width(*text));
@@ -170,13 +175,16 @@ void cScrollingPixmap::SetText(const char * Text, const cFont * Font)
       Delay = 5*10;
    }
    else
+   {
+      xoffset = 0;
       direction = 0; // no scrolling
+   }
 
    if (centered && textWidth <= vPort.Width())
    {
       LOCK_PIXMAPS;
       pixmap->Clear();
-      if (NULL == (const char *)text)
+      if (isempty(text))
          pixmap->Fill(colorBg);
       else
          pixmap->DrawText(cPoint(0, 0), *text, colorFg, colorBg, Font, maxwidth, Font->Height(), taDefault);
@@ -185,45 +193,24 @@ void cScrollingPixmap::SetText(const char * Text, const cFont * Font)
    }
    else
    {
-      LOCK_PIXMAPS;
-      pixmap->Clear();
-      if (NULL == (const char *)text)
-         pixmap->Fill(colorBg);
-      else
-         pixmap->DrawText(cPoint(0, 0), *text, colorFg, colorBg, Font, max(vPort.Width(), textWidth), Font->Height(), alignment & ~taBorder);
+      {  // locking block
+         LOCK_PIXMAPS;
+         pixmap->Clear();
+         if (NULL == (const char *)text)
+            pixmap->Fill(colorBg);
+         else
+            pixmap->DrawText(cPoint(0, 0), *text, colorFg, colorBg, Font, max(vPort.Width(), textWidth), Font->Height(), alignment & ~taBorder);
       
-      pixmap->SetDrawPortPoint(cPoint(0, 0));
+         pixmap->SetDrawPortPoint(cPoint(0, 0));
+      }
+      ElchiBackground->Add(this);
+      active = true;
    }
 }
 
 
-void cScrollingPixmap::SetColor(tColor ColorFg, tColor ColorBg)
-{
-   colorFg = ColorFg;
-   colorBg = ColorBg;
-}
-
-
-void cScrollingPixmap::SetLayer(int Layer)
-{
-   pixmap->SetLayer(Layer);
-}
-
-
-void cScrollingPixmap::SeAlpha(int Alpha)
-{
-   pixmap->SetAlpha(Alpha);
-}
-
-
-void cScrollingPixmap::SetViewPort(const cRect &Rect)
-{
-   pixmap->SetViewPort(Rect);
-}
-
-
 bool cScrollingPixmap::Update()
-{
+{  // mtxBg is locked when Update() is called, Update() can lock Pixmaps
    bool changed = false;
    int delay = 5;
    uint64_t intervall = 20;
@@ -266,7 +253,7 @@ bool cScrollingPixmap::Update()
          }
       }
 
-      if (changed) {    // SetDrawPortPoint sets LOCK_PIXMAP
+      if (changed) {
          pixmap->SetDrawPortPoint(cPoint(-xoffset, 0));
       }
    }
@@ -275,20 +262,23 @@ bool cScrollingPixmap::Update()
 
 
   
-//
-// ================================== class cEpgImage ===================================================
-//
-// load and buffer EPG images
-// provide pointer to EPG image on request
-// load EPG image in separate thread
-//
+///
+/// ================================== class cEpgImage ===================================================
+///
+/// load and buffer EPG images
+/// provide pointer to EPG image on request
+/// load EPG image in separate thread
+/// Instance exists from SetEvent until cMenu is closed
+///
 cEpgImage::cEpgImage(cPixmap *Pixmap, int Width, int Height, int FrameSize)
 :cThread("skinelchiHD-cEpgImage")
 {
+   DSYSLOG("skinelchiHD: cEpgImage");
    pixmap = Pixmap;
    w = Width;
    h = Height;
    frameSize = FrameSize;
+   active = false;
    eventID = 0;
    channelID = NULL;
    recordingPath = NULL;
@@ -296,15 +286,16 @@ cEpgImage::cEpgImage(cPixmap *Pixmap, int Width, int Height, int FrameSize)
    currentImage = -1;
 
    Start();
-   ElchiBackground->Add(this);
-   // Instanz existiert von SetEvent bis cMenu geschlossen wird
 }
 
 
 cEpgImage::~cEpgImage()
 {
-   ElchiBackground->Del(this, false);
+   if (active) {
+      ElchiBackground->Del(this);
+   }
    Stop();
+   Clear();
 }
 
 
@@ -313,13 +304,27 @@ void cEpgImage::Stop()
    if (Running()) {
       Cancel(-1);
       condWait.Signal();
+      Cancel(2);  // avoid uninitialized mutex in Clear()
    }
+}
+
+
+/// delete all cached images
+void cEpgImage::Clear()
+{
+   DSYSLOG("skinelchiHD: cEpgImage::Clear() (%d)", maxImage);
+   cMutexLock mtxImagesLock(&mtxImages);
+   if (maxImage > 0)
+      for (int i = 0; i<maxImage; i++)
+         delete imgEPG[i];
+   maxImage = 0;
+   currentImage = -1;
 }
 
 
 bool cEpgImage::PutEventID(const char *ChannelID, tEventID EventID)
 {
-   DSYSLOG("skinelchiHD: cEpgImage::PutEventID(%s %d)", (const char *)ChannelID, EventID)
+   DSYSLOG("skinelchiHD: cEpgImage::PutEventID(%s %d)", (const char *)ChannelID, EventID);
    int rc = -1;
    cString filename;
    struct stat statbuf;
@@ -330,23 +335,39 @@ bool cEpgImage::PutEventID(const char *ChannelID, tEventID EventID)
    recordingPath = NULL;
    mtxEventID.Unlock();
 
-   if (0 == eventID) // skip on empty eventID
-      Clear();
+   if (eventID == 0) { // on empty eventID
+      if (active) {
+         ElchiBackground->Del(this);
+         active = false;
+      }
+   }
    else
    {
       filename = cString::sprintf("%s/%s_%d.jpg", ElchiConfig.GetEpgImageDir(), *channelID, eventID);
       rc = stat(filename, &statbuf);
-      /* eventID without channel gives often wrong pictures
-      if (rc != 0) {
-         filename = cString::sprintf("%s/%d.jpg", ElchiConfig.GetEpgImageDir(), eventID);
+      if (rc != 0)
+      {
+         filename = cString::sprintf("%s/%s_%d_0.jpg", ElchiConfig.GetEpgImageDir(), *channelID, eventID);
          rc = stat(filename, &statbuf);
-         if (rc == 0) channelID = NULL;
+         /* eventID without channelID gives often wrong pictures because of same eventID on different channels
+          * therefore only active when no picture with channelID found and event-only is enabled in settings */
+         if (rc != 0 && ElchiConfig.EpgImageEventIdOnly == 1) {
+            filename = cString::sprintf("%s/%d.jpg", ElchiConfig.GetEpgImageDir(), eventID);
+            rc = stat(filename, &statbuf);
+            if (rc != 0) {
+               filename = cString::sprintf("%s/%d_0.jpg", ElchiConfig.GetEpgImageDir(), eventID);
+               rc = stat(filename, &statbuf);
+            }
+            if (rc == 0) channelID = NULL;
+         }
       }
-      */
       
       // start Thread only if image(s) exist
-      if (rc == 0)
+      if (rc == 0) {
          condWait.Signal();
+         ElchiBackground->Add(this);
+         active = true;
+      }
    }
          
    return rc == 0;
@@ -355,15 +376,20 @@ bool cEpgImage::PutEventID(const char *ChannelID, tEventID EventID)
 
 bool cEpgImage::PutRecording(const char *RecPath)
 {
-   DSYSLOG("skinelchiHD: cEpgImage::PutRecording (%s)", (const char *)RecPath)
+   //DSYSLOG("skinelchiHD: cEpgImage::PutRecording (%s ?== %s)", (const char *)RecPath, *recordingPath)
    bool imagesAvailable = false;
    struct dirent *e;
    char *dot;
-         
+
+   if (active) {
+      ElchiBackground->Del(this);
+      active = false;
+   }
+
    // check if at least one image is available
    cReadDir dir(RecPath);
    while ((e = dir.Next()) != NULL) {
-      if ((dot = strrchr(e->d_name, '.')) != NULL ) {
+      if ((dot = strrchr(e->d_name, '.')) != NULL && (strlen(dot) == 4) ) {
          if(strcasecmp(dot, ".jpg") == 0) {
             imagesAvailable = true;
             break;
@@ -379,18 +405,21 @@ bool cEpgImage::PutRecording(const char *RecPath)
       recordingPath = cString(RecPath);
       mtxEventID.Unlock();
       condWait.Signal();  // start Thread
+      ElchiBackground->Add(this);
+      active = true;
    }
    
    return imagesAvailable;
 }
 
 
-// Update the OSD, e.g. draw picture
+/// Update the OSD, e.g. draw picture
 bool cEpgImage::Update()  
 {
    bool flushRequired = false;
-   mtxImages.Lock();
+   cMutexLock mtxImagesLock(&mtxImages);
 
+   DSYSLOG2("cEpgImage::Update: maxImage=%d", maxImage);
    if (maxImage > 0)
    {
       if (currentImage == -1 || 
@@ -412,31 +441,18 @@ bool cEpgImage::Update()
          flushRequired = true;
       }
    }
-   mtxImages.Unlock();
    return flushRequired;
 }
 
-
-// delete all cached images
-void cEpgImage::Clear()
+/// thread for reading all images
+void cEpgImage::Action(void)
 {
-   mtxImages.Lock();
-   for (int i = 0; i<maxImage; i++)
-      delete imgEPG[i];
-   maxImage = 0;
-   currentImage = -1;
-   mtxImages.Unlock();
-}
-
-
-// thread for reading all images
-void cEpgImage::Action(void) {
    condWait.Wait();  // wait for start signal
 
    while (Running()) {
       DSYSLOG2("skinelchiHD: cEpgImage::Action start %d", eventID)
 
-      mtxEventID.Lock();  // enters at beginning or after wake up from  PutEventID()
+      mtxEventID.Lock();  // enters at beginning or after wake up from PutEventID()
       tEventID currentEventID = eventID;
       cString currentChannelID = cString(channelID);
       cString currentRecordingPath = cString(recordingPath);
@@ -444,7 +460,7 @@ void cEpgImage::Action(void) {
       
       Clear();
 
-      if (currentEventID > 0) {  // new tas exists
+      if (currentEventID > 0) {  // new task exists
          cString filename;
          struct stat statbuf;
          int rc = -1;
@@ -453,15 +469,19 @@ void cEpgImage::Action(void) {
          // init image variables
          if (isempty(currentRecordingPath))
          {  // EPG image
-            filename = cString::sprintf("%s/%s_%d.jpg", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID);
-            rc = stat(filename, &statbuf);
-            /* eventID without channel gives often wrong pictures
-            if (rc != 0) {
+            if (*channelID) {
+               filename = cString::sprintf("%s/%s_%d.jpg", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID);
+               rc = stat(filename, &statbuf);
+               if ( rc != 0)
+                  filename = cString::sprintf("%s/%s_%d_0.jpg", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID);
+            }
+            else { /* Caution: eventID without channel gives often wrong pictures */
                filename = cString::sprintf("%s/%d.jpg", ElchiConfig.GetEpgImageDir(), currentEventID);
                rc = stat(filename, &statbuf);
-               if (rc == 0) channelID = NULL;
+               if ( rc != 0)
+                  filename = cString::sprintf("%s/%d_0.jpg", ElchiConfig.GetEpgImageDir(), currentEventID);
             }
-            */
+            rc = stat(filename, &statbuf);
          }
          else
          {  // recording image
@@ -471,29 +491,28 @@ void cEpgImage::Action(void) {
             rc = -1;
             
             while ((e = dir.Next()) != NULL) {
-               if ((dot = strrchr(e->d_name, '.')) != NULL ) {
-                  if(strcasecmp(dot, ".jpg") == 0) {
+               if ((dot = strrchr(e->d_name, '.')) != NULL && (strlen(dot) == 4) ) {
+                  if(strcasecmp(dot, ".jpg") == 0)
                      recImages.Append(strdup(cString::sprintf("%s/%s", *recordingPath, e->d_name)));
-                  }
-                  if (recImages.Size() > 0) {
-                     rc = 0;
-                     filename = recImages[0];
-                  }
                }
+            }
+            if (recImages.Size() > 0) {
+               recImages.Sort();
+               filename = recImages[0];
+               rc = 0;
             }
          }
 
          // loop over all images
-         while (rc == 0 && maxImage < MAXEPGIMAGES) { // start thread (conversion) only if image available
+         while (rc == 0 && maxImage < MAXEPGIMAGES && Running()) { // start conversion only if at least one image exists
             DSYSLOG2("skinelchiHD: cEpgImage::Action %d %s %d", rc, *filename, maxImage)
 
             imgEPG[maxImage] = new cOSDImage(filename, w, h, Theme.Color(clrChannelDateBg), frameSize, frameSize*0.6);
             
             if (imgEPG[maxImage] != NULL && imgEPG[maxImage]->GetImage())
             {
-               mtxImages.Lock();
+               cMutexLock mtxImagesLock(&mtxImages);
                maxImage++;
-               mtxImages.Unlock();
             }
 
             // init variables for next image
@@ -517,7 +536,4 @@ void cEpgImage::Action(void) {
       }
       condWait.Wait();
    }
-
-   // delete images
-   Clear();
 }

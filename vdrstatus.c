@@ -19,22 +19,20 @@
 cRecordingEntry::cRecordingEntry(const cDevice *Device, const char *Name, const char *FileName)
 {
    device = Device;
-   name = strdup(Name);
-   filename = strdup(FileName);
+   name = Name;
+   filename = FileName;
 }
 
 
 cRecordingEntry::~cRecordingEntry()
 {
-   free (name);
-   free (filename);
 }
 
 
 // --------------------- cSkinElchiStatus -------------------------
 cSkinElchiStatus::cSkinElchiStatus()
 {
-   //isyslog("skinelchiHD cSkinElchiStatus()");
+   DSYSLOG("skinelchiHD cSkinElchiStatus()");
    audioTrack = NULL;
    audioChannel = NULL;
    tracks = NULL;
@@ -45,7 +43,7 @@ cSkinElchiStatus::cSkinElchiStatus()
 
 cSkinElchiStatus::~cSkinElchiStatus()
 {
-   //isyslog("skinelchiHD ~cSkinElchiStatus()");
+   DSYSLOG("skinelchiHD ~cSkinElchiStatus()");
    if (audioTrack) {
       free(audioTrack);
    }
@@ -94,9 +92,9 @@ void cSkinElchiStatus::Recording(const cDevice *Device, const char *Name, const 
    else {
       cRecordingEntry *entry = recordinglist.First();
       bool found = false;
-      for (entry = recordinglist.First(); !(found = !strcmp(entry->GetFilename(), FileName)); entry = recordinglist.Next(entry)) {
-      }
-
+      while (entry && !(found = !strcmp(entry->GetFilename(), FileName)))
+         entry = recordinglist.Next(entry);
+      
       if (found)
          recordinglist.Del(entry, true);
    }

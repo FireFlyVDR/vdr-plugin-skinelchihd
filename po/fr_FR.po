@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2020-09-11 16:50+0200\n"
+"POT-Creation-Date: 2021-01-24 15:24+0100\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Patrice Staudt <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -79,11 +79,17 @@ msgstr "Conflit de programmation"
 msgid "all"
 msgstr "tous"
 
-msgid "EPG+Details"
+msgid "EPG + Details"
 msgstr "Détails EPG"
 
-msgid "EPG+Details+Genre"
+msgid "EPG + Details + Genre"
 msgstr "Détails EPG et genre"
+
+msgid "channel ID + event ID"
+msgstr ""
+
+msgid "event ID only"
+msgstr ""
 
 msgid "scroll text"
 msgstr "Texte défillant"
@@ -116,6 +122,13 @@ msgstr "EPG taille image"
 msgid "  duration of each EPG image [s]"
 msgstr "  durée par image [s]"
 
+#. TRANSLATORS: note the two leading spaces
+msgid "  search for EPG images with"
+msgstr ""
+
+msgid "show remote timers in EPG"
+msgstr ""
+
 msgid "Channel Display"
 msgstr "Chaîne affichée"
 
@@ -144,6 +157,9 @@ msgid "search logos first as"
 msgstr ""
 
 msgid "show signal bars"
+msgstr ""
+
+msgid "show remote timers"
 msgstr ""
 
 msgid "write logo messages to syslog"

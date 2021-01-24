@@ -178,6 +178,7 @@ cSkinElchiHDDisplayReplay::~cSkinElchiHDDisplayReplay()
 {
    DSYSLOG("skinelchiHD: cSkinElchiHDDisplayReplay::~cSkinElchiHDDisplayReplay()")
    DELETENULL(spmTitle);
+   DELETENULL(spmMessage);
 
    ElchiBackground->SetOSD(NULL);
    DELETENULL(osd);
@@ -224,12 +225,14 @@ void cSkinElchiHDDisplayReplay::SetScrollTitle(const char *Title)
    w = min(w, x4 - x0 - h);
 
    DELETENULL(spmTitle);
-   LOCK_PIXMAPS;
-   pmTitleBG->Clear();
-   pmTitleBG->SetLayer(LYR_BG);
+
    spmTitle = new cScrollingPixmap(osd, cRect(x0, y0, w, smallFont->Height()),
                                    smallFont, 256, Theme.Color(clrMenuTitleFg));
    spmTitle->SetText(Title, smallFont);
+   
+   LOCK_PIXMAPS;
+   pmTitleBG->Clear();
+   pmTitleBG->SetLayer(LYR_BG);
 
    pmTitleBG->DrawRectangle(cRect(x0, y0, w, lh - h), Theme.Color(clrReplayTitleBg));
    pmTitleBG->DrawRectangle(cRect(w, y0 + h, h, lh - h), clrBG);
@@ -254,7 +257,7 @@ void cSkinElchiHDDisplayReplay::SetMode(bool Play, bool Forward, int Speed)
       pmMode->DrawBitmap(cPoint(xSymbols[xSYM_REC], ySymbolARcutRec), elchiSymbols.Get(SYM_REC, isRecording ? Theme.Color(clrSymbolRecFg) : clrOff, isRecording ? Theme.Color(clrSymbolRecBg) : clrBG));
 
       isCutting = RecordingsHandler.Active();
-      pmMode->DrawBitmap(cPoint(xSymbols[xSYM_CUTTING], ySymbolARcutRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(isCutting ? clrChannelSymbolOn : clrChannelSymbolOff), Theme.Color(clrBackground)));
+      pmMode->DrawBitmap(cPoint(xSymbols[xSYM_CUTTING], ySymbolARcutRec), elchiSymbols.Get(SYM_CUTTING, isCutting ? clrOn : clrOff, clrBG));
       
       cBitmap *bmp = NULL;
       if ((Speed > -1) && Play && !Forward) {
@@ -341,13 +344,8 @@ void cSkinElchiHDDisplayReplay::SetMode(bool Play, bool Forward, int Speed)
 void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
 {
    DSYSLOG("skinelchiHD: cSkinElchiHDDisplayReplay::SetProgress(%d,%d)", Current, Total)
-   if (!showVolume) {
-      /*
-      cProgressBar pb(x9 - x0 - y1 - y1 / 2, y2 - y1 - 8, Current, Total, marks, Theme.Color(clrReplayProgressSeen), Theme.Color(clrReplayProgressRest), Theme.Color(clrReplayProgressSelected), Theme.Color(clrReplayProgressMark), Theme.Color(clrReplayProgressCurrent));
-      //osd->DrawBitmap(x0 + y1, y1 + 4, pb);
-      pmProgress->DrawBitmap(cPoint(x0 + y1, 4), pb);
-      */
-
+   if (!showVolume) 
+   {
       int width = x9 - 3*lh2;
       int height = lh - 2*(lh/8);
       if (Total > 0)
@@ -367,10 +365,10 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
                {
                   const cMark *m2 = marks->Next(m);
                   int p2 = m2 ? GetPos(m2->Position(), width, Total) : width;
-                  int h = height / 4;
-                  DrawShadedRectangle(pmProgress, Theme.Color(clrReplayProgressSelected), cRect(lh2+p1, lh/8+h, p2 - p1, height - h -h ));
+                  int h4 = height / 4;
+                  DrawShadedRectangle(pmProgress, Theme.Color(clrReplayProgressSelected), cRect(lh2+p1, lh/8 + h4, p2 - p1, height - h4 - h4));
                }
-               DrawMark(lh2, lh2 + width, lh2+p1, lh/8, height, Start, m->Position() == Current, Theme.Color(clrReplayProgressMark), Theme.Color(clrReplayProgressCurrent));
+               DrawMark(lh2, lh2 + width, lh2 + p1, lh/8, height, Start, m->Position() == Current, Theme.Color(clrReplayProgressMark), Theme.Color(clrReplayProgressCurrent));
                Start = !Start;
             }
          }
@@ -380,17 +378,21 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
 
 void cSkinElchiHDDisplayReplay::DrawMark(int xStart, int xEnd, int x, int yOffset, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent)
 {
-  pmProgress->DrawRectangle(cRect(x, yOffset, MarksWidth, Height), Theme.Color(clrReplayProgressMark));
-  const int d = Height / (Current ? 3 : 4);
-  for (int i = 0; i < d; i++)
-  {
-      int h = Start ? i : Height - 1 - i;
-      int l = 1+2*(d-i);
-      if (x - d + i <xStart || x + d -i > xEnd)
-      {
-         l = 1+d-i;
-      }
-      pmProgress->DrawRectangle(cRect(max(xStart, x - d + i), yOffset + h, l, 1), Current ? Theme.Color(clrReplayProgressCurrent) : Theme.Color(clrReplayProgressMark));
+   x = std::min(x, xEnd - MarksWidth);
+   pmProgress->DrawRectangle(cRect(x, yOffset, MarksWidth, Height), Theme.Color(clrReplayProgressMark));
+   int d = Height / (Current ? 3 : 4);
+   for (int i = 0; i <= d; i++)
+   {
+      int y = Start ? d - i : Height - d + i - 1;
+      int l = MarksWidth + i + i;
+      
+      if (x - i < xStart)
+         l -= xStart - x + i;
+
+      if (x - i + l > xEnd)
+         l = xEnd - x + i;
+
+      pmProgress->DrawRectangle(cRect(std::max(xStart, x - i), yOffset + y, l, 1), Current ? Theme.Color(clrReplayProgressCurrent) : Theme.Color(clrReplayProgressMark));
    }    
 }
 
@@ -535,9 +537,9 @@ void cSkinElchiHDDisplayReplay::Flush(void)
       if (Setup.ShowReplayMode && !showMessage && old_ar != videoinfo.aspectratio) {
          cBitmap *bmp = NULL;
          switch (videoinfo.aspectratio) {
-            case arHD:     bmp = &elchiSymbols.Get(SYM_AR_HD, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
+            case arHD:     bmp = &elchiSymbols.Get(SYM_AR_HD,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
             case arUHD:    bmp = &elchiSymbols.Get(SYM_AR_UHD, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
-            case ar4_3:    bmp = &elchiSymbols.Get(SYM_AR_43, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
+            case ar4_3:    bmp = &elchiSymbols.Get(SYM_AR_43,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
             case ar16_9:   bmp = &elchiSymbols.Get(SYM_AR_169, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
             default:       break;
          }
@@ -545,7 +547,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
          if (bmp)
             pmMode->DrawBitmap(cPoint(xSymbols[xSYM_AR], ySymbolARcutRec), *bmp);
          else
-            pmMode->DrawRectangle(cRect(xSymbols[xSYM_AR], ySymbolARcutRec, elchiSymbols.Width(SYM_AR_HD) - 1, elchiSymbols.Height(SYM_AR_HD) - 1), Theme.Color(clrBackground));
+            pmMode->DrawRectangle(cRect(xSymbols[xSYM_AR], ySymbolARcutRec, elchiSymbols.Width(SYM_AR_HD), elchiSymbols.Height(SYM_AR_HD)), Theme.Color(clrBackground));
 
          changed = true;
          old_ar = videoinfo.aspectratio;
@@ -553,6 +555,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
 
       if (ElchiConfig.showVideoInfo == 2 && !modeonly && !showVolume) {
          if ((old_width != videoinfo.width) || (old_height != videoinfo.height)) {
+            
             if (videoinfo.width && videoinfo.height) {
                title = cString::sprintf("%s %dx%d", (const char *)rectitle, videoinfo.width, videoinfo.height);
             }
@@ -571,7 +574,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
    bool cuttingtemp = RecordingsHandler.Active();
    if (isCutting != cuttingtemp) {
       isCutting = cuttingtemp;
-      pmMode->DrawBitmap(cPoint(xSymbols[xSYM_CUTTING], ySymbolARcutRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(isCutting ? clrChannelSymbolOn : clrChannelSymbolOff), Theme.Color(clrBackground)));
+      pmMode->DrawBitmap(cPoint(xSymbols[xSYM_CUTTING], ySymbolARcutRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(isCutting ? clrChannelSymbolOn : clrChannelSymbolOff), clrBG));
       changed = true;
    }
 

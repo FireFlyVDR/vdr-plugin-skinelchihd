@@ -35,7 +35,7 @@ private:
    const cMarks *marks;
    bool isRecording, isCutting, modeonly, changed, showMessage, showVolume;
    cPixmap *pmBG, *pmTitleBG, *pmMode, *pmJump, *pmTitle, *pmMessageBG, *pmProgress, *pmVolume;
-   cScrollingPixmap *spmMessage;
+   cScrollingPixmap *spmTitle, *spmMessage;
    cTimeMs volumeTimer;
    int volumechange;
    cString oldCurrent;
@@ -45,7 +45,6 @@ private:
    int old_height;
    eAspectRatio old_ar;
 
-   cScrollingPixmap *spmTitle;
    int Gap;
    int SymbolGap;
    void SetScrollTitle(const char *Title);

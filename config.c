@@ -28,6 +28,8 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    showIcons = 1;
    EpgImageSize = 3;
    EpgImageDisplayTime = 3;
+   EpgImageEventIdOnly = 0;
+   EpgShowRemoteTimers = 1;
 
    // channel display
    strcpy(logoBaseDir, "");
@@ -38,6 +40,7 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    LogoSVGFirst = 0;
    showSignalBars = 1;
    LogoMessages = 0;
+   ShowRemoteTimers = 1;
    
    // clr dialog
    //clrdlgActive = false;
@@ -76,6 +79,8 @@ bool cSkinElchiHDConfig::SetupParse(const char *Name, const char *Value)
    else if (strcmp(Name, "showIcons") == 0)                    showIcons = atoi(Value);
    else if (strcmp(Name, "EpgImageSize") == 0)                 EpgImageSize = atoi(Value);
    else if (strcmp(Name, "EpgImageDisplayTime") == 0)          EpgImageDisplayTime = atoi(Value);
+   else if (strcmp(Name, "EpgImageEventIdOnly") == 0)          EpgImageEventIdOnly = atoi(Value);
+   else if (strcmp(Name, "EpgShowRemoteTimers") == 0)          EpgShowRemoteTimers = atoi(Value);
 
    else if (strcmp(Name, "showAudioInfo") == 0)                showAudioInfo = atoi(Value);
    else if (strcmp(Name, "showRecInfo") == 0)                  showRecInfo = atoi(Value);
@@ -83,6 +88,7 @@ bool cSkinElchiHDConfig::SetupParse(const char *Name, const char *Value)
    else if (strcmp(Name, "LogoSVGFirst") == 0)                 LogoSVGFirst = atoi(Value);
    else if (strcmp(Name, "showSignalBars") == 0)               showSignalBars = atoi(Value);
    else if (strcmp(Name, "LogoMessages") == 0)                 LogoMessages = atoi(Value);
+   else if (strcmp(Name, "ShowRemoteTimers") == 0)             ShowRemoteTimers = atoi(Value);
 
    else return false;
    return true;

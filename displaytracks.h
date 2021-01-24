@@ -27,7 +27,6 @@ private:
    int numTracks, maxTracks;
    void SetItem(const char *Text, int Index, bool Current);
    cPixmap *pmBG, *pmSelector, *pmSelectorBG, *pmSymbols;
-   cScrollingPixmap *spmMessage;
 
 public:
    cSkinElchiHDDisplayTracks(const char *Title, int NumTracks, const char * const *Tracks);

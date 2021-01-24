@@ -42,7 +42,7 @@ public:
    void Stop();
    void SetOSD(cOsd *Osd) { osd = Osd; }
    void Add(cBgObject*);
-   void Del(cBgObject*, bool);
+   void Del(cBgObject*);
 };
 
 extern cElchiBackground *ElchiBackground;
@@ -61,6 +61,7 @@ private:
    int textWidth;
    int direction;
    int xoffset, maxXoffset;
+   bool active;
    cTimeMs timer;
    int Delay;
    cString text;
@@ -69,12 +70,12 @@ private:
 public:
    cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Font, int max_char, tColor ColorFg, tColor ColorBg = clrTransparent, bool centered = false, int Alignment = taDefault|taBorder);
    ~cScrollingPixmap();
-   void SetColor(tColor ColorFg, tColor ColorBg = clrTransparent);
-   void SetLayer(int Layer);
-   void SeAlpha(int Alpha);
+   void SetColor(tColor ColorFg, tColor ColorBg = clrTransparent) { colorFg = ColorFg; colorBg = ColorBg; }
+   void SetLayer(int Layer) { pixmap->SetLayer(Layer); }
+   void SeAlpha(int Alpha) { pixmap->SetAlpha(Alpha); }
+   void SetViewPort(const cRect &Rect) { pixmap->SetViewPort(Rect); }
    bool Update();
-   void SetText(const char *Text, const cFont *Font);
-   void SetViewPort(const cRect &Rect);
+   void SetText(const char *Text, const cFont *Font);  // caller must not lock pixmaps
 };
 
 #define MAXEPGIMAGES 6
@@ -83,24 +84,25 @@ class cEpgImage : public cThread, cBgObject
 {
 private:
    virtual void Action(void);
+   void Stop(void);
    void Clear();
    
    cPixmap *pixmap;
    int w, h, frameSize;
+   bool active;
    cString channelID;
    tEventID eventID;
    cString recordingPath;
    cTimeMs epgimageTimer;
    int maxImage, currentImage;
    cOSDImage *imgEPG[MAXEPGIMAGES];
-   cMutex mtxImages;  // protect maxImage and imgEPG[]
-   cMutex mtxEventID; // protect eventID and recordingPath
+   cMutex mtxImages;
+   cMutex mtxEventID;
    cCondWait condWait;
 
 public:
    cEpgImage(cPixmap *Pixmap,int Width, int Height, int FrameSize);
    ~cEpgImage();
-   void Stop(void);
    bool PutEventID(const char *strChannel, tEventID EventID);
    bool PutRecording(const char *recPath);
    bool Update();

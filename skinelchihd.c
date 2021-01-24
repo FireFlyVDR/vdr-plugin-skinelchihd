@@ -46,18 +46,20 @@
 #include <vdr/menu.h>
 #include <vdr/themes.h>
 #include <vdr/plugin.h>
+#include <vdr/thread.h>
 
 
 #if defined(APIVERSNUM) && APIVERSNUM < 20403
 #error THIS VERSION OF THE SKINELCHIHD-PLUGIN REQUIRES AT LEAST VDR 2.4.3
 #endif
 
-static const char *VERSION      = "0.5.1" ;
+static const char *VERSION      = "0.5.2" ;
 static const char *DESCRIPTION  = trNOOP("ElchiHD skin");
 const char *OSDSKIN             = "ElchiHD";
 
 cSkinElchiStatus *ElchiStatus;
 cElchiBackground *ElchiBackground;
+
 
 // --- cSkinElchiHD ----------------------------------------------------------
 cSkinElchiHD::cSkinElchiHD(void)
@@ -241,7 +243,6 @@ void cPluginSkinElchiHD::Stop(void)
    // Stop any background activities the plugin is performing.
    if (ElchiBackground) {
       ElchiBackground->Stop();
-      ElchiBackground = NULL;
    }
 }
 

@@ -65,4 +65,14 @@ static inline double GetTimeMS(void)
 #endif
 }
 
+union uColor {
+   tColor clr;
+   struct {
+      uint8_t B;
+      uint8_t G;
+      uint8_t R;
+      uint8_t A;
+   } c;
+};
+
 #endif // __ELCHIHD_COMMON_H

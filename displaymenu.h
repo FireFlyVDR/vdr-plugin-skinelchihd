@@ -39,8 +39,6 @@ private:
 
    int lh, lh2, menuTop, menuHeight, currentIndex, area;
    cString lastDate;
-   bool changed;
-   const cRecording *lastRecording;
    bool previousHasEPGimages;
    
    cPixmap *pmBG, *pmMenu, *pmEvent, *pmCurrentItemBG, *pmEPGImage;
@@ -61,13 +59,14 @@ private:
    //int EventImages;
    int epgImageLines;
    timeval lasttime;
+   int tabs[MaxTabs];
    cString stripXmlTag(cString source, const char* tag);
 
 public:
    cSkinElchiHDDisplayMenu(void);
    virtual ~cSkinElchiHDDisplayMenu();
    virtual void SetMenuCategory(eMenuCategory MenuCategory);
-   //virtual void SetTabs(int Tab1, int Tab2 = 0, int Tab3 = 0, int Tab4 = 0, int Tab5 = 0);
+   virtual void SetTabs(int Tab1, int Tab2 = 0, int Tab3 = 0, int Tab4 = 0, int Tab5 = 0);
    //virtual void SetMenuSortMode(eMenuSortMode MenuSortMode);
    virtual void Scroll(bool Up, bool Page);
    virtual int MaxItems(void);

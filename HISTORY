@@ -16,8 +16,29 @@ VDR Plugin 'skinelchiHD' Revision History
 - added support for GraphicsMagick++ as alternative for ImageMagick++. Select graphicsmagick or imagemagick by setting IMAGELIB 
   in the Makefile or add IMAGELIB=... as parameter to make. As GraphicsMagick cannot read SVG properly only PNG channel 
   logos are available with GraphicsMagick++
-- dropped support for IamgeMagick++ 6.x as it has problems with transparency which won't be solved. So for ImageMAGick++ version 7.x is required
-  (thanks to Uwe @vdrportal.de for testing v6 and v7)
+- dropped support for ImageMagick++ 6.x as it has problems with transparency which won't be solved. So for ImageMagick++ version 7.x is required
+  (thanks to Uwe @VDR-Portal for testing v6 and v7)
 - fixed cutting symbol darkness
-- made HD/UHD logo in front of recordings optional
+- made HD/UHD logo in front of recordings display optional
 
+2021-01-24 Version 0.5.2
+- fixed sequence of EPG images of recordings
+- fixed inverse display of REC symbol in schedule list menu
+- fixed sporadious continuing of displaying EPG images after closing EPG event menu
+- several minor design optimizations
+- added icon for inactive timers ('I', 'i') and for remote timers ('S') in EPG schedule menus
+- fixed wrong aligned scrolling text after channel switch
+- redesigned several symbols with different resolutions for better antialiasing
+- improved robustness of multihreading
+- added option to use EPG images with eventID only (without channelID) (suggested by dile@VDR-Portal)
+- added support for for first EPG image ending with '_0' (suggested by dile@VDR-Portal)
+- fixed duplicate text in events and recording info in some special cases (thanks to dile@VDR-Portal for reporting)
+- fixed aligning of markers in replay progress bar
+- implemented SetItemTimer()
+- improved display of recordings to prevent overlapping text or symbols
+- added support for remote timers with symbols and in menus. Adapted symbols are now displayed in front of the 
+  events in the channel info and in the timer menu. Active local recordings are always displayed with a red/white REC symbol, 
+  active remote recordings and local ones in the future are displayed in yellow.
+- added patch epgsearch-2.4.0_remote-timers.diff for epgsearch in the patch folder for displaying remote timers via 's' and 'S' 
+- improved menu responsiveness
+- code cleanup and minor improvements

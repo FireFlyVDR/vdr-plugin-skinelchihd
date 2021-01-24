@@ -21,10 +21,9 @@ private:
    cOsd *osd;
    int w, h, lh, lh2;
    int isMuted, currentVolume;
-   bool changed, showMessage;
+   bool changed;
    tOSDsize OSDsize;
    cPixmap *pmBG;
-   cScrollingPixmap *spmMessage;
 public:
    cSkinElchiHDDisplayVolume(void);
    virtual ~cSkinElchiHDDisplayVolume();

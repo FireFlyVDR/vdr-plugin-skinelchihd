@@ -9,6 +9,7 @@
 
 //#define DEBUG
 //#define DEBUG2
+//#define DEBUG_TIMING
 
 #include "common.h"
 #include "displaymenu.h"
@@ -76,12 +77,13 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    timercheck = ElchiConfig.showTimer;
    lastCurrentText = NULL;
    epgimageThread = NULL;
+   for (int i = 0; i<MaxTabs; i++) tabs[i] = 0;
 
    osd = NULL;
    if ((timercheck & 2) && !cPluginManager::CallFirstService(EPGSEARCH_CONFLICTINFO))
       timercheck &= ~2;
    lastDate = NULL;
-   lh = font->Height();
+   lh = std::max(font->Height(), elchiSymbols.Height(SYM_NEWSML)); //not smaller than NEW symbol
    int slh = cFont::GetFont(fontSml)->Height();
 
    OSDsize.left   = cOsd::OsdLeft();
@@ -152,7 +154,6 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    osd = NULL;
 
    currentIndex = -1;
-   lastRecording = NULL;
    previousHasEPGimages = false;
 
    osd = cOsdProvider::NewOsd(OSDsize.left, OSDsize.top);
@@ -235,8 +236,6 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    pmButton3inactive->Fill(clrBG);
    pmButton3inactive->DrawEllipse(cRect(btn4 -btn3 - lh2, lh - lh2, lh2, lh2), clrTransparent, -4);
 
-   changed = true;
-
    int titleWidth = x6 - x1 - font->Width(*DayDateTime()) - font->Width("  ");
    spmTitle = new cScrollingPixmap(osd, cRect(x1, y0+(font->Height()-cFont::GetFont(fontSml)->Height())/2, titleWidth, cFont::GetFont(fontSml)->Height()),
                                       cFont::GetFont(fontSml), MAXCHARS, Theme.Color(clrMenuTitleFg));
@@ -245,13 +244,15 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
 
 cSkinElchiHDDisplayMenu::~cSkinElchiHDDisplayMenu()
 {
+   DSYSLOG("skinelchiHD: DisplayMenu::~cSkinElchiHDDisplayMenu()")
+   
    if (epgimageThread) {
-      epgimageThread->Stop();
       DELETENULL(epgimageThread);
    }
 
-   if (spmTitle) DELETENULL(spmTitle);
-   if (spmCurrentItem) DELETENULL(spmCurrentItem);
+   DELETENULL(spmTitle);
+   DELETENULL(spmMessage);
+   DELETENULL(spmCurrentItem);
 
    lastCurrentText = NULL;
 
@@ -259,6 +260,7 @@ cSkinElchiHDDisplayMenu::~cSkinElchiHDDisplayMenu()
    if (osd) {
       DELETENULL(osd);
    }
+   DSYSLOG("skinelchiHD: DisplayMenu::~cSkinElchiHDDisplayMenu() end")
 }
 
 void cSkinElchiHDDisplayMenu::SetMenuCategory(eMenuCategory MenuCategory)
@@ -269,16 +271,49 @@ void cSkinElchiHDDisplayMenu::SetMenuCategory(eMenuCategory MenuCategory)
    ///< changes in the menu category. If it does, it shall call the base class
    ///< function in order to set the members accordingly for later calls to the
    ///< MenuCategory() function.
-
    DSYSLOG("skinelchiHD: DisplayMenu::SetMenuCategory to %d (%s)", MenuCategory, GetCategoryName(MenuCategory));
+
+   cSkinDisplayMenu::SetMenuCategory(MenuCategory);
    menuCategory = MenuCategory;
 }
+
+
+void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, int Tab5)
+{
+   cSkinDisplayMenu::SetTabs(Tab1, Tab2, Tab3, Tab4, Tab5);
+
+   const cFont *font = cFont::GetFont(fontOsd);
+   int avgCharWidth = font->Width('8');
+   if (!avgCharWidth) avgCharWidth = AvgCharWidth();
+   int avgCharWidth2 = avgCharWidth / 2;
+   
+   switch(menuCategory)
+   {
+      case mcRecording:
+         /* 0 Date     */ tabs[0] = 0;
+         /* 1 Time     */ tabs[1] = tabs[0] + 8 * avgCharWidth;
+         /* 2 Duration */ tabs[2] = tabs[1] + avgCharWidth2 + 5 * avgCharWidth;
+         /* 3 new      */ tabs[3] = tabs[2] + avgCharWidth2 + 5 * avgCharWidth;
+         /* 4 HD/UHD   */ tabs[4] = tabs[3] + 2*symbolGap + elchiSymbols.Width(SYM_NEWSML);
+         /* 5 Name     */ tabs[5] = tabs[4] + (ElchiConfig.showRecHD ? elchiSymbols.Width(SYM_AR_HD) + symbolGap : 0);
+         break;
+      case mcTimer:
+         /* symbol         */ tabs[0] = 0;
+         /* Ch Number      */ tabs[1] = tabs[0] + elchiSymbols.Width(SYM_REC) + symbolGap;
+         /* date/wday      */ tabs[2] = tabs[1] + avgCharWidth2 + (numdigits(cChannels::MaxNumber()) + 1) * avgCharWidth;
+         /* start time     */ tabs[3] = tabs[2] + avgCharWidth2 + 10 * avgCharWidth;
+         /* end time       */ tabs[4] = tabs[3] + avgCharWidth2 + 6 * avgCharWidth;
+         /* [@srv:]recName */ tabs[5] = tabs[4] + avgCharWidth2 + 6 * avgCharWidth;
+         break;
+      default:
+         break;
+   }
+}
+
 
 void cSkinElchiHDDisplayMenu::DrawScrollbar(int Total, int Offset, int Shown, int Top, int Height)
 {
    if (Total > 0 && Total > Shown) {
-      changed = true;
-
       DSYSLOG("skinelchiHD: DisplayMenu::DrawScrollbar tb2=%d lh2=%d", Height * Shown / Total, lh/2);
       
       int dist = symbolGap + elchiSymbols.Width(SYM_ARROW_DOWN);
@@ -356,13 +391,12 @@ void cSkinElchiHDDisplayMenu::Scroll(bool Up, bool Page)
 
 int cSkinElchiHDDisplayMenu::MaxItems(void)
 {  ///< Returns the maximum number of items the menu can display.
-   const cFont *font = cFont::GetFont(fontOsd);
-   lh = font->Height();
    return (menuHeight / lh);
 }
 
 void cSkinElchiHDDisplayMenu::Clear(void)
 {  ///< Clears the entire central area of the menu.
+   DSYSLOG("skinelchiHD: DisplayMenu::Clear")
    lastCurrentText = NULL;
    timersDisplayed = false;
    xScrollStart = -1;
@@ -379,7 +413,6 @@ void cSkinElchiHDDisplayMenu::Clear(void)
    }
 
    lastDate = NULL;
-   changed = true;
 
    textScroller.Reset();
    tColor clrBG = Theme.Color(clrBackground);
@@ -416,8 +449,6 @@ void cSkinElchiHDDisplayMenu::DrawTitle(void)
    }
    else
       spmTitle->SetText(title, cFont::GetFont(fontSml));
-
-   changed = true;
 }
 
 void cSkinElchiHDDisplayMenu::SetTitle(const char *Title)
@@ -437,13 +468,11 @@ void cSkinElchiHDDisplayMenu::SetButtons(const char *Red, const char *Green, con
    tColor lutFg[] = { clrButtonRedFg, clrButtonGreenFg, clrButtonYellowFg, clrButtonBlueFg };
 
    const cFont *smallfont = cFont::GetFont(fontSml);
-   const cFont *font = cFont::GetFont(fontOsd);
-   lh = font->Height();
 
    LOCK_PIXMAPS;
    pmMenu->DrawRectangle(cRect(btn0, y6, btn4, y8 - y6), clrTransparent);
    // pmButtonxBG: clrBG, wird angezeigt wenn kein Button Text vorliegt
-   // pmButtonx:   clr-Button, wird als hintergrund angezeigt wenn Button Text vorliegt
+   // pmButtonx:   clr-Button, wird als Hintergrund angezeigt wenn Button Text vorliegt
    // pmMenu:      enthält Button Text
    pmButton0inactive->SetLayer(lutText[Setup.ColorKey0] ? LYR_HIDDEN : LYR_SELECTOR);
    pmButton0BG->SetLayer(lutText[Setup.ColorKey0] ? LYR_SELECTOR : LYR_HIDDEN);
@@ -460,8 +489,6 @@ void cSkinElchiHDDisplayMenu::SetButtons(const char *Red, const char *Green, con
    pmButton3inactive->SetLayer(lutText[Setup.ColorKey3] ? LYR_HIDDEN : LYR_SELECTOR);
    pmButton3BG->SetLayer(lutText[Setup.ColorKey3] ? LYR_SELECTOR : LYR_HIDDEN);
    if (lutText[Setup.ColorKey3]) pmMenu->DrawText(cPoint(btn3, y6), lutText[Setup.ColorKey3], Theme.Color(lutFg[Setup.ColorKey3]), clrTransparent, smallfont, btn4 - btn3, 0, taCenter);
-
-   changed = true;
 }
 
 void cSkinElchiHDDisplayMenu::SetMessage(eMessageType Type, const char *Text)
@@ -472,272 +499,37 @@ void cSkinElchiHDDisplayMenu::SetMessage(eMessageType Type, const char *Text)
 
    tColor clrBG = Theme.Color(clrBackground);
    if (Text) {
-      DSYSLOG("skinelchiHD: DisplayMenu::SetMessage(%d,\"%s\")", int(Type), Text)
-      changed = true;
+      DSYSLOG("skinelchiHD: DisplayMenu::SetMessage1 (%d,\"%s\")", int(Type), Text?Text:"NULL")
       showMessage = true;
       const cFont *font = cFont::GetFont(fontOsd);
-      lh = font->Height();
 
+      spmMessage->SetColor(Theme.Color(clrMessageStatusFg + 2 * Type));
+      spmMessage->SetText(Text, font);
+      spmMessage->SetLayer(LYR_SCROLL);
+      
       LOCK_PIXMAPS;
       DrawShadedRectangle(pmBG, Theme.Color(clrMessageStatusBg + 2 * Type), cRect(x0, y5, x8, lh));
       pmBG->DrawEllipse(cRect(0, y5, lh2, lh2), clrBG, -2);
       pmBG->DrawEllipse(cRect(0, y6 - lh2, lh2, lh2), clrBG, -3);
       pmBG->DrawEllipse(cRect(x8 - lh2, y5, lh2, lh2), clrBG, -1);
       pmBG->DrawEllipse(cRect(x8 - lh2, y6 - lh2, lh2, lh2), clrBG, -4);
-      
-      spmMessage->SetColor(Theme.Color(clrMessageStatusFg + 2 * Type));
-      spmMessage->SetText(Text, font);
-      spmMessage->SetLayer(LYR_SCROLL);
    }
    else {
       if (showMessage) {
-         DSYSLOG("skinelchiHD: DisplayMenu::SetMessage(%d,\"%s\")", int(Type), Text?Text:"NULL")
-         changed = true;
+         DSYSLOG("skinelchiHD: DisplayMenu::SetMessage2 (%d,\"%s\")", int(Type), Text?Text:"NULL")
          showMessage = false;
          pmBG->DrawRectangle(cRect(x0, y5, x8, lh), clrBG);
          spmMessage->SetLayer(LYR_HIDDEN);
       }
       else
-         DSYSLOG("skinelchiHD: skip DisplayMenu::SetMessage(%d,\"%s\")", int(Type), Text)
+         DSYSLOG("skinelchiHD: skip DisplayMenu::SetMessage3 (%d,\"%s\")", int(Type), Text?Text:"NULL")
    }
-}
-
-void cSkinElchiHDDisplayMenu::SetItem(const char *Text, int Index, bool Current, bool Selectable)
-{  ///< Sets the item at the given Index to Text. Index is between 0 and the
-   ///< value returned by MaxItems(), minus one. Text may contain tab characters ('\t'),
-   ///< which shall be used to separate the text into several columns, according to the
-   ///< values set by a prior call to SetTabs(). 
-   ///< If Current is true, this item shall be drawn in a way indicating to the user
-   ///< that it is the currently selected one.
-   ///< Selectable can be used to display items differently that can't be
-   ///< selected by the user.
-   ///< Whenever the current status is moved from one item to another,
-   ///< this function will be first called for the old current item
-   ///< with Current set to false, and then for the new current item
-   ///< with Current set to true.
-
-   DSYSLOG("skinelchiHD: DisplayMenu::SetItem(\"%s\",%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Text, Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5) )
-   tColor ColorFg = Theme.Color(Current ? clrMenuItemCurrentFg : Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable); 
-   const cFont *font = cFont::GetFont(fontOsd);
-   lh = font->Height();
-   int y = menuTop + Index * lh;
-   
-   // set Background and make it scrollable after last tab 
-   if (xScrollStart < 0) { // calc only if for new menu
-      xScrollStart = x1;
-      int i;
-      for (i = 1; (i < MaxTabs) && Tab(i); i++) {}
-      xScrollStart = x1 + Tab(i-1);
-   }
-   SetItemBackground(Index, Current, Selectable, xScrollStart);
-
-   const char *s;
-   int xOffset = x1;
-   for (int i = 0; i < MaxTabs; i++) {
-      bool isLastText = NULL == GetTabbedText(Text, i+1);
-      s = GetTabbedText(Text, i);
-      if (s) {  // symbol and progress bar detection
-         char buffer[9];
-         bool isTimer = false;
-         bool isNewRecording = false;
-         bool isProgressBar = false;
-         bool hasEventTimer = false;
-         bool hasPartitialEventTimer = false;
-         bool isRecording = false;
-         bool hasVPS = false;
-         bool isRunning = false;
-
-         if (ElchiConfig.showIcons) {
-            // check for timer info symbols: " !#>"
-            if (menuCategory == mcTimer && i == 0 && strlen(s) == 1 && strchr(" !#>", s[0])) {
-               isTimer = true; // update status                                                 
-            }
-            else
-            // check for new recording: "10:10*", "1:10*", "01.01.06*"
-               if (menuCategory == mcRecording && (strlen(s) == 6 && s[5] == '*' && s[2] == ':' && isdigit(*s)
-                      && isdigit(*(s + 1)) && isdigit(*(s + 3)) && isdigit(*(s + 4)))
-                  || (strlen(s) == 5 && s[4] == '*' && s[1] == ':' && isdigit(*s)
-                      && isdigit(*(s + 2)) && isdigit(*(s + 3)))
-                  || (strlen(s) == 9 && s[8] == '*' && s[5] == '.' && s[2] == '.'
-                      && isdigit(*s) && isdigit(*(s + 1)) && isdigit(*(s + 3))
-                      && isdigit(*(s + 4)) && isdigit(*(s + 6)) && isdigit(*(s + 7)))) {
-                  isNewRecording = true;  // update status
-                  strncpy(buffer, s, strlen(s));   // make a copy
-                  buffer[strlen(s) - 1] = '\0';  // remove the '*' character
-               }
-               else
-                  if (menuCategory == mcSchedule || menuCategory == mcScheduleNow || menuCategory == mcScheduleNext) {
-                     
-                     if ((strlen(s) == 3) && ( i == 2 || i == 3 || i == 4)) {
-                        if (s[0] == 'R') isRecording = true;
-                        if (s[0] == 'T') hasEventTimer = true;
-                        if (s[0] == 't') hasPartitialEventTimer = true;
-                        if (s[1] == 'V') hasVPS = true;
-                        if (s[2] == '*') isRunning = true;
-                     }
-                     else
-                        if ((strlen(s) == 4) && ( i == 2 || i == 3 || i == 4 ) && ( s[0] == ' ' )) { //epgsearch What's on now default
-                           if (s[1] == 'R') isRecording = true;
-                           if (s[1] == 'T') hasEventTimer = true;
-                           if (s[1] == 't') hasPartitialEventTimer = true;
-                           if (s[2] == 'V') hasVPS = true;
-                           if (s[3] == '*') isRunning = true;
-                        }
-                  }
-          }
-
-         int current = 0, total = 0;
-         // check for progress bar: "[|||||||   ]"
-         if (!isTimer && !isNewRecording && ElchiConfig.GraphicalProgressbar &&
-            (strlen(s) > 5 && s[0] == '[' && s[strlen(s) - 1] == ']')) {
-            const char *p = s + 1;
-            isProgressBar = true; // update status
-            for (; *p != ']'; ++p) {  // check if progressbar characters
-               if (*p == ' ' || *p == '|') { // update counters
-                  ++total;
-                  if (*p == '|')
-                     ++current;
-               } else {  // wrong character detected; not a progressbar
-                  isProgressBar = false;
-                  break;
-               }
-            }
-         }
-         xOffset = x1 + Tab(i);
-
-         if (isTimer) {
-            // timer menu  =========================================================
-            pmMenu->DrawRectangle(cRect(xOffset, y, x5, lh - 1), clrTransparent);
-            switch(s[0]) {
-            case '!': 
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_ARROW_TURN)) / 2), elchiSymbols.Get(SYM_ARROW_TURN, ColorFg, clrTransparent));
-               break;
-            case '#':
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_RECSML)) / 2), elchiSymbols.Get(SYM_RECSML, Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
-               break;
-            case '>':
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK)) / 2), elchiSymbols.Get(SYM_CLOCK, ColorFg, clrTransparent));
-               break;
-            case ' ':
-            default:
-               break;
-            }
-         } else if (isRecording || hasEventTimer || hasPartitialEventTimer || hasVPS || isRunning) {
-            LOCK_PIXMAPS;
-            // program schedule menu  =========================================================
-            if (isRecording) {
-               DSYSLOG("skinelchiHD: DisplayMenu::SetItem Recording: ERROR - this should not happen!");
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_RECSML)) / 2), elchiSymbols.Get(SYM_RECSML, Theme.Color(clrSymbolRecBg), Theme.Color(clrSymbolRecFg)));
-            }
-            else {
-               if (hasEventTimer)
-                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK) ) / 2), elchiSymbols.Get(SYM_CLOCK, ColorFg, clrTransparent));
-               if (hasPartitialEventTimer)
-                  pmMenu->DrawBitmap(cPoint(xOffset + (elchiSymbols.Height(SYM_CLOCK) - elchiSymbols.Height(SYM_CLOCKSML) ) / 2, y + (lh - elchiSymbols.Height(SYM_CLOCKSML)) / 2), elchiSymbols.Get(SYM_CLOCKSML, ColorFg, clrTransparent));
-            }
-            xOffset += elchiSymbols.Width(SYM_CLOCK); // clock is wider than rec
-
-            if (hasVPS)
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_VPSSML)) / 2), elchiSymbols.Get(SYM_VPSSML, ColorFg, clrTransparent));
-            xOffset += elchiSymbols.Width(SYM_VPSSML);
-
-            if (isRunning)
-               pmMenu->DrawText(cPoint(xOffset, y), "*", ColorFg, clrTransparent, font, x5 - xOffset);
-            
-         } else if (isNewRecording) {
-            // recordings menu ==================================
-            // replace by: bool SetItemRecording(const cRecording *Recording, int Index, bool Current, bool Selectable, int Level, int Total, int New)
-            pmMenu->DrawText(cPoint(xOffset, y), buffer, ColorFg, clrTransparent, font, x5 - xOffset);
-            // draw symbol "new" centered
-            int gap = std::max(0, (Tab(i+1)-Tab(i)- font->Width(buffer) - elchiSymbols.Height(SYM_NEWSML)) / 2);
-            pmMenu->DrawBitmap(cPoint(xOffset + font->Width(buffer) + gap, y + (lh - elchiSymbols.Height(SYM_NEWSML)) / 2), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
-         } else if (isProgressBar) {
-            // define x coordinates of progressbar
-            int pxs = xOffset;
-            int pxe;
-            if (strlen(s) < 11)
-               pxe = (Tab(i + 1)?Tab(i+1):x5);
-            else
-               pxe = std::min(xOffset + font->Width(s) - font->Height()/2, (int)x5);
-
-            int px = pxs + std::max((int)((float) current * (float) (pxe - pxs) / (float) total), 1);
-            //isyslog("skinelchiHD: progressbar: %d-%d (%d) %d(%d)", px0, px1, px1-px0, px, px-px0);
-            // define y coordinates of progressbar
-            int pys = y + lh/4;
-            int pye = y + lh - lh/4;
-
-            DrawShadedRectangle(pmMenu, Theme.Color(clrProgressBarUpper), cRect(pxs, pys, px-pxs, pye-pys));
-            DrawShadedRectangle(pmMenu, Theme.Color(clrProgressBarLower), cRect(px, pys, pxe-px, pye-pys));
-         }  // end isProgressBar
-         else
-            //DSYSLOG("skinelchiHD: DisplayMenu::SetItem(\"%s\" B i=%d, xOff=%d", s, i, xOffset)
-            if (Current) {
-               if (xOffset == xScrollStart) { // zeichne letzten (=scrollenden) Teil
-                  spmCurrentItem->SetText(s, font);
-               }
-               else {
-                  pmMenu->DrawText(cPoint(xOffset, y), s, ColorFg, clrTransparent, font, (isLastText?x5-lh/2:x1+Tab(i+1)) - xOffset);
-               }               
-            }
-            else { // non-current
-               pmMenu->DrawText(cPoint(xOffset, y), s, ColorFg, clrTransparent, font, (isLastText?x5-lh/2:x1+Tab(i+1)) - xOffset);
-               //DSYSLOG("skinelchiHD: DisplayMenu::SetItem(\"%s\" C i=%d, xOff=%d Len=%d", s, i, xOffset, ((Tab(i+1) && NULL != GetTabbedText(Text, i+1)?x1+Tab(i+1):x5-lh/2)) - xOffset)
-               
-            }
-      }
-      if (!Tab(i + 1))
-         break;
-   }
-
-   SetEditableWidth(x5 - lh/2 - xOffset);
-   changed = true;
-}
-
-bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, bool TimerActive)
-{
-   //< Sets the item at the given Index to Event. See SetItem() for more information.
-   ///< If a derived skin class implements this function, it can display an Event item
-   ///< in a more elaborate way than just a simple line of text.
-   ///< If Channel is not NULL, the channel's name and/or number shall be displayed.
-   ///< If WithDate is true, the date of the Event shall be displayed (in addition to the time).
-   ///< TimerMatch tells how much of this event will be recorded by a timer.
-   ///< TimerActive tells whether the timer that will record this event is active.
-   ///< If the skin displays the Event item in its own way, it shall return true.
-   ///< The default implementation does nothing and returns false, which results in
-   ///< a call to SetItem() with a proper text.
-
-   return false;
-}
-
-bool cSkinElchiHDDisplayMenu::SetItemTimer(const cTimer *Timer, int Index, bool Current, bool Selectable)
-{  ///< Sets the item at the given Index to Timer. See SetItem() for more information.
-   ///< If a derived skin class implements this function, it can display a Timer item
-   ///< in a more elaborate way than just a simple line of text.
-   ///< If the skin displays the Timer item in its own way, it shall return true.
-   ///< The default implementation does nothing and returns false, which results in
-   ///< a call to SetItem() with a proper text.
-
-   return false;
-}
-
-bool cSkinElchiHDDisplayMenu::SetItemChannel(const cChannel *Channel, int Index, bool Current, bool Selectable, bool WithProvider)
-{  ///< Sets the item at the given Index to Channel. See SetItem() for more information.
-   ///< If a derived skin class implements this function, it can display a Channel item
-   ///< in a more elaborate way than just a simple line of text.
-   ///< If WithProvider ist true, the provider shall be displayed in addition to the
-   ///< channel's name.
-   ///< If the skin displays the Channel item in its own way, it shall return true.
-   ///< The default implementation does nothing and returns false, which results in
-   ///< a call to SetItem() with a proper text.
-
-   return false;
 }
 
 void cSkinElchiHDDisplayMenu::SetItemBackground(int Index, bool Current, bool Selectable, int xScrollArea)
 {
    tColor ColorFg = Theme.Color(Current ? clrMenuItemCurrentFg : Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable); 
    const cFont *font = cFont::GetFont(fontOsd);
-   int lh = font->Height();
    int y = menuTop + Index * lh;
    if (Current) {
       if (Index != currentIndex) {
@@ -764,6 +556,318 @@ void cSkinElchiHDDisplayMenu::SetItemBackground(int Index, bool Current, bool Se
       }
    }
 }
+
+void cSkinElchiHDDisplayMenu::SetItem(const char *Text, int Index, bool Current, bool Selectable)
+{  ///< Sets the item at the given Index to Text. Index is between 0 and the
+   ///< value returned by MaxItems(), minus one. Text may contain tab characters ('\t'),
+   ///< which shall be used to separate the text into several columns, according to the
+   ///< values set by a prior call to SetTabs(). 
+   ///< If Current is true, this item shall be drawn in a way indicating to the user
+   ///< that it is the currently selected one.
+   ///< Selectable can be used to display items differently that can't be
+   ///< selected by the user.
+   ///< Whenever the current status is moved from one item to another,
+   ///< this function will be first called for the old current item
+   ///< with Current set to false, and then for the new current item
+   ///< with Current set to true.
+
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItem(\"%s\",%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Text, Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5));
+   tColor ColorFg = Theme.Color(Current ? clrMenuItemCurrentFg : Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable); 
+   const cFont *font = cFont::GetFont(fontOsd);
+   int y = menuTop + Index * lh;
+   
+   // set Background and make it scrollable after last tab 
+   if (xScrollStart < 0) { // calc only if for new menu
+      xScrollStart = x1;
+      int i;
+      for (i = 1; (i < MaxTabs) && Tab(i); i++) {}
+      xScrollStart = x1 + Tab(i-1);
+   }
+   SetItemBackground(Index, Current, Selectable, xScrollStart);
+
+   const char *s;
+   int xOffset = x1;
+   for (int i = 0; i < MaxTabs; i++) {
+      bool isLastText = NULL == GetTabbedText(Text, i+1);
+      s = GetTabbedText(Text, i);
+      if (s) {  // symbol and progress bar detection
+         char buffer[15];
+         bool isTimerItem = false;
+         bool isEventItem = false;
+         bool isNewRecording = false;
+         bool isProgressBar = false;
+         bool hasEventTimer = false;
+         bool hasPartitialEventTimer = false;
+         bool hasDisabledEventTimer = false;
+         bool hasDisabledPartitialEventTimer = false;
+         bool hasRemoteEventTimer = false;
+         bool isRecording = false;
+         bool hasVPS = false;
+         bool isRunning = false;
+
+         if (ElchiConfig.showIcons) {
+            // check for timer info symbols: " !#>"
+            if (menuCategory == mcTimer && i == 0 && strlen(s) == 1 && strchr(" !#>", s[0])) {
+               isTimerItem = true; // update status                                                 
+            }
+            else
+            // check for new recording: "10:10*", "1:10*", "01.01.06*"
+               if (menuCategory == mcRecording && (strlen(s) == 6 && s[5] == '*' && s[2] == ':' && isdigit(*s)
+                      && isdigit(*(s + 1)) && isdigit(*(s + 3)) && isdigit(*(s + 4)))
+                  || (strlen(s) == 5 && s[4] == '*' && s[1] == ':' && isdigit(*s)
+                      && isdigit(*(s + 2)) && isdigit(*(s + 3)))
+                  || (strlen(s) == 9 && s[8] == '*' && s[5] == '.' && s[2] == '.'
+                      && isdigit(*s) && isdigit(*(s + 1)) && isdigit(*(s + 3))
+                      && isdigit(*(s + 4)) && isdigit(*(s + 6)) && isdigit(*(s + 7)))) {
+                  isNewRecording = true;  // update status
+                  strncpy(buffer, s, min(sizeof(buffer), strlen(s)));   // make a copy
+                  buffer[min(sizeof(buffer), strlen(s)) - 1] = '\0';  // remove the '*' character
+               }
+               else
+                  if (menuCategory == mcSchedule || menuCategory == mcScheduleNow || menuCategory == mcScheduleNext) {
+                     
+                     if ((strlen(s) == 3) && ( i == 2 || i == 3 || i == 4)) {
+                        isEventItem = true;
+                        if (s[0] == 'R') isRecording = true;
+                        if (s[0] == 'T') hasEventTimer = true;
+                        if (s[0] == 't') hasPartitialEventTimer = true;
+                        if (s[0] == 'I') hasDisabledEventTimer = true;
+                        if (s[0] == 'i') hasDisabledPartitialEventTimer = true;
+                        if (s[0] == 'S') hasRemoteEventTimer = true;
+                        if (s[1] == 'V') hasVPS = true;
+                        if (s[2] == '*') isRunning = true;
+                     }
+                     else
+                        if ((strlen(s) == 4) && ( i == 2 || i == 3 || i == 4 ) && ( s[0] == ' ' )) { //epgsearch What's on now default
+                           isEventItem = true;
+                           if (s[1] == 'R') isRecording = true;
+                           if (s[1] == 'T') hasEventTimer = true;
+                           if (s[1] == 't') hasPartitialEventTimer = true;
+                           if (s[1] == 'I') hasDisabledEventTimer = true;
+                           if (s[1] == 'i') hasDisabledPartitialEventTimer = true;
+                           if (s[1] == 'S') hasRemoteEventTimer = true;
+                           if (s[2] == 'V') hasVPS = true;
+                           if (s[3] == '*') isRunning = true;
+                        }
+                  }
+          }
+
+         int current = 0, total = 0;
+         // check for progress bar: "[|||||||   ]"
+         if (!isTimerItem && !isNewRecording && ElchiConfig.GraphicalProgressbar &&
+            (strlen(s) > 5 && s[0] == '[' && s[strlen(s) - 1] == ']')) {
+            const char *p = s + 1;
+            isProgressBar = true; // update status
+            for (; *p != ']'; ++p) {  // check if progressbar characters
+               if (*p == ' ' || *p == '|') { // update counters
+                  ++total;
+                  if (*p == '|')
+                     ++current;
+               } else {  // wrong character detected; not a progressbar
+                  isProgressBar = false;
+                  break;
+               }
+            }
+         }
+         xOffset = x1 + Tab(i);
+
+         if (isTimerItem)
+         {
+            // timer menu  =========================================================
+            // NOTICE should be not be used anymore
+            pmMenu->DrawRectangle(cRect(xOffset, y, x5, lh - 1), clrTransparent);
+            switch(s[0]) {
+            case '!': 
+               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_ARROW_TURN)) / 2), elchiSymbols.Get(SYM_ARROW_TURN, ColorFg, clrTransparent));
+               break;
+            case '#':
+               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_RECSML)) / 2), elchiSymbols.Get(SYM_RECSML, Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
+               break;
+            case '>':
+               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK)) / 2), elchiSymbols.Get(SYM_CLOCK, ColorFg, clrTransparent));
+               break;
+            case ' ':
+            default:
+               break;
+            }
+         } else if (isEventItem)
+         {  // program schedule menu  =========================================================
+            if (isRecording) {
+               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_RECSML)) / 2), elchiSymbols.Get(SYM_RECSML, Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
+            }
+            else {
+               if (hasEventTimer)
+                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK) ) / 2), elchiSymbols.Get(SYM_CLOCK, ColorFg, clrTransparent));
+               if (hasPartitialEventTimer)
+                  pmMenu->DrawBitmap(cPoint(xOffset + (elchiSymbols.Width(SYM_CLOCK) - elchiSymbols.Width(SYM_CLOCKSML) ) / 2, y + (lh - elchiSymbols.Height(SYM_CLOCKSML)) / 2), elchiSymbols.Get(SYM_CLOCKSML, ColorFg, clrTransparent));
+               if (hasDisabledEventTimer)
+                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK_INACTIVE) ) / 2), elchiSymbols.Get(SYM_CLOCK_INACTIVE, ColorFg, clrTransparent));
+               if (hasDisabledPartitialEventTimer)
+                  pmMenu->DrawBitmap(cPoint(xOffset + (elchiSymbols.Width(SYM_CLOCK_INACTIVE) - elchiSymbols.Width(SYM_CLOCKSML_INACTIVE) ) / 2, y + (lh - elchiSymbols.Height(SYM_CLOCKSML_INACTIVE)) / 2), elchiSymbols.Get(SYM_CLOCKSML_INACTIVE, ColorFg, clrTransparent));
+               if (hasRemoteEventTimer && ElchiConfig.EpgShowRemoteTimers)
+                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK_REMOTE) ) / 2), elchiSymbols.Get(SYM_CLOCK_REMOTE, ColorFg, clrTransparent));
+            }
+            xOffset += elchiSymbols.Width(SYM_CLOCK); // clock is wider than rec
+
+            if (hasVPS)
+               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_VPSSML)) / 2), elchiSymbols.Get(SYM_VPSSML, ColorFg, clrTransparent));
+            xOffset += elchiSymbols.Width(SYM_VPSSML);
+         } else if (isNewRecording)
+         {  // recordings menu ==================================
+            // replaced by: SetItemRecording()
+            pmMenu->DrawText(cPoint(xOffset, y), buffer, ColorFg, clrTransparent, font, x5 - xOffset);
+            // draw symbol "new" centered
+            int gap = std::max(0, (Tab(i+1)-Tab(i)- font->Width(buffer) - elchiSymbols.Height(SYM_NEWSML)) / 2);
+            pmMenu->DrawBitmap(cPoint(xOffset + font->Width(buffer) + gap, y + (lh - elchiSymbols.Height(SYM_NEWSML)) / 2), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
+         } else if (isProgressBar)
+         {  // progressbar ==================================
+            // define x coordinates of progressbar
+            int pxs = xOffset;
+            int pxe;
+            if (strlen(s) < 11)
+               pxe = (Tab(i + 1)?Tab(i+1):x5);
+            else
+               pxe = std::min(xOffset + font->Width(s) - font->Height()/2, (int)x5);
+
+            int px = pxs + std::max((int)((float) current * (float) (pxe - pxs) / (float) total), 1);
+            // define y coordinates of progressbar
+            int pys = y + lh/4;
+            int pye = y + lh - lh/4;
+
+            DrawShadedRectangle(pmMenu, Theme.Color(clrProgressBarUpper), cRect(pxs, pys, px-pxs, pye-pys));
+            DrawShadedRectangle(pmMenu, Theme.Color(clrProgressBarLower), cRect(px, pys, pxe-px, pye-pys));
+         }  // end isProgressBar
+         else {
+            if (Current) {
+               if (xOffset == xScrollStart) // draw last (scrolling) part
+                  spmCurrentItem->SetText(s, font);
+               else
+                  pmMenu->DrawText(cPoint(xOffset, y), s, ColorFg, clrTransparent, font, (isLastText?x5-lh/2:x1+Tab(i+1)) - xOffset);
+            }
+            else { // non-current
+               pmMenu->DrawText(cPoint(xOffset, y), s, ColorFg, clrTransparent, font, (isLastText?x5-lh/2:x1+Tab(i+1)) - xOffset);
+            }
+         }
+      }
+      if (!Tab(i + 1))
+         break;
+   }
+
+   SetEditableWidth(x5 - lh/2 - xOffset);
+}
+
+bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, bool TimerActive)
+{  ///< Sets the item at the given Index to Event. See SetItem() for more information.
+   ///< If a derived skin class implements this function, it can display an Event item
+   ///< in a more elaborate way than just a simple line of text.
+   ///< - If Channel is not NULL, the channel's name and/or number shall be displayed.
+   ///< - If WithDate is true, the date of the Event shall be displayed (in addition to the time).
+   ///< - TimerMatch tells how much of this event will be recorded by a timer.
+   ///< - TimerActive tells whether the timer that will record this event is active.
+   ///< If the skin displays the Event item in its own way, it shall return true.
+   ///< The default implementation does nothing and returns false, which results in
+   ///< a call to SetItem() with a proper text.
+
+   return false;
+}
+
+bool cSkinElchiHDDisplayMenu::SetItemTimer(const cTimer *Timer, int Index, bool Current, bool Selectable)
+{  ///< Sets the item at the given Index to Timer. See SetItem() for more information.
+   ///< If a derived skin class implements this function, it can display a Timer item
+   ///< in a more elaborate way than just a simple line of text.
+   ///< If the skin displays the Timer item in its own way, it shall return true.
+   ///< The default implementation does nothing and returns false, which results in
+   ///< a call to SetItem() with a proper text.
+
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItemTimer(%d,%s,%s)", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'");
+   if (Timer)
+   {
+      cString day, name(""), line;
+      if (Timer->WeekDays())
+         day = Timer->PrintDay(0, Timer->WeekDays(), false);
+      else if (Timer->Day() - time(NULL) < 28 * SECSINDAY)
+      {
+         day = itoa(Timer->GetMDay(Timer->Day()));
+         name = WeekDayName(Timer->Day());
+      }
+      else
+      {
+         struct tm tm_r;
+         time_t Day = Timer->Day();
+         localtime_r(&Day, &tm_r);
+         char buffer[16];
+         strftime(buffer, sizeof(buffer), "%Y%m%d", &tm_r);
+         day = buffer;
+      }
+      
+      const char *file = Setup.FoldersInTimerMenu ? NULL : strrchr(Timer->File(), FOLDERDELIMCHAR);
+      if (file && strcmp(file + 1, TIMERMACRO_TITLE) && strcmp(file + 1, TIMERMACRO_EPISODE))
+         file++;
+      else
+         file = Timer->File();
+      
+      const cFont *font = cFont::GetFont(fontOsd);
+      tColor colorFg, colorBg;
+      int y = menuTop + Index * lh;
+      SetItemBackground(Index, Current, Selectable, x1 + tabs[5]);
+      
+      if (Current) {
+         colorFg = Theme.Color(clrMenuItemCurrentFg);
+         spmCurrentItem->SetText(cString::sprintf("%s%s", Timer->Remote() ? *cString::sprintf("@%s: ", Timer->Remote()) : "", file), font);
+      }
+      else { // non-current
+         colorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
+         pmMenu->DrawText(cPoint(x1 + tabs[5], y), cString::sprintf("%s%s", Timer->Remote() ? *cString::sprintf("@%s: ", Timer->Remote()) : "", file), colorFg, clrTransparent, font, x5 - lh/2 - tabs[5]);
+      }
+      
+      pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%d", Timer->Channel()->Number()), colorFg, clrTransparent, font, tabs[2] - tabs[1]);
+      pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%s%s%s", *name, *name && **name ? " " : "", *day), colorFg, clrTransparent, font, tabs[3] - tabs[2]);
+      pmMenu->DrawText(cPoint(x1 + tabs[3], y), cString::sprintf("%02d:%02d", Timer->Start() / 100, Timer->Start() % 100), colorFg, clrTransparent, font, tabs[4] - tabs[3]);
+      pmMenu->DrawText(cPoint(x1 + tabs[4], y), cString::sprintf("%02d:%02d", Timer->Stop() / 100, Timer->Stop() % 100), colorFg, clrTransparent, font, tabs[5] - tabs[4]);
+      
+      colorBg = clrTransparent;
+      if (Timer->HasFlags(tfActive))
+      {
+         eSymbols timerSymbol = SYM_MAX_COUNT;
+         if (Timer->Local()) {
+            if (Timer->Recording()) {
+               colorFg = Theme.Color(clrSymbolRecFg);
+               colorBg = Theme.Color(clrSymbolRecBg);
+               timerSymbol = SYM_REC;
+            }
+            else if (Timer->FirstDay())
+               timerSymbol = SYM_ARROW_TURN;
+            else
+               timerSymbol = SYM_CLOCK;
+         } else {
+            if (Timer->Recording())
+               timerSymbol = SYM_REC_REMOTE;
+            else if (Timer->FirstDay())
+               timerSymbol = SYM_ARROW_TURN_REMOTE;
+            else 
+               timerSymbol = SYM_CLOCK_REMOTE;
+         }
+         
+         if ( timerSymbol != SYM_MAX_COUNT)
+            pmMenu->DrawBitmap(cPoint(x1 + tabs[0], y + center(lh, elchiSymbols.Height(timerSymbol))), elchiSymbols.Get(timerSymbol, colorFg, colorBg));
+      }
+      return true;
+   }
+   return false;
+}
+
+bool cSkinElchiHDDisplayMenu::SetItemChannel(const cChannel *Channel, int Index, bool Current, bool Selectable, bool WithProvider)
+{  ///< Sets the item at the given Index to Channel. See SetItem() for more information.
+   ///< If a derived skin class implements this function, it can display a Channel item
+   ///< in a more elaborate way than just a simple line of text.
+   ///< If WithProvider ist true, the provider shall be displayed in addition to the
+   ///< channel's name.
+   ///< If the skin displays the Channel item in its own way, it shall return true.
+   ///< The default implementation does nothing and returns false, which results in
+   ///< a call to SetItem() with a proper text.
+
+   return false;
+}
    
 bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int Index, bool Current, bool Selectable, int Level, int Total, int New)
 {  ///< Sets the item at the given Index to Recording. See SetItem() for more information.
@@ -779,13 +883,12 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
    ///< The default implementation does nothing and returns false, which results in
    ///< a call to SetItem() with a proper text.
 
-   DSYSLOG("skinelchiHD: DisplayMenu::SetItemRecording(\"%s\",%d,%s,%s) %s %d-%d-%d-%d-%d-%d", "-", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5) )
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItemRecording(%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5) )
    
    const cFont *font = cFont::GetFont(fontOsd);
    tColor ColorFg;
-   int lh = font->Height();
    int y = menuTop + Index * lh;
-   SetItemBackground(Index, Current, Selectable, x1 + Tab(3) + 2*symbolGap);
+   SetItemBackground(Index, Current, Selectable, x1 + tabs[5] + 2*symbolGap);
    
    if (Total) {  // folder
       const char* tmp = Recording->Title(' ', true, Level);
@@ -798,11 +901,11 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
       }
       else { // non-current
          ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-         pmMenu->DrawText(cPoint(x1 + Tab(3) + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- Tab(3) - 2*symbolGap);
+         pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
       }
       // both
-      pmMenu->DrawText(cPoint(x1 + Tab(0), y), cString::sprintf("%d", Total), ColorFg, clrTransparent, font, Tab(2) - Tab(0));
-      pmMenu->DrawText(cPoint(x1 + Tab(2), y), cString::sprintf("%d", New), ColorFg, clrTransparent, font, Tab(3) - Tab(2));
+      pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%d", Total), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
+      pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%d", New), ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
       free (name);
    }
    else { // recording
@@ -825,10 +928,7 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
          }
       }
                
-      ///copied from VDR to replace Title() to add 'HD'
-      bool NewIndicator = true;
-      char New = NewIndicator && Recording->IsNew() ? '*' : ' ';
-      //char *titleBuffer = NULL;
+      ///based on VDR's cRecording::Title()
       if (Level < 0 || Level == Recording->HierarchyLevels()) {
          struct tm tm_r;
          time_t start = Recording->Start();
@@ -838,11 +938,9 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
             s++;
          else
             s = (char *)Recording->Name();
-         cString Length("");
-         if (NewIndicator) {
-            int Minutes = std::max(0, (Recording->LengthInSeconds() + 30) / 60);
-            Length = cString::sprintf("%d:%02d", Minutes / 60, Minutes % 60);
-         }
+
+         int Minutes = std::max(0, (Recording->LengthInSeconds() + 30) / 60);
+         cString Length = cString::sprintf("%d:%02d", Minutes / 60, Minutes % 60);
 
          if (Current) {
             ColorFg = Theme.Color(clrMenuItemCurrentFg);
@@ -850,24 +948,24 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
          }
          else { // non-current
             ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-            pmMenu->DrawText(cPoint(x1 + Tab(3) + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- Tab(3) - 2*symbolGap);
+            pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
          }
          // both
-         pmMenu->DrawText(cPoint(x1 + Tab(0), y), cString::sprintf("%02d.%02d.%02d", t->tm_mday, t->tm_mon + 1, t->tm_year % 100), ColorFg, clrTransparent, font, Tab(1) - Tab(0));
-         pmMenu->DrawText(cPoint(x1 + Tab(1), y), cString::sprintf("%02d:%02d", t->tm_hour, t->tm_min), ColorFg, clrTransparent, font, Tab(2) - Tab(1));
-         pmMenu->DrawText(cPoint(x1 + Tab(2), y), *Length, ColorFg, clrTransparent, font, Tab(3) - Tab(2));
+         pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%02d.%02d.%02d", t->tm_mday, t->tm_mon + 1, t->tm_year % 100), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
+         pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%02d:%02d", t->tm_hour, t->tm_min), ColorFg, clrTransparent, font, tabs[2] - tabs[1], font->Height(), taRight|taBorder);
+         pmMenu->DrawText(cPoint(x1 + tabs[2], y), *Length, ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
          
          if (Recording->IsNew())
-            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) + symbolGap - elchiSymbols.Width(SYM_NEWSML) - symbolGap - elchiSymbols.Width(SYM_AR_HD), y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
+            pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
          if (is_H264)
-            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) + symbolGap - elchiSymbols.Width(SYM_AR_HD), y + center(lh, elchiSymbols.Height(SYM_AR_HD))), elchiSymbols.Get(SYM_AR_HD, ColorFg, clrTransparent));
-         if (is_H265)
-            pmMenu->DrawBitmap(cPoint(x1 + Tab(3) + symbolGap - elchiSymbols.Width(SYM_AR_UHD), y + center(lh, elchiSymbols.Height(SYM_AR_UHD))), elchiSymbols.Get(SYM_AR_UHD, ColorFg, clrTransparent));
+            pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_AR_HD))), elchiSymbols.Get(SYM_AR_HD, ColorFg, clrTransparent));
+         else if (is_H265)
+            pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_AR_UHD))), elchiSymbols.Get(SYM_AR_UHD, ColorFg, clrTransparent));
       }
    }
-   changed = true;
    return true;
 }
+
 
 void cSkinElchiHDDisplayMenu::SetScrollbar(int TotalLines, int OffsetLines)
 {  ///< Sets the Total number of items in the currently displayed list, and the
@@ -876,6 +974,7 @@ void cSkinElchiHDDisplayMenu::SetScrollbar(int TotalLines, int OffsetLines)
    ///< display a scrollbar.
    DrawScrollbar(TotalLines, OffsetLines, MaxItems(), menuTop, MaxItems() * lh);
 }
+
 
 void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
 {  ///< Sets the Event that shall be displayed, using the entire central area
@@ -886,34 +985,33 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
       DSYSLOG("skinelchiHD: skip DisplayMenu::SetEvent()")
       return;
    }
+   DSYSLOG("skinelchiHD: DisplayMenu::SetEvent(\"%s\")", Event?Event->Title()?Event->Title():"null":"null");
 
-   DSYSLOG("skinelchiHD: DisplayMenu::SetEvent(%s %d)", *Event->ChannelID().ToString(), Event->EventID())
-
-   changed = true;
    tColor clrMEvent = Theme.Color(clrMenuEventTitle);
    const cFont *font = cFont::GetFont(fontOsd);
    const cFont *smallfont = cFont::GetFont(fontSml);
    int slh = smallfont->Height();
-   lh = font->Height();
    int textwidth = x5 - x1; // max. width
    bool hasEPGimages = false;
    cTextWrapper tw;  //strips trailing newlines
    
    if (epgimagesize) {  // != 0, that is: is desired and can be displayed
-      textwidth = x4 - x1 - (x1 - x0);
-      pmEPGImage->SetDrawPortPoint(cPoint(0, 0));
-      cRect vPort = pmEPGImage->ViewPort();
-      vPort.SetHeight(epgImageLines * slh);
-      pmEPGImage->SetViewPort(vPort);
-
       if (!epgimageThread) {
          epgimageThread = new cEpgImage(pmEPGImage, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height(), border);
-         DSYSLOG("skinelchiHD: DisplayMenu::SetEvent osd Height=%d %.1f lh=%d %dx%d", OSDsize.height, OSDsize.height*0.35, lh, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height());
       }
 
       // start conversion via PutEventID
+      pmEPGImage->Clear();
       hasEPGimages = epgimageThread->PutEventID((const char *)Event->ChannelID().ToString(), Event->EventID());
-      DSYSLOG("skinelchiHD: DisplayMenu::SetEvent %3s evID=%s_%d", hasEPGimages?"yes":"no", (const char *)Event->ChannelID().ToString(), Event->EventID());
+
+      if (hasEPGimages) {
+         textwidth = x4 - x1 - (x1 - x0);
+         pmEPGImage->SetDrawPortPoint(cPoint(0, 0));
+         cRect vPort = pmEPGImage->ViewPort();
+         vPort.SetHeight(epgImageLines * slh);
+         pmEPGImage->SetViewPort(vPort);
+         pmEPGImage->SetLayer(LYR_TEXT);
+      }
    }
 
    int y = y3;
@@ -1069,7 +1167,7 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
       cTextWrapper tw2;
       scrollShownLines = (y5 - y)/slh;
       scrollOffsetLines = 0;
-      int eventLines, upperLines = 0;
+      int upperLines = 0;
 
       if (!hasEPGimages)
       {
@@ -1077,28 +1175,27 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
          scrollTotalLines = tw.Lines();
          scrollbarTop = y;
          scrollbarHeight = y5 - y;
-         eventLines = tw.Lines();
       }
       else {
          tw.Set(text, smallfont, x4 - x1 - lh2);
          upperLines = (y4-y + slh - 1)/slh;
+         while (tw.Lines() > upperLines && !strlen(tw.GetLine(upperLines))) 
+            upperLines++;
          scrollTotalLines = upperLines;
          scrollbarTop = y4;
          scrollbarHeight = y5 - y4;
-         eventLines = upperLines;
 
-         if (tw.Lines() > scrollTotalLines)
+         if (tw.Lines() > upperLines)
          {
-            tw2.Set(strstr(text,tw.GetLine(upperLines)), smallfont, x5 - x1);
+            tw2.Set(strstr((char *)*text, (char *)tw.GetLine(upperLines)), smallfont, x5 - x1);
             scrollTotalLines += tw2.Lines();
-            eventLines += tw2.Lines();
          }
       }
 
       LOCK_PIXMAPS;
       if (pmEvent)
          osd->DestroyPixmap(pmEvent);
-      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines*slh), cRect(0, 0, x5 - x1, eventLines * slh));
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines*slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh));
       pmEvent->Clear();
 
       if (!hasEPGimages)
@@ -1146,19 +1243,12 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
    const cFont *font = cFont::GetFont(fontOsd);
    const cFont *smallfont = cFont::GetFont(fontSml);
    int slh = smallfont->Height();
-   lh = font->Height();
    int y = y3;
    int textwidth = x5 - x1;
    bool hasEPGimages = false;
    cTextWrapper tw;
 
    if (epgimagesize) { // != 0, that is: is requested and can be displayed
-      textwidth = x4 - x1 - (x1 - x0);
-      pmEPGImage->SetDrawPortPoint(cPoint(0, 0));
-      cRect vPort = pmEPGImage->ViewPort();
-      vPort.SetHeight(epgImageLines * slh);
-      pmEPGImage->SetViewPort(vPort);
-
       if (!epgimageThread) {
          epgimageThread = new cEpgImage(pmEPGImage, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height(), border);
          DSYSLOG("skinelchiHD: DisplayMenu::SetRecording osd Height=%d %.1f lh=%d %dx%d", OSDsize.height, OSDsize.height*0.35, lh, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height());
@@ -1166,6 +1256,13 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
 
       // start conversion via PutRecording
       hasEPGimages = epgimageThread->PutRecording((const char *)Recording->FileName());
+      if (hasEPGimages) {
+         textwidth = x4 - x1 - (x1 - x0);
+         pmEPGImage->SetDrawPortPoint(cPoint(0, 0));
+         cRect vPort = pmEPGImage->ViewPort();
+         vPort.SetHeight(epgImageLines * slh);
+         pmEPGImage->SetViewPort(vPort);
+      }
    }
    
    cString t = cString::sprintf("%s  %s", *DateString(Recording->Start()), *TimeString(Recording->Start()));
@@ -1438,7 +1535,7 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
       cTextWrapper tw2;
       scrollShownLines = (y5 - y)/slh;
       scrollOffsetLines = 0;
-      int eventLines, upperLines = 0;
+      int upperLines = 0;
       
       if (!hasEPGimages)
       {
@@ -1446,28 +1543,27 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          scrollTotalLines = tw.Lines();
          scrollbarTop = y;
          scrollbarHeight = y5 - y;
-         eventLines = tw.Lines();
       }
       else {
          tw.Set(text, smallfont, x4 - x1 - lh2);
-         upperLines = (y4-y + slh - 1)/slh;
+         upperLines = (y4 - y + slh - 1)/slh;
+         while (tw.Lines() > upperLines && !strlen(tw.GetLine(upperLines))) 
+            upperLines++;
          scrollTotalLines = upperLines;
          scrollbarTop = y4;
          scrollbarHeight = y5 - y4;
-         eventLines = upperLines;
 
          if (tw.Lines() > scrollTotalLines)
          {
             tw2.Set(strstr(text,tw.GetLine(upperLines)), smallfont, x5 - x1);
             scrollTotalLines += tw2.Lines();
-            eventLines += tw2.Lines();
          }
       }
       
       LOCK_PIXMAPS;
       if (pmEvent)
          osd->DestroyPixmap(pmEvent);
-      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * slh), cRect(0, 0, x5 - x1, eventLines * slh)); 
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh)); 
       pmEvent->Clear();
 
       if (!hasEPGimages)
@@ -1488,8 +1584,6 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
       }
       SetTextScrollbar();
    }
-
-   changed = true;
 }
 
 void cSkinElchiHDDisplayMenu::SetText(const char *Text, bool FixedFont)
@@ -1498,7 +1592,6 @@ void cSkinElchiHDDisplayMenu::SetText(const char *Text, bool FixedFont)
    ///< the Scroll() function will be called to drive scrolling that text if
    ///< necessary.
    DSYSLOG("skinelchiHD: DisplayMenu::SetText(%s,%s)", Text, FixedFont ? "'FixedFont'" : "'nonFixedFont'")
-   changed = true;
    //TODO replace textScroller
    textScroller.Set(osd, x1, menuTop, GetTextAreaWidth(), menuHeight, Text, GetTextAreaFont(FixedFont), Theme.Color(clrMenuText), Theme.Color(clrBackground));
    SetTextScrollbar();
@@ -1527,11 +1620,14 @@ const cFont *cSkinElchiHDDisplayMenu::GetTextAreaFont(bool FixedFont) const
 
 void cSkinElchiHDDisplayMenu::Flush(void)
 {  ///< Actually draws the OSD display to the output device.
-#ifdef DEBUG
+#ifdef DEBUG2
    DSYSLOG("skinelchiHD: DisplayMenu::Flush()");
-
+#endif
+#ifdef DEBUG_TIMING
+   timeval tpa1, tpa2;
    timeval tp1, tp2;
-   gettimeofday(&tp1, NULL);
+   double msec2 = 0.;
+   gettimeofday(&tpa1, NULL);
 #endif
    ///if (lasttime.tv_sec) isyslog("skinelchiHD Menu: FlushDelta=%.2f msec", (((long long)tp1.tv_sec * 1000000 + tp1.tv_usec) - ((long long)lasttime.tv_sec * 1000000 + lasttime.tv_usec)) / 1000.0);
    //lasttime=tp1;
@@ -1540,13 +1636,11 @@ void cSkinElchiHDDisplayMenu::Flush(void)
       DrawTitle();
    
    const cFont *font = cFont::GetFont(fontOsd);
-   lh = font->Height();
    
    cString date = DayDateTime();
-   if (!*lastDate || strcmp(date, lastDate)) {
-      changed = true;
+   if (isempty(lastDate) || strcmp(*date, *lastDate)) {
       pmMenu->DrawRectangle(cRect(x6 - font->Width(lastDate), y0, font->Width(lastDate), lh), clrTransparent);
-      pmMenu->DrawText(cPoint(x6 - font->Width(date), y0), date, Theme.Color(clrMenuDate), clrTransparent, font);
+      pmMenu->DrawText(cPoint(x6 - font->Width(*date), y0), *date, Theme.Color(clrMenuDate), clrTransparent, font);
       lastDate = date;
    }
 
@@ -1558,8 +1652,6 @@ void cSkinElchiHDDisplayMenu::Flush(void)
          const cFont *font = cFont::GetFont(fontOsd);
          Epgsearch_lastconflictinfo_v1_0 conflictinfo;
          conflictinfo.nextConflict = 0;
-         conflictinfo.relevantConflicts = 0;
-         conflictinfo.totalConflicts = 0;
 
          if ((timercheck & 2) && cPluginManager::CallFirstService(EPGSEARCH_CONFLICTINFO, &conflictinfo)) {
             if (conflictinfo.nextConflict) {
@@ -1593,48 +1685,31 @@ void cSkinElchiHDDisplayMenu::Flush(void)
 
          showVolume = true;
          volumeTimer.Set(1000);
-         changed = true;
       }
       else {
          if (showVolume && volumeTimer.TimedOut()) {
             LOCK_PIXMAPS;
             pmBG->DrawRectangle(cRect(x0, y5, x5, lh), Theme.Color(clrBackground));
             showVolume = false;
-            changed = true;
          }
       }
    }
 
-   /*if (ElchiConfig.clrdlgActive) {
-      DSYSLOG2("skinelchiHD: colorchanging - DisplayMenu::Flush()")
-      lastClrDlgFg = ElchiConfig.clrDlgFg;
-      lastClrDlgBg = ElchiConfig.clrDlgBg;
-
-      pmMenu->DrawText(cPoint(x0, y5), "Test Message",
-         lastClrDlgFg, lastClrDlgBg, font, x8 - x0, y8 - y5, taCenter);
-   }
-   else */
-   {
-      if (changed) {
-#ifdef DEBUG
-         //DSYSLOG2("skinelchiHD: DisplayMenu::Flush()")
-         timeval tp1, tp2;
-         gettimeofday(&tp1, NULL);
+#ifdef DEBUG_TIMING
+   //DSYSLOG2("skinelchiHD: DisplayMenu::Flush()")
+   gettimeofday(&tp1, NULL);
 #endif
-         osd->Flush();
-#ifdef DEBUG         
-         gettimeofday(&tp2, NULL);
-         dsyslog("skinelchiHD: DisplayMenu::osd->Flush() %4.3f ms",
-            (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000.0);
-#endif
-         changed = false;
-      }
-   }
-
-#ifdef DEBUG   
+   osd->Flush();
+#ifdef DEBUG_TIMING
    gettimeofday(&tp2, NULL);
-   double msec = (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000.0;
-   if (msec > 0.2) isyslog("skinelchiHD: DisplayMenu::Flush() all: %4.3f ms", msec);
+   //dsyslog("skinelchiHD: DisplayMenu::osd->Flush() %4.3f ms",
+   msec2 = (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000.0;
+#endif
+
+#ifdef DEBUG_TIMING
+   gettimeofday(&tpa2, NULL);
+   double msec = (((long long)tpa2.tv_sec * 1000000 + tpa2.tv_usec) - ((long long)tpa1.tv_sec * 1000000 + tpa1.tv_usec)) / 1000.0;
+   if (msec > 0.2); isyslog("skinelchiHD: DisplayMenu::Flush() flush: %4.3f ms all: %4.3f ms (%+4.3f ms)", msec2, msec, msec - msec2);
 #endif
 }
 

@@ -7,13 +7,15 @@
  * $Id$
  */
 
+//#define DEBUG
+//#define DEBUG2
+
 #include <time.h>
 
 #include <vdr/device.h>
 #include <vdr/menu.h>
 #include <vdr/osd.h>
 
-//#define DEBUG
 #include "common.h"
 #include "displaychannel.h"
 #include "vdrstatus.h"
@@ -29,6 +31,7 @@ extern cSkinElchiStatus *ElchiStatus;
 
 cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
 {
+   DSYSLOG("skinelchiHD: cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel()")
    hasVideo = true;
    old_ar = ar_unknown;
    old_width = -1;
@@ -42,8 +45,8 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    recordingchange = -1;
    lastdate = NULL;
    Channelnumber[0] = 0;
-   recording = false;
-   cutting = false;
+   isRecording = false;
+   isCutting = false;
    withInfo = WithInfo;
    const cFont *smallfont = cFont::GetFont(fontSml);
    const cFont *font = cFont::GetFont(fontOsd);
@@ -159,7 +162,15 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    }
 
    pmBG = osd->CreatePixmap(LYR_BG, cRect(0, 0, xRight, withInfo ? yBottom : yRecordings));
+   if (pmBG == NULL) {
+      esyslog("skinelchiHD DisplayChannel: Creation of pixmap failed");
+      return;
+   }
    pmChannelNameBg = osd->CreatePixmap(LYR_TEXTBG, cRect(xLeft, yChName, xSymbolStart - xLeft, lh));
+   if (pmChannelNameBg == NULL) {
+      esyslog("skinelchiHD DisplayChannel: Creation of ChannelName pixmap failed");
+      return;
+   }
    if (ElchiConfig.showLogo)
       pmLogo = osd->CreatePixmap(LYR_TEXT, cRect(xLogo, yLogo, wLogo, hLogo));
    
@@ -236,6 +247,7 @@ cSkinElchiHDDisplayChannel::~cSkinElchiHDDisplayChannel()
    DELETENULL(spmFollowingShort);
    DELETENULL(spmChannelName);
    DELETENULL(spmMessage);
+   DELETENULL(spmAudio);
    DELETENULL(spmRecording);
 
    ElchiBackground->SetOSD(NULL);
@@ -257,7 +269,7 @@ void cSkinElchiHDDisplayChannel::DrawBackground()
    /// Date Time BG
    DrawShadedRectangle(pmBG, Theme.Color(clrChannelDateBg), cRect(xLeft, yChDateTime, wChDateTime + wLogo + lh2, lh));
    pmBG->DrawEllipse(cRect(xLeft+wChDateTime + wLogo, yChDateTime, lh2, lh2), Theme.Color(clrBackground), -1);
-   pmBG->DrawEllipse(cRect(xLeft+wChDateTime + wLogo, yChDateTime + lh -lh2, lh2, lh2), Theme.Color(clrBackground), -4);
+   pmBG->DrawEllipse(cRect(xLeft+wChDateTime + wLogo, yChDateTime + lh - lh2, lh2, lh2), Theme.Color(clrBackground), -4);
    
    /// Channel Name BG
    DrawShadedRectangle(pmChannelNameBg, Theme.Color(clrChannelNameBg));
@@ -413,8 +425,8 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
 
          //  draw symbols: rec, encrypted, DD, Audio, Teletext
          LOCK_PIXMAPS;
-         pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_REC], ySymbolARRec), elchiSymbols.Get(SYM_REC, Theme.Color(recording ? clrSymbolRecFg : clrChannelSymbolOff), recording ? Theme.Color(clrSymbolRecBg) : bg));
-         pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_cutting], ySymbolARRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(cutting ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
+         pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_REC], ySymbolARRec), elchiSymbols.Get(SYM_REC, Theme.Color(isRecording ? clrSymbolRecFg : clrChannelSymbolOff), isRecording ? Theme.Color(clrSymbolRecBg) : bg));
+         pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_cutting], ySymbolARRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(isCutting ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
          pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_encrypted], ySymbols), elchiSymbols.Get(SYM_ENCRYPTED, Theme.Color(Channel->Ca() ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
          pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_DolbyDigital], ySymbols), elchiSymbols.Get(SYM_DOLBYDIGITAL, Theme.Color(Channel->Dpid(0) ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
          pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_Audio], ySymbols), elchiSymbols.Get(SYM_AUDIO, Theme.Color(Channel->Apid(1) ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
@@ -464,6 +476,7 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
                cOSDImage *imgLogo = new cOSDImage(filename, wLogo, hLogo, bLogo);
                if (imgLogo && imgLogo->GetImage()) {
                   pmLogo->DrawImage(cPoint(0, 0), *imgLogo->GetImage());
+                  delete imgLogo;
                   if (ElchiConfig.LogoMessages)
                      isyslog("skinElchiHD: logo loaded %s", *filename);
                   pmLogo->SetLayer(LYR_TEXT);
@@ -499,7 +512,13 @@ void cSkinElchiHDDisplayChannel::SetEvents(const cEvent *Present, const cEvent *
    if (withInfo) {
       const cFont *smallfont = cFont::GetFont(fontSml);
       const cFont *font = cFont::GetFont(fontOsd);
-      LOCK_PIXMAPS;
+      
+      spmPresentTitle->SetText(Present ? Present->Title() : NULL, font);
+      spmPresentShort->SetText(Present ? Present->ShortText() : NULL, smallfont);
+
+      spmFollowingTitle->SetText(Following ? Following->Title() : NULL, font);
+      spmFollowingShort->SetText(Following ? Following->ShortText() : NULL, smallfont);
+      LOCK_PIXMAPS;  // after SetText() to avoid deadlock
       
       if (!Present || !Present->StartTime()) {
          pmBG->DrawRectangle(cRect(xTimeBar + Gap, yEvText, wTimeBar, hEvents), Theme.Color(clrChannelEpgTitleBg));
@@ -517,12 +536,6 @@ void cSkinElchiHDDisplayChannel::SetEvents(const cEvent *Present, const cEvent *
 
       pmBG->DrawText(cPoint(xEvTime, yEvText), Present ? Present->GetTimeString() : (cString)NULL, Theme.Color(clrChannelEpgTimeFg), Theme.Color(clrChannelEpgTimeBg), cFont::GetFont(fontOsd), wEvTime, 0, taCenter);
       pmBG->DrawText(cPoint(xEvTime, yEvText + 2 * lh), Following ? Following->GetTimeString() : (cString)NULL, Theme.Color(clrChannelEpgTimeFg), Theme.Color(clrChannelEpgTimeBg), cFont::GetFont(fontOsd), wEvTime, 0, taCenter);
-      
-      spmPresentTitle->SetText(Present ? Present->Title() : NULL, font);
-      spmPresentShort->SetText(Present ? Present->ShortText() : NULL, smallfont);
-
-      spmFollowingTitle->SetText(Following ? Following->Title() : NULL, font);
-      spmFollowingShort->SetText(Following ? Following->ShortText() : NULL, smallfont);
    }
 
    if (Present && Present->Vps()) {
@@ -610,15 +623,19 @@ void cSkinElchiHDDisplayChannel::Flush(void)
    if (PresentEvent) {
       LOCK_TIMERS_READ
       Timer = Timers->GetMatch(PresentEvent, &TimerMatch);
-      if (Timer && Timer->Recording() && Timer->Local()) {
-         changed = true;
-         presentOffset = elchiSymbols.Width(SYM_REC) + Gap;
-         if (PresentEvent->IsRunning())
+      if (Timer && Timer->Recording()) {
+         if (Timer->Local()) {
             pmBG->DrawBitmap(cPoint(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(SYM_REC,
-                           Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
-         else
-            pmBG->DrawBitmap(cPoint(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(SYM_REC,
-                           Theme.Color(clrChannelEpgShortText), Theme.Color(clrChannelEpgTitleBg)));
+                             Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
+            changed = true;
+            presentOffset = elchiSymbols.Width(SYM_REC) + Gap;
+         }
+         else if (ElchiConfig.ShowRemoteTimers) {
+            pmBG->DrawBitmap(cPoint(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(Timer->Local() ? SYM_REC : SYM_REC_REMOTE,
+                             Theme.Color(clrChannelEpgTitleBg), Theme.Color(clrChannelEpgShortText)));
+            changed = true;
+            presentOffset = elchiSymbols.Width(SYM_REC) + Gap;
+         }
       }
    }
    if (presentOffset != presentLastOffset) {
@@ -626,15 +643,16 @@ void cSkinElchiHDDisplayChannel::Flush(void)
          pmBG->DrawRectangle(cRect(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2, elchiSymbols.Width(SYM_REC), elchiSymbols.Height(SYM_REC)), Theme.Color(clrBackground));
       spmPresentTitle->SetViewPort(cRect(xEvText + presentOffset, yEvText, wEvText - presentOffset, lh));
       presentLastOffset = presentOffset;
+      changed = true;
    }
 
    if (FollowingEvent) {
       LOCK_TIMERS_READ
       Timer = Timers->GetMatch(FollowingEvent, &TimerMatch);
-      if (Timer && TimerMatch == tmFull && Timer->HasFlags(tfActive) && Timer->Local()) {
+      if (Timer && TimerMatch == tmFull && Timer->HasFlags(tfActive) && (Timer->Local() || ElchiConfig.ShowRemoteTimers)) {
          changed = true;
          followingOffset = elchiSymbols.Width(SYM_REC) + Gap;
-         pmBG->DrawBitmap(cPoint(xEvText, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(SYM_REC,
+         pmBG->DrawBitmap(cPoint(xEvText, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(Timer->Local() ? SYM_REC : SYM_REC_REMOTE,
                          Theme.Color(clrChannelEpgTitleBg), Theme.Color(clrChannelEpgShortText)));
       }
    }
@@ -643,6 +661,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
          pmBG->DrawRectangle(cRect(xEvText, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2, elchiSymbols.Width(SYM_REC), elchiSymbols.Height(SYM_REC)), Theme.Color(clrBackground));
       spmFollowingTitle->SetViewPort(cRect(xEvText + followingOffset, yEvText + 2*lh, wEvText - followingOffset, lh));
       followingLastOffset = followingOffset;
+      changed = true;
    }
 
    if (!showMessage && !showVolume) {
@@ -769,8 +788,8 @@ void cSkinElchiHDDisplayChannel::Flush(void)
       {
          int numRecordings = 0;
          int newrecordingChange = ElchiStatus->GetRecordingChange(&numRecordings);
-         if (recordingchange != newrecordingChange) {
-         
+         if (recordingchange != newrecordingChange)
+         {
             recordingchange = newrecordingChange;
             if (0 == numRecordings) {
                spmRecording->SetLayer(LYR_HIDDEN);
@@ -786,17 +805,17 @@ void cSkinElchiHDDisplayChannel::Flush(void)
 
    // ----------------------- cutting symbol --------------------------------
    bool cuttingtemp = RecordingsHandler.Active();
-   if (!showVolume && !showMessage && cutting != cuttingtemp) {
-      cutting = cuttingtemp;
-      pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_cutting], ySymbolARRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(cutting ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
+   if (!showVolume && !showMessage && isCutting != cuttingtemp) {
+      isCutting = cuttingtemp;
+      pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_cutting], ySymbolARRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(isCutting ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
       changed = true;
    }
    
    // ----------------------- recording symbol --------------------------------
    bool rectemp = cRecordControls::Active();
-   if (!showVolume && !showMessage && recording != rectemp) {
-      recording = rectemp;
-      pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_REC], ySymbolARRec), elchiSymbols.Get(SYM_REC, Theme.Color(recording ? clrSymbolRecFg : clrChannelSymbolOff), recording ? Theme.Color(clrSymbolRecBg) : bg));
+   if (!showVolume && !showMessage && isRecording != rectemp) {
+      isRecording = rectemp;
+      pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_REC], ySymbolARRec), elchiSymbols.Get(SYM_REC, Theme.Color(isRecording ? clrSymbolRecFg : clrChannelSymbolOff), isRecording ? Theme.Color(clrSymbolRecBg) : bg));
       changed = true;
    }
 

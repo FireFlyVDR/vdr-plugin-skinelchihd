@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2020-09-11 16:31+0200\n"
+"POT-Creation-Date: 2021-01-16 18:34+0100\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Christoph Haubrich <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -79,35 +79,41 @@ msgstr "Timer-Konflikt"
 msgid "all"
 msgstr "alle"
 
-msgid "EPG+Details"
-msgstr "EPG+Details"
+msgid "EPG + Details"
+msgstr "EPG + Details"
 
-msgid "EPG+Details+Genre"
-msgstr "EPG+Details+Genre"
+msgid "EPG + Details + Genre"
+msgstr "EPG + Details + Genre"
+
+msgid "channel ID + event ID"
+msgstr "Kanal-ID + Event-ID"
+
+msgid "event ID only"
+msgstr "nur Event ID"
 
 msgid "scroll text"
-msgstr "rollender Text"
+msgstr "Laufschrift"
 
 msgid "show timer and conflict in menu"
-msgstr "zeige Timer und Konflikte im Menü"
+msgstr "Timer und Konflikte im Menü anzeigen"
 
 msgid "show logo if recording is HD/UHD"
-msgstr "zeige HD/UHD-Logo vor Aufnahmen"
+msgstr "HD/UHD-Logo vor Aufnahmen anzeigen"
 
 msgid "show recording details"
-msgstr "zeige Aufnahmedetails"
+msgstr "Aufnahmedetails anzeigen"
 
 msgid "show EPG details"
-msgstr "zeige EPG-Details"
+msgstr "EPG-Details anzeigen"
 
 msgid "show video format info (if available)"
-msgstr "zeige Video Format Info (wenn möglich)"
+msgstr "Video Format Info anzeigen (wenn möglich)"
 
 msgid "use graphical progressbar"
-msgstr "Zeige graph. Fortschrittsbalken"
+msgstr "graph. Fortschrittsbalken anzeigen"
 
 msgid "show symbols"
-msgstr "Zeige Symbole"
+msgstr "Symbole anzeigen"
 
 msgid "EPG picture size"
 msgstr "EPG Bildgröße"
@@ -115,6 +121,13 @@ msgstr "EPG Bildgröße"
 #. TRANSLATORS: note the two leading spaces
 msgid "  duration of each EPG image [s]"
 msgstr "  Zeit je Bild [s]"
+
+#. TRANSLATORS: note the two leading spaces
+msgid "  search for EPG images with"
+msgstr "  suche nach EPG Bildern mit"
+
+msgid "show remote timers in EPG"
+msgstr "Remote Timer im EPG anzeigen"
 
 msgid "Channel Display"
 msgstr "Kanal-Anzeige"
@@ -146,8 +159,11 @@ msgstr "suche Logo zuerst als"
 msgid "show signal bars"
 msgstr "Signalstärke anzeigen"
 
+msgid "show remote timers"
+msgstr "Remote Timer anzeigen"
+
 msgid "write logo messages to syslog"
-msgstr "schreibe Logomeldungen in syslog"
+msgstr "Logomeldungen in Syslog schreiben"
 
 msgid "ElchiHD skin"
 msgstr "ElchiHD Oberfläche"

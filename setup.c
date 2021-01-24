@@ -226,7 +226,7 @@ eOSState cSkinElchiHDSetupColor::ProcessKey(eKeys Key)
 class cSkinElchiHDSetupGeneral : public cOsdMenu
 {
 private:
-   cSkinElchiHDConfig *tmpconfig;
+   cSkinElchiHDConfig *tmpConfig;
    int oldepgimagesize;
    void Setup(void);
    const char * EpgImageSizeItems[5];
@@ -237,6 +237,7 @@ private:
    const char * TimerCheckItems[4];
    const char * MailIconItems[3];
    const char * EpgDetails[3];
+   const char * EpgImageSearch[2];
 
 protected:
    virtual eOSState ProcessKey(eKeys Key);
@@ -246,12 +247,12 @@ public:
    virtual ~cSkinElchiHDSetupGeneral();
 };
 
-cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *tmpConfig)
+cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *TmpConfig)
 :cOsdMenu("", 33)
 {
    SetTitle(cString::sprintf("%s - '%s' %s", trVDR("Setup"), "skinElchiHD", tr("General")));
 
-   tmpconfig = tmpConfig;
+   tmpConfig = TmpConfig;
 
    EpgImageSizeItems[0] = tr("don't show");
    EpgImageSizeItems[1] = "small";
@@ -269,8 +270,11 @@ cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *tmpConfig
    TimerCheckItems[3] = tr("all");
 
    EpgDetails[0]   = trVDR("EPG");
-   EpgDetails[1]   = tr("EPG+Details");
-   EpgDetails[2]   = tr("EPG+Details+Genre");
+   EpgDetails[1]   = tr("EPG + Details");
+   EpgDetails[2]   = tr("EPG + Details + Genre");
+
+   EpgImageSearch[0] = tr("channel ID + event ID");
+   EpgImageSearch[1] = tr("event ID only");
 
    Setup();
 }
@@ -282,20 +286,23 @@ cSkinElchiHDSetupGeneral::~cSkinElchiHDSetupGeneral()
 
 void cSkinElchiHDSetupGeneral::Setup(void)
 {
-   Add(new cMenuEditBoolItem(tr("scroll text"), &tmpconfig->useScrolling));
-   Add(new cMenuEditStraItem(tr("show timer and conflict in menu"), &tmpconfig->showTimer, 4, TimerCheckItems));
-   Add(new cMenuEditBoolItem(tr("show logo if recording is HD/UHD"), &tmpconfig->showRecHD));
-   Add(new cMenuEditStraItem(tr("show recording details"), &tmpconfig->showRecDetails, 3, EpgDetails));
-   Add(new cMenuEditStraItem(tr("show EPG details"), &tmpconfig->showEPGDetails, 3, EpgDetails));
-   Add(new cMenuEditStraItem(tr("show video format info (if available)"), &tmpconfig->showVideoInfo, 3, VideoFormatItems));
-   Add(new cMenuEditBoolItem(tr("use graphical progressbar"), &tmpconfig->GraphicalProgressbar));
-   Add(new cMenuEditBoolItem(tr("show symbols"), &tmpconfig->showIcons));
-   oldepgimagesize = tmpconfig->EpgImageSize;
-   Add(new cMenuEditStraItem(tr("EPG picture size"), &tmpconfig->EpgImageSize, 5, EpgImageSizeItems));
-   if (tmpconfig->EpgImageSize) {
+   Add(new cMenuEditBoolItem(tr("scroll text"), &tmpConfig->useScrolling));
+   Add(new cMenuEditStraItem(tr("show timer and conflict in menu"), &tmpConfig->showTimer, 4, TimerCheckItems));
+   Add(new cMenuEditBoolItem(tr("show logo if recording is HD/UHD"), &tmpConfig->showRecHD));
+   Add(new cMenuEditStraItem(tr("show recording details"), &tmpConfig->showRecDetails, 3, EpgDetails));
+   Add(new cMenuEditStraItem(tr("show EPG details"), &tmpConfig->showEPGDetails, 3, EpgDetails));
+   Add(new cMenuEditStraItem(tr("show video format info (if available)"), &tmpConfig->showVideoInfo, 3, VideoFormatItems));
+   Add(new cMenuEditBoolItem(tr("use graphical progressbar"), &tmpConfig->GraphicalProgressbar));
+   Add(new cMenuEditBoolItem(tr("show symbols"), &tmpConfig->showIcons));
+   oldepgimagesize = tmpConfig->EpgImageSize;
+   Add(new cMenuEditStraItem(tr("EPG picture size"), &tmpConfig->EpgImageSize, 5, EpgImageSizeItems));
+   if (tmpConfig->EpgImageSize) {
       // TRANSLATORS: note the two leading spaces
-      Add(new cMenuEditIntItem(tr("  duration of each EPG image [s]"), &tmpconfig->EpgImageDisplayTime, 2, 15));
+      Add(new cMenuEditIntItem(tr("  duration of each EPG image [s]"), &tmpConfig->EpgImageDisplayTime, 2, 15));
+      // TRANSLATORS: note the two leading spaces
+      Add(new cMenuEditStraItem(tr("  search for EPG images with"), &tmpConfig->EpgImageEventIdOnly, 2, EpgImageSearch));
    }
+   Add(new cMenuEditBoolItem(tr("show remote timers in EPG"), &tmpConfig->EpgShowRemoteTimers));
 }
 
 eOSState cSkinElchiHDSetupGeneral::ProcessKey(eKeys Key)
@@ -312,8 +319,8 @@ eOSState cSkinElchiHDSetupGeneral::ProcessKey(eKeys Key)
       }
    }
 
-   if (oldepgimagesize != tmpconfig->EpgImageSize) {
-      oldepgimagesize = tmpconfig->EpgImageSize;
+   if (oldepgimagesize != tmpConfig->EpgImageSize) {
+      oldepgimagesize = tmpConfig->EpgImageSize;
       int oldcurrent = Current();
       Clear();
       Setup();
@@ -328,7 +335,7 @@ eOSState cSkinElchiHDSetupGeneral::ProcessKey(eKeys Key)
 class cSkinElchiHDSetupChannelDisplay : public cOsdMenu
 {
 private:
-   cSkinElchiHDConfig *tmpconfig;
+   cSkinElchiHDConfig *tmpConfig;
    void Setup(void);
    const char *RecInfoItems[3];
    const char *ShowLogoItems[3];
@@ -338,16 +345,16 @@ protected:
    virtual eOSState ProcessKey(eKeys Key);
 
 public:
-   cSkinElchiHDSetupChannelDisplay(cSkinElchiHDConfig *tmpConfig);
+   cSkinElchiHDSetupChannelDisplay(cSkinElchiHDConfig *TmpConfig);
    virtual ~cSkinElchiHDSetupChannelDisplay();
 };
 
-cSkinElchiHDSetupChannelDisplay::cSkinElchiHDSetupChannelDisplay(cSkinElchiHDConfig *tmpConfig)
+cSkinElchiHDSetupChannelDisplay::cSkinElchiHDSetupChannelDisplay(cSkinElchiHDConfig *TmpConfig)
 :cOsdMenu("", 33)
 {
    SetTitle(cString::sprintf("%s - '%s' %s", trVDR("Setup"), "skinElchiHD", tr("Channel Display")));
 
-   tmpconfig = tmpConfig;
+   tmpConfig = TmpConfig;
 
    RecInfoItems[0] = trVDR("no");
    RecInfoItems[1] = tr("only when recording");
@@ -369,14 +376,15 @@ cSkinElchiHDSetupChannelDisplay::~cSkinElchiHDSetupChannelDisplay()
 
 void cSkinElchiHDSetupChannelDisplay::Setup(void)
 {
-   Add(new cMenuEditBoolItem(tr("show audio Info"), &tmpconfig->showAudioInfo));
-   Add(new cMenuEditStraItem(tr("show recording Info"), &tmpconfig->showRecInfo, 3, RecInfoItems));
-   Add(new cMenuEditStraItem(tr("show channel logos"), &tmpconfig->showLogo, 3, ShowLogoItems));
+   Add(new cMenuEditBoolItem(tr("show audio Info"), &tmpConfig->showAudioInfo));
+   Add(new cMenuEditStraItem(tr("show recording Info"), &tmpConfig->showRecInfo, 3, RecInfoItems));
+   Add(new cMenuEditStraItem(tr("show channel logos"), &tmpConfig->showLogo, 3, ShowLogoItems));
 #ifndef GRAPHICSMAGICK   
-   Add(new cMenuEditStraItem(tr("search logos first as"), &tmpconfig->LogoSVGFirst, 2, LogoTypeItems));
+   Add(new cMenuEditStraItem(tr("search logos first as"), &tmpConfig->LogoSVGFirst, 2, LogoTypeItems));
 #endif   
-   Add(new cMenuEditBoolItem(tr("show signal bars"), &tmpconfig->showSignalBars));
-   Add(new cMenuEditBoolItem(tr("write logo messages to syslog"), &tmpconfig->LogoMessages));
+   Add(new cMenuEditBoolItem(tr("show signal bars"), &tmpConfig->showSignalBars));
+   Add(new cMenuEditBoolItem(tr("show remote timers"), &tmpConfig->ShowRemoteTimers));
+   Add(new cMenuEditBoolItem(tr("write logo messages to syslog"), &tmpConfig->LogoMessages));
 }
 
 eOSState cSkinElchiHDSetupChannelDisplay::ProcessKey(eKeys Key)
@@ -470,6 +478,8 @@ void cSkinElchiHDSetup::Store(void)
    SetupStore("showIcons", ElchiConfig.showIcons);
    SetupStore("EpgImageSize", ElchiConfig.EpgImageSize);
    SetupStore("EpgImageDisplayTime", ElchiConfig.EpgImageDisplayTime);
+   SetupStore("EpgImageEventIdOnly", ElchiConfig.EpgImageEventIdOnly);
+   SetupStore("EpgShowRemoteTimers", ElchiConfig.EpgShowRemoteTimers);
 
    // channel Display values
    SetupStore("showAudioInfo", ElchiConfig.showAudioInfo);
@@ -478,4 +488,6 @@ void cSkinElchiHDSetup::Store(void)
    SetupStore("LogoSVGFirst", ElchiConfig.LogoSVGFirst);
    SetupStore("showSignalBars", ElchiConfig.showSignalBars);
    SetupStore("LogoMessages", ElchiConfig.LogoMessages);
+   SetupStore("LogoSearchNameFirst"); // remove setting
+   SetupStore("ShowRemoteTimers", ElchiConfig.ShowRemoteTimers);
 }

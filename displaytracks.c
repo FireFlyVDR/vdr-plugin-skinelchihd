@@ -110,8 +110,6 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
    
    for (int i = offset; i < offset + MaxTracks; i++)
       SetItem(Tracks[i], i, false);
-
-   spmMessage = NULL;
 }
 
 cSkinElchiHDDisplayTracks::~cSkinElchiHDDisplayTracks()
