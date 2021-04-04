@@ -229,7 +229,7 @@ private:
    cSkinElchiHDConfig *tmpConfig;
    int oldepgimagesize;
    void Setup(void);
-   const char * EpgImageSizeItems[5];
+   const char * EpgImageSizeItems[6];
    const char * ResizeItems[3];
 
    const char * RecInfoItems[3];
@@ -255,10 +255,11 @@ cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *TmpConfig
    tmpConfig = TmpConfig;
 
    EpgImageSizeItems[0] = tr("don't show");
-   EpgImageSizeItems[1] = "small";
-   EpgImageSizeItems[2] = "medium";
-   EpgImageSizeItems[3] = "large";
-   EpgImageSizeItems[4] = "extra large";
+   EpgImageSizeItems[1] = tr("small");
+   EpgImageSizeItems[2] = tr("medium");
+   EpgImageSizeItems[3] = tr("large");
+   EpgImageSizeItems[4] = tr("extra large");
+   EpgImageSizeItems[5] = tr("huge");
 
    VideoFormatItems[0]  = trVDR("no");
    VideoFormatItems[1]  = tr("format");
@@ -295,7 +296,7 @@ void cSkinElchiHDSetupGeneral::Setup(void)
    Add(new cMenuEditBoolItem(tr("use graphical progressbar"), &tmpConfig->GraphicalProgressbar));
    Add(new cMenuEditBoolItem(tr("show symbols"), &tmpConfig->showIcons));
    oldepgimagesize = tmpConfig->EpgImageSize;
-   Add(new cMenuEditStraItem(tr("EPG picture size"), &tmpConfig->EpgImageSize, 5, EpgImageSizeItems));
+   Add(new cMenuEditStraItem(tr("EPG picture size"), &tmpConfig->EpgImageSize, 6, EpgImageSizeItems));
    if (tmpConfig->EpgImageSize) {
       // TRANSLATORS: note the two leading spaces
       Add(new cMenuEditIntItem(tr("  duration of each EPG image [s]"), &tmpConfig->EpgImageDisplayTime, 2, 15));

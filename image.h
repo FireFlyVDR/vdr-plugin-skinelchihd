@@ -16,7 +16,7 @@
 class cOSDImage : public cListObject
 {
 public:
-   cOSDImage(cString Filename, int Width, int Height, tColor clrBorder, int Border, int OBevel);
+   cOSDImage(cString Filename, int Width, int Height);
    cOSDImage(cString Filename, int Width, int Height, int Border);
    ~cOSDImage();
    inline cImage *GetImage() { return image; }
@@ -25,8 +25,7 @@ public:
 
 private:
    cString imagefilename;
-   int width, height, border, oBevel;
-   tColor clrFrame;
+   int width, height, border;
    cImage *image;
 
    bool LoadImage(bool isLogo);

@@ -26,6 +26,7 @@ private:
    void DrawScrollbar(int Total, int Offset, int Shown, int Top, int Height);
    void SetTextScrollbar(void);
    void DrawTitle(void);
+   void DrawImageFrame(void);
    void SetItemBackground(int Index, bool Current, bool Selectable, int xScrollArea);
    int scrollTotalLines, scrollShownLines, scrollOffsetLines, scrollbarTop, scrollbarHeight;
    
@@ -58,6 +59,7 @@ private:
    int timercheck;
    //int EventImages;
    int epgImageLines;
+   cSize epgImageSize;
    timeval lasttime;
    int tabs[MaxTabs];
    cString stripXmlTag(cString source, const char* tag);

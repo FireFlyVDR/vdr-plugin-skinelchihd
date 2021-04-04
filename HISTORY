@@ -42,3 +42,13 @@ VDR Plugin 'skinelchiHD' Revision History
 - added patch epgsearch-2.4.0_remote-timers.diff for epgsearch in the patch folder for displaying remote timers via 's' and 'S' 
 - improved menu responsiveness
 - code cleanup and minor improvements
+
+2021-04-05 Version 0.5.3
+- fixed possible missing update of replay OSD
+- fixed segfault at startup if output plugin is detached
+- fixed delay of symbol update in timer list
+- implemented SetItemChannel
+- fixed size of EPG images with different aspect ratio
+- refactored integration of EPG image into OSD
+- added an additional EPG image size ("huge")
+- fixed recording menu of undelete plugin

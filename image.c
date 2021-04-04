@@ -32,7 +32,7 @@ using namespace Magick;
 // load image (EPG or logo) with help of imageMagick
 // resize image with imageMagick if size differs from request and target size is provided
 // return pointer to cImage with GetImage()
-cOSDImage::cOSDImage(cString Filename, int Width, int Height, tColor ClrFrame, int Border, int OBevel)
+cOSDImage::cOSDImage(cString Filename, int Width, int Height)
 {
    DSYSLOG2("skinelchiHD: cOSDImage EPG: %s", *imagefilename)
    InitializeMagick(NULL);
@@ -40,9 +40,7 @@ cOSDImage::cOSDImage(cString Filename, int Width, int Height, tColor ClrFrame, i
    imagefilename = Filename;
    width = Width;
    height = Height;
-   clrFrame = ClrFrame;
-   border = Border;
-   oBevel = OBevel;
+   border = 0;
    image = NULL;
    if (!isempty(imagefilename))
       LoadImage(false);
@@ -56,9 +54,7 @@ cOSDImage::cOSDImage(cString Filename, int Width, int Height, int Border)
    imagefilename = Filename;
    width = Width;
    height = Height;
-   clrFrame = clrTransparent;
    border = Border;
-   oBevel = -1;
    image = NULL;
    if (!isempty(imagefilename))
       LoadImage(true);
@@ -113,28 +109,11 @@ bool cOSDImage::LoadImage(bool isLogo)
             mgkImage.extent(Geometry(width, height), "None", CenterGravity);
          }
          else { // EPG image
-            // reisze if required without changing aspect ratio
-            if (hImg != height - 2*border) {  //TODO check if height is greater than allowed, then shrink width
+            if (hImg != height - 2*border) { // reisze if required without changing aspect ratio
                mgkImage.resize(Geometry((width -2*border)*wImg/hImg, height - 2*border, 0, 0));
             }
- 
-            if (border) {
-               if (oBevel) { // EPG image with beveled frame
-#ifndef GRAPHICSMAGICK
-                  Magick::Color mgkFrame = Magick::Color(QuantumRange/255*((clrFrame & 0x00FF0000)>>16),
-                                                         QuantumRange/255*((clrFrame & 0x0000FF00)>> 8),
-                                                         QuantumRange/255* (clrFrame & 0x000000FF), 
-                                                         QuantumRange/255*((clrFrame & 0xFF000000)>>24)); //RGBA
-#else
-                  Magick::Color mgkFrame = Magick::Color(MaxRGB/255*((clrFrame & 0x00FF0000)>>16),
-                                                         MaxRGB/255*((clrFrame & 0x0000FF00)>> 8),
-                                                         MaxRGB/255* (clrFrame & 0x000000FF), 
-                                                         MaxRGB/255*((clrFrame & 0xFF000000)>>24)); //RGBA
-#endif   
-                  
-                  mgkImage.borderColor(mgkFrame);
-                  mgkImage.frame(border, border, border-oBevel, oBevel);
-               }
+            if ((int)mgkImage.columns() > width - 2*border) { // cut left/right border if it does not fit
+               mgkImage.shave(Geometry(((int)mgkImage.columns() - (width - 2*border))/2, 0, 0, 0));
             }
          }
          wImg = mgkImage.columns();
@@ -143,8 +122,6 @@ bool cOSDImage::LoadImage(bool isLogo)
 #ifdef DEBUG_IMAGETIMES
          tp3 = GetTimeMS();
 #endif
-         DSYSLOG("skinelchiHD: cOSDImage: 4 %dx%d  Magick:%dx%d", width, height, (int)mgkImage.columns(), (int)mgkImage.rows());
-         
          // convert to cImage
          mgkImage.depth(8);
          mgkImage.getPixels (0, 0, wImg, hImg); // x, y, w, h

@@ -21,7 +21,7 @@ VDR features like True Color support.
 Requirements:
 -------------
 VDR  2.4.3+
-ImageMagick++ 7.x or GraphicsMagick++
+GraphicsMagick++ or ImageMagick++ 7.x
 for SVG channel logos ImageMagick++ is required
 
 
@@ -46,7 +46,7 @@ The skinElchiHD plugin is compiled and installed the same way as any other plugi
 - cd ../..
 - make plugins  [IMAGELIB=graphicsmagick]
 
-Append "IMAGELIB=imagemagick" or "IMAGELIB=graphicsmagick" to themake command to build with the respective library. 
+Append "IMAGELIB=imagemagick" or "IMAGELIB=graphicsmagick" to the make command to build with the respective library. 
 Default (e.g. witout parameter) is ImageMagick++.
 
 Copy the provided 50-skinelchihd.conf file to your VDR args dir (e.g. /etc/vdr/conf.d)
@@ -59,9 +59,9 @@ Copy the theme files in the themes subdirectory to the VDR theme directory
 Usage:
 ------
 Channel logos:
-For displaying channel logos skinElchiHD requires SVG logo files. SkinElchiHD
+For displaying channel logos skinElchiHD requires PNG or SVG logo files. SkinElchiHD
 does not provide logo files but there are several sets floating around in the
-internet. The logos should have no background (=transparent) as it is added by
+internet. The logos should have no background (= transparent) as it is added by
 skinElchiHD.
 
 The path to the logo files can be set with a command line parameter: 
@@ -71,7 +71,7 @@ The path to the logo files can be set with a command line parameter:
 For displaying SVG channel logos ImagMagick++ is required.
 
 Images of EPG and recordings: 
-SkinElchiHD can display EPG images in JPEG format for both EPG view and recordings.
+SkinElchiHD can display EPG images in JPEG format for both EPG events and recordings.
 The path to EPG images can be set with:
   -e <EPGImageDir>, --epgimages=<ImageDir>  path to EPG images
                                             (default: <CacheDir>/plugins/skinelchihd/epgimages)
@@ -80,8 +80,10 @@ For the EPG the images need to follow the format "<SOURCE>_<EPGID>[_<No].jpg"
 where <SOURCE> is the DVB source (e.g. S19.2E-1-1019-10301) and <EPGID> the ID
 of the EPG event. If there is more than one image then for the second and 
 further images an ascending Number <No> beginning with '1' is appended and
-skinElchiHD can display up to 5 images sequentially. The time until the next
-images is dispalyed can be set via OSD in the Setup of the plugin.
+skinElchiHD can display up to 5 images sequentially. Beginning with skinElchiHD 0.5.2
+the first EPG image can also have a number '0' appended to have a consistent numbering
+across all images. The time until the next images is dispalyed can be set via OSD in
+the Setup of the plugin.
 
 For recording images they have to reside in the folder of the recording and
 need to end with ".jpg".
@@ -102,10 +104,10 @@ General:
   select detail range of recordings
 
 - Show EPG details:                 EPG / EPG + details  / EPG + details + genre
-  select details range of EPG entries
+  select detail range of EPG entries
 
 - Show video format info (if available): no / format / size and format
-  shows size and format of current diesplayed stream in channel and replay menus
+  shows size and format of current displayed stream in channel and replay menus
 
 - use graphical progressbar:        yes/no
   convert ascii symbols [||||  ] to a graphical progress bar 
@@ -113,7 +115,7 @@ General:
 - show symbols:                     yes / no   
   shows VDR indicators as symbols instead of characters
 
-- EPG picture size:                 don't show / small / medium / large / extra large
+- EPG picture size:                 don't show / small / medium / large / extra large / huge
   select size of images in EPG and recordings menu
 
   - duration of each EPG image [s]: 5

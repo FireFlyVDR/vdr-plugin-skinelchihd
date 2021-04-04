@@ -55,6 +55,8 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    double OSDAspect = 16.0/9.0;
 
    cDevice::PrimaryDevice()->GetOsdSize(OSDWidth, OSDHeight, OSDAspect);
+   if (!OSDHeight)
+      OSDHeight = OSDsize.height;
 
    DSYSLOG("skinelchiHD: OSDsize Replay %dx%d left=%d/%d top=%d/%d width=%d/%d heigth=%d/%d",
            OSDWidth, OSDHeight, OSDsize.left, Setup.OSDLeft, OSDsize.top, Setup.OSDTop, OSDsize.width, Setup.OSDWidth, OSDsize.height, Setup.OSDHeight)
@@ -354,7 +356,8 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
          LOCK_PIXMAPS;
          DrawShadedRectangle(pmProgress, Theme.Color(clrReplayProgressSeen), cRect(lh2, lh/8, p, height));
          pmProgress->DrawRectangle(cRect(lh2+p, lh/8, width - p, height), Theme.Color(clrReplayProgressRest));
-         
+         changed = true;
+
          if (marks)
          {
             bool Start = true;

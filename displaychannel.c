@@ -67,6 +67,12 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    double OSDAspect = 16.0/9.0;
 
    cDevice::PrimaryDevice()->GetOsdSize(OSDWidth, OSDHeight, OSDAspect);
+   if (!OSDHeight)
+      // fix zero size if display is detached at startup
+      OSDHeight = OSDsize.height;
+
+   DSYSLOG("skinelchiHD: OSDsize Channel %dx%d left=%d/%d top=%d/%d width=%d/%d heigth=%d/%d",
+           OSDWidth, OSDHeight, OSDsize.left, Setup.OSDLeft, OSDsize.top, Setup.OSDTop, OSDsize.width, Setup.OSDWidth, OSDsize.height, Setup.OSDHeight);
 
    if (OSDHeight >= 2160) {
       wLogo          = 320;
@@ -140,7 +146,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    wChName = xSymbolStart - xChName -lh;
    
    yLogo = 0;                      // Logo Top
-   yChDateTime = (ElchiConfig.showLogo &&  hLogo >= lh) ?  hLogo - 3*lh2 : 0;  // Date Time Top
+   yChDateTime = (ElchiConfig.showLogo &&  hLogo > 3*lh2) ?  hLogo - 3*lh2 : 0;  // Date Time Top
    yChName = yChDateTime + lh + SymbolGap;    //Channel Name Top
    ySymbols = (lh - elchiSymbols.Height(SYM_VPS)) / 2;  // Symbols Top (centered in Channel Name Bar)
    ySymbolARRec = (lh - elchiSymbols.Height(SYM_REC)) / 2;  // Symbols Top (centered in Channel Name Bar)
@@ -163,7 +169,8 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
 
    pmBG = osd->CreatePixmap(LYR_BG, cRect(0, 0, xRight, withInfo ? yBottom : yRecordings));
    if (pmBG == NULL) {
-      esyslog("skinelchiHD DisplayChannel: Creation of pixmap failed");
+      esyslog("skinelchiHD DisplayChannel: Creation of pixmap failed (%dx%d lh=%d withInfo=%s TrueColor=%s)", 
+              xRight, withInfo ? yBottom : yRecordings, lh, withInfo?"true":"false", osd->IsTrueColor()?"true":"false");
       return;
    }
    pmChannelNameBg = osd->CreatePixmap(LYR_TEXTBG, cRect(xLeft, yChName, xSymbolStart - xLeft, lh));

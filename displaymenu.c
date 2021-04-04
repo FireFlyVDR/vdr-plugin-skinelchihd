@@ -95,6 +95,8 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    int OSDWidth = 1280;
    double OSDAspect = 16.0/9.0;
    cDevice::PrimaryDevice()->GetOsdSize(OSDWidth, OSDHeight, OSDAspect);
+   if (!OSDHeight)
+      OSDHeight = OSDsize.height;
   
    DSYSLOG("skinelchiHD: OSDsize Menu %dx%d left=%d/%d top=%d/%d width=%d/%d height=%d/%d",
            OSDWidth, OSDHeight, OSDsize.left, Setup.OSDLeft, OSDsize.top, Setup.OSDTop, OSDsize.width, Setup.OSDWidth, OSDsize.height, Setup.OSDHeight);
@@ -138,10 +140,11 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    {
       epgImageLines = 0;
       switch (epgimagesize) {
-         case 1: epgImageLines = 3; break;
-         case 2: epgImageLines = 5; break;
-         case 4: epgImageLines = 9; break;
-         case 3: 
+         case 1: epgImageLines =  3; break;
+         case 2: epgImageLines =  5; break;
+         case 3: epgImageLines =  7; break;
+         case 4: epgImageLines =  9; break;
+         case 5: epgImageLines = 11; break;
          default: epgImageLines = 7;      
       }
       x4 = x6 - epgImageLines*slh*4/3; 
@@ -188,8 +191,9 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    pmMenu->Clear();
 
    // EPG image
-   pmEPGImage = osd->CreatePixmap(LYR_HIDDEN, cRect(x4, y3 + slh/2, epgImageLines*slh*4/3, epgImageLines*slh));
-
+   epgImageSize = cSize((epgImageLines*slh - 2*border)*4/3, epgImageLines*slh - 2*border);
+   pmEPGImage = osd->CreatePixmap(LYR_HIDDEN, cRect(x4, y3 + slh/2, 2*border + epgImageSize.Width(), 2*border + epgImageSize.Height()));
+   
    // create selector BG
    pmCurrentItemBG = osd->CreatePixmap(LYR_HIDDEN, cRect(0, 0, x5 - x0, lh));
    DrawShadedRectangle(pmCurrentItemBG, Theme.Color(clrMenuItemCurrentBg));
@@ -304,6 +308,12 @@ void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, in
          /* start time     */ tabs[3] = tabs[2] + avgCharWidth2 + 10 * avgCharWidth;
          /* end time       */ tabs[4] = tabs[3] + avgCharWidth2 + 6 * avgCharWidth;
          /* [@srv:]recName */ tabs[5] = tabs[4] + avgCharWidth2 + 6 * avgCharWidth;
+         break;
+      case mcChannel:
+         /* Ch Number      */ tabs[0] = 0;
+         /* encr           */ tabs[1] = tabs[0] + symbolGap + numdigits(cChannels::MaxNumber()) * avgCharWidth;
+         /* radio          */ tabs[2] = tabs[1] + symbolGap + elchiSymbols.Width(SYM_ENCRYPTED);
+         /* Ch name        */ tabs[3] = tabs[2] + elchiSymbols.Width(SYM_RADIO) + avgCharWidth2;
          break;
       default:
          break;
@@ -431,6 +441,23 @@ void cSkinElchiHDDisplayMenu::Clear(void)
       cPixmap *tmpPixmap = pmEvent;
       pmEvent = NULL;
       osd->DestroyPixmap(tmpPixmap);
+   }
+}
+
+void cSkinElchiHDDisplayMenu::DrawImageFrame()
+{
+   if (pmEPGImage) {
+      LOCK_PIXMAPS;
+      pmEPGImage->Clear();
+      int h = epgImageSize.Height() + 2*border;
+      int w = epgImageSize.Width() + 2*border;
+      for (int b = 0; b < border; b++) {
+         bool inner = b < border*2/3;
+         pmEPGImage->DrawRectangle(cRect(b, b, w - b - b, 1), inner ? 0xFFD2D2D2 : 0xFF525252);
+         pmEPGImage->DrawRectangle(cRect(b, h - 1 - b, w - b - b, 1), inner ? 0xFF525252 : 0xFFD2D2D2);
+         pmEPGImage->DrawRectangle(cRect(b, b + 1, 1, h - b - b - 2), inner ? 0xFFDDDDDD : 0xFF646464);
+         pmEPGImage->DrawRectangle(cRect(w - 1 - b, b + 1, 1, h - b - b - 2), inner ? 0xFF646464 : 0xFFDDDDDD);
+      }
    }
 }
 
@@ -807,7 +834,7 @@ bool cSkinElchiHDDisplayMenu::SetItemTimer(const cTimer *Timer, int Index, bool 
          file = Timer->File();
       
       const cFont *font = cFont::GetFont(fontOsd);
-      tColor colorFg, colorBg;
+      tColor colorFg, colorBg = clrTransparent;
       int y = menuTop + Index * lh;
       SetItemBackground(Index, Current, Selectable, x1 + tabs[5]);
       
@@ -817,15 +844,15 @@ bool cSkinElchiHDDisplayMenu::SetItemTimer(const cTimer *Timer, int Index, bool 
       }
       else { // non-current
          colorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-         pmMenu->DrawText(cPoint(x1 + tabs[5], y), cString::sprintf("%s%s", Timer->Remote() ? *cString::sprintf("@%s: ", Timer->Remote()) : "", file), colorFg, clrTransparent, font, x5 - lh/2 - tabs[5]);
+         pmMenu->DrawText(cPoint(x1 + tabs[5], y), cString::sprintf("%s%s", Timer->Remote() ? *cString::sprintf("@%s: ", Timer->Remote()) : "", file), colorFg, colorBg, font, x5 - lh/2 - tabs[5]);
       }
       
-      pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%d", Timer->Channel()->Number()), colorFg, clrTransparent, font, tabs[2] - tabs[1]);
-      pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%s%s%s", *name, *name && **name ? " " : "", *day), colorFg, clrTransparent, font, tabs[3] - tabs[2]);
-      pmMenu->DrawText(cPoint(x1 + tabs[3], y), cString::sprintf("%02d:%02d", Timer->Start() / 100, Timer->Start() % 100), colorFg, clrTransparent, font, tabs[4] - tabs[3]);
-      pmMenu->DrawText(cPoint(x1 + tabs[4], y), cString::sprintf("%02d:%02d", Timer->Stop() / 100, Timer->Stop() % 100), colorFg, clrTransparent, font, tabs[5] - tabs[4]);
+      pmMenu->DrawRectangle(cRect(x1 + tabs[0], y, tabs[1] - tabs[0], lh), clrTransparent);
+      pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%d", Timer->Channel()->Number()), colorFg, colorBg, font, tabs[2] - tabs[1]);
+      pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%s%s%s", *name, *name && **name ? " " : "", *day), colorFg, colorBg, font, tabs[3] - tabs[2]);
+      pmMenu->DrawText(cPoint(x1 + tabs[3], y), cString::sprintf("%02d:%02d", Timer->Start() / 100, Timer->Start() % 100), colorFg, colorBg, font, tabs[4] - tabs[3]);
+      pmMenu->DrawText(cPoint(x1 + tabs[4], y), cString::sprintf("%02d:%02d", Timer->Stop() / 100, Timer->Stop() % 100), colorFg, colorBg, font, tabs[5] - tabs[4]);
       
-      colorBg = clrTransparent;
       if (Timer->HasFlags(tfActive))
       {
          eSymbols timerSymbol = SYM_MAX_COUNT;
@@ -851,9 +878,8 @@ bool cSkinElchiHDDisplayMenu::SetItemTimer(const cTimer *Timer, int Index, bool 
          if ( timerSymbol != SYM_MAX_COUNT)
             pmMenu->DrawBitmap(cPoint(x1 + tabs[0], y + center(lh, elchiSymbols.Height(timerSymbol))), elchiSymbols.Get(timerSymbol, colorFg, colorBg));
       }
-      return true;
    }
-   return false;
+   return true;
 }
 
 bool cSkinElchiHDDisplayMenu::SetItemChannel(const cChannel *Channel, int Index, bool Current, bool Selectable, bool WithProvider)
@@ -866,6 +892,44 @@ bool cSkinElchiHDDisplayMenu::SetItemChannel(const cChannel *Channel, int Index,
    ///< The default implementation does nothing and returns false, which results in
    ///< a call to SetItem() with a proper text.
 
+   
+   if (Channel) {
+      const cFont *font = cFont::GetFont(fontOsd);
+      tColor colorFg, colorBg = clrTransparent;
+      int y = menuTop + Index * lh;
+   
+      if (Current)
+         colorFg = Theme.Color(clrMenuItemCurrentFg);
+      else
+         colorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
+
+      SetItemBackground(Index, Current, Selectable, x1 + tabs[3]);
+      
+      if (Channel->GroupSep())
+         pmMenu->DrawText(cPoint(x1 + tabs[3], y), cString::sprintf("%s", Channel->Name()), colorFg, colorBg, font);
+      else
+      {
+         pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%d", Channel->Number()), colorFg, colorBg, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
+         pmMenu->DrawRectangle(cRect(x1 + tabs[1], y, tabs[3] - tabs[1], lh), colorBg);
+
+         if (*Channel->Caids() >= CA_ENCRYPTED_MIN)
+            pmMenu->DrawBitmap(cPoint(x1 + tabs[1] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_ENCRYPTED))), elchiSymbols.Get(SYM_ENCRYPTED, Theme.Color(clrChannelSymbolOn), colorBg));
+         if (!Channel->Vpid() && (*Channel->Apids() || *Channel->Dpids()))
+            pmMenu->DrawBitmap(cPoint(x1 + tabs[2] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_RADIO))), elchiSymbols.Get(SYM_RADIO, Theme.Color(clrChannelSymbolOn), colorBg));
+      
+         cString buffer;
+         if (WithProvider)
+            buffer = cString::sprintf("%s - %s", Channel->Provider(), Channel->Name());
+         else
+            buffer = cString::sprintf("%s", Channel->Name());
+         
+         if (Current)
+            spmCurrentItem->SetText(buffer, font);
+         else
+            pmMenu->DrawText(cPoint(x1 + tabs[3], y), buffer, colorFg, colorBg, font);
+      }
+      return true;
+   }
    return false;
 }
    
@@ -884,86 +948,87 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
    ///< a call to SetItem() with a proper text.
 
    DSYSLOG("skinelchiHD: DisplayMenu::SetItemRecording(%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5) )
-   
-   const cFont *font = cFont::GetFont(fontOsd);
-   tColor ColorFg;
-   int y = menuTop + Index * lh;
-   SetItemBackground(Index, Current, Selectable, x1 + tabs[5] + 2*symbolGap);
-   
-   if (Total) {  // folder
-      const char* tmp = Recording->Title(' ', true, Level);
-      
-      char* name = strdup(tmp+2);
-      
-      if (Current) {
-         ColorFg = Theme.Color(clrMenuItemCurrentFg);
-         spmCurrentItem->SetText(name, font);
-      }
-      else { // non-current
-         ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-         pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
-      }
-      // both
-      pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%d", Total), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
-      pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%d", New), ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
-      free (name);
-   }
-   else { // recording
-      bool is_H264 = false, is_H265 = false;
-      if (ElchiConfig.showRecHD) {
-         // find H.264/H.265 videos
-         if (Recording->Info() && Recording->Info()->Components()) {
-            const cComponents *Components = Recording->Info()->Components();
-            for (int i = 0; i < Components->NumComponents(); i++) {
-               const tComponent *p = Components->Component(i);
-               if (p->stream == sc_video_H264_AVC) {
-                  is_H264 = true;
-                  break;
-               }
-               if (p->stream == sc_video_H265_HEVC) {
-                  is_H265 = true;
-                  break;
-               }
-            }
-         }
-      }
-               
-      ///based on VDR's cRecording::Title()
-      if (Level < 0 || Level == Recording->HierarchyLevels()) {
-         struct tm tm_r;
-         time_t start = Recording->Start();
-         struct tm *t = localtime_r(&start, &tm_r);
-         char *s;
-         if (Level > 0 && (s = (char *)strrchr(Recording->Name(), FOLDERDELIMCHAR)) != NULL)
-            s++;
-         else
-            s = (char *)Recording->Name();
 
-         int Minutes = std::max(0, (Recording->LengthInSeconds() + 30) / 60);
-         cString Length = cString::sprintf("%d:%02d", Minutes / 60, Minutes % 60);
-
+   if (menuCategory == mcRecording)
+   {
+      const cFont *font = cFont::GetFont(fontOsd);
+      tColor ColorFg;
+      int y = menuTop + Index * lh;
+      SetItemBackground(Index, Current, Selectable, x1 + tabs[5] + 2*symbolGap);
+      
+      if (Total) {  // folder
+         const char* tmp = Recording->Title(' ', true, Level);
+         
+         char* name = strdup(tmp+2);
+         
          if (Current) {
             ColorFg = Theme.Color(clrMenuItemCurrentFg);
-            spmCurrentItem->SetText(cString::sprintf("%s", s), font);
+            spmCurrentItem->SetText(name, font);
          }
          else { // non-current
             ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-            pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
+            pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
          }
          // both
-         pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%02d.%02d.%02d", t->tm_mday, t->tm_mon + 1, t->tm_year % 100), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
-         pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%02d:%02d", t->tm_hour, t->tm_min), ColorFg, clrTransparent, font, tabs[2] - tabs[1], font->Height(), taRight|taBorder);
-         pmMenu->DrawText(cPoint(x1 + tabs[2], y), *Length, ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
-         
-         if (Recording->IsNew())
-            pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
-         if (is_H264)
-            pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_AR_HD))), elchiSymbols.Get(SYM_AR_HD, ColorFg, clrTransparent));
-         else if (is_H265)
-            pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_AR_UHD))), elchiSymbols.Get(SYM_AR_UHD, ColorFg, clrTransparent));
+         pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%d", Total), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
+         pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%d", New), ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
+         free (name);
       }
+      else { // recording
+         eSymbols ARSymbol = SYM_MAX_COUNT;
+         if (ElchiConfig.showRecHD) {
+            // find radio and H.264/H.265 streams - detection FAILED: RTL/SAT1 etc. do not send a video component :-(
+            if (Recording->Info() && Recording->Info()->Components()) {
+               const cComponents *Components = Recording->Info()->Components();
+               int i = -1;
+               while (++i < Components->NumComponents() && ARSymbol == SYM_MAX_COUNT) {
+                  const tComponent *p = Components->Component(i);
+                  switch (p->stream) {
+                     //case sc_video_MPEG2:     ARSymbol = SYM_MAX_COUNT;   break;
+                     case sc_video_H264_AVC:  ARSymbol = SYM_AR_HD;  break;
+                     case sc_video_H265_HEVC: ARSymbol = SYM_AR_UHD; break;
+                     default:                 break;
+                  }
+               }
+            }
+         }
+         
+         ///based on VDR's cRecording::Title()
+         if (Level < 0 || Level == Recording->HierarchyLevels()) {
+            struct tm tm_r;
+            time_t start = Recording->Start();
+            struct tm *t = localtime_r(&start, &tm_r);
+            char *s;
+            if (Level > 0 && (s = (char *)strrchr(Recording->Name(), FOLDERDELIMCHAR)) != NULL)
+               s++;
+            else
+               s = (char *)Recording->Name();
+            
+            int Minutes = std::max(0, (Recording->LengthInSeconds() + 30) / 60);
+            cString Length = cString::sprintf("%d:%02d", Minutes / 60, Minutes % 60);
+            
+            if (Current) {
+               ColorFg = Theme.Color(clrMenuItemCurrentFg);
+               spmCurrentItem->SetText(cString::sprintf("%s", s), font);
+            }
+            else { // non-current
+               ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
+               pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
+            }
+            // both
+            pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%02d.%02d.%02d", t->tm_mday, t->tm_mon + 1, t->tm_year % 100), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
+            pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%02d:%02d", t->tm_hour, t->tm_min), ColorFg, clrTransparent, font, tabs[2] - tabs[1], font->Height(), taRight|taBorder);
+            pmMenu->DrawText(cPoint(x1 + tabs[2], y), *Length, ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
+            
+            if (Recording->IsNew())
+               pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
+            if (ARSymbol != SYM_MAX_COUNT)
+               pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(ARSymbol))), elchiSymbols.Get(ARSymbol, ColorFg, clrTransparent));
+         }
+      }
+      return true;
    }
-   return true;
+   return false;
 }
 
 
@@ -997,7 +1062,7 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
    
    if (epgimagesize) {  // != 0, that is: is desired and can be displayed
       if (!epgimageThread) {
-         epgimageThread = new cEpgImage(pmEPGImage, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height(), border);
+         epgimageThread = new cEpgImage(pmEPGImage, epgImageSize.Width(), epgImageSize.Height(), border);
       }
 
       // start conversion via PutEventID
@@ -1011,6 +1076,7 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
          vPort.SetHeight(epgImageLines * slh);
          pmEPGImage->SetViewPort(vPort);
          pmEPGImage->SetLayer(LYR_TEXT);
+         DrawImageFrame();
       }
    }
 
@@ -1250,8 +1316,7 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
 
    if (epgimagesize) { // != 0, that is: is requested and can be displayed
       if (!epgimageThread) {
-         epgimageThread = new cEpgImage(pmEPGImage, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height(), border);
-         DSYSLOG("skinelchiHD: DisplayMenu::SetRecording osd Height=%d %.1f lh=%d %dx%d", OSDsize.height, OSDsize.height*0.35, lh, pmEPGImage->DrawPort().Width(), pmEPGImage->DrawPort().Height());
+         epgimageThread = new cEpgImage(pmEPGImage, epgImageSize.Width(), epgImageSize.Height(), border);
       }
 
       // start conversion via PutRecording
@@ -1262,6 +1327,8 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          cRect vPort = pmEPGImage->ViewPort();
          vPort.SetHeight(epgImageLines * slh);
          pmEPGImage->SetViewPort(vPort);
+         pmEPGImage->SetLayer(LYR_TEXT);
+         DrawImageFrame();
       }
    }
    

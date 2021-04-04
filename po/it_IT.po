@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2021-01-24 13:53+0100\n"
+"POT-Creation-Date: 2021-04-01 19:01+0200\n"
 "PO-Revision-Date: 2009-07-01 23:29+0100\n"
 "Last-Translator: Diego Pierotto <vdr-italian@tiscali.it>\n"
 "Language-Team:  <vdr@linuxtv.org>\n"
@@ -72,6 +72,21 @@ msgstr "Generale"
 
 msgid "don't show"
 msgstr "non mostrare"
+
+msgid "small"
+msgstr ""
+
+msgid "medium"
+msgstr ""
+
+msgid "large"
+msgstr ""
+
+msgid "extra large"
+msgstr ""
+
+msgid "huge"
+msgstr ""
 
 msgid "size and format"
 msgstr ""

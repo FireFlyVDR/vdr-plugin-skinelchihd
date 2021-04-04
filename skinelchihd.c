@@ -4,7 +4,7 @@
  * Copyright (C) 2002?- 2004? Andy Grobb, Rolf Ahrenberg, Andreas Kool
  * Copyright (C) 2004?- 2005? sezz @ vdr-portal.de, Christoph Haubrich
  * Copyright (C) 2005?- 2006 _Frank_ @ vdrportal.de
- * Copyright (C) 2007 - 2020 Christoph Haubrich
+ * Copyright (C) 2007 - 2021 Christoph Haubrich
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@
 #error THIS VERSION OF THE SKINELCHIHD-PLUGIN REQUIRES AT LEAST VDR 2.4.3
 #endif
 
-static const char *VERSION      = "0.5.2" ;
+static const char *VERSION      = "0.5.3" ;
 static const char *DESCRIPTION  = trNOOP("ElchiHD skin");
 const char *OSDSKIN             = "ElchiHD";
 

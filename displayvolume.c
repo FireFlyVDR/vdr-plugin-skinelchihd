@@ -33,6 +33,8 @@ cSkinElchiHDDisplayVolume::cSkinElchiHDDisplayVolume(void)
    int OSDWidth = 1280;
    double OSDAspect = 16.0/9.0;
    cDevice::PrimaryDevice()->GetOsdSize(OSDWidth, OSDHeight, OSDAspect);
+   if (!OSDHeight)
+      OSDHeight = OSDsize.height;
 
    DSYSLOG("skinelchiHD: OSDsize Volume %dx%d left=%d/%d top=%d/%d width=%d/%d heigth=%d/%d",
            OSDWidth, OSDHeight, OSDsize.left, Setup.OSDLeft, OSDsize.top, Setup.OSDTop, OSDsize.width, Setup.OSDWidth, OSDsize.height, Setup.OSDHeight);

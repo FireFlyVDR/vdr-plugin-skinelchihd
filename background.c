@@ -430,10 +430,9 @@ bool cEpgImage::Update()
          if (currentImage >= maxImage)
             currentImage = 0;
          
-         {
+         {  // locking block
             LOCK_PIXMAPS;
-            pixmap->Clear();
-            pixmap->DrawImage(cPoint(pixmap->DrawPort().Width() - imgEPG[currentImage]->GetImage()->Width(), 0), *imgEPG[currentImage]->GetImage());
+            pixmap->DrawImage(cPoint(frameSize, frameSize), *imgEPG[currentImage]->GetImage());
             pixmap->SetLayer(LYR_TEXT);
          }
          
@@ -507,7 +506,7 @@ void cEpgImage::Action(void)
          while (rc == 0 && maxImage < MAXEPGIMAGES && Running()) { // start conversion only if at least one image exists
             DSYSLOG2("skinelchiHD: cEpgImage::Action %d %s %d", rc, *filename, maxImage)
 
-            imgEPG[maxImage] = new cOSDImage(filename, w, h, Theme.Color(clrChannelDateBg), frameSize, frameSize*0.6);
+            imgEPG[maxImage] = new cOSDImage(filename, w, h);
             
             if (imgEPG[maxImage] != NULL && imgEPG[maxImage]->GetImage())
             {

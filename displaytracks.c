@@ -44,6 +44,8 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
    double OSDAspect = 16.0/9.0;
 
    cDevice::PrimaryDevice()->GetOsdSize(OSDWidth, OSDHeight, OSDAspect);
+   if (!OSDHeight)
+      OSDHeight = OSDsize.height;
 
    DSYSLOG("skinelchiHD: OSDsize Tracks %dx%d left=%d/%d top=%d/%d width=%d/%d heigth=%d/%d",
            OSDWidth, OSDHeight, OSDsize.left, Setup.OSDLeft, OSDsize.top, Setup.OSDTop, OSDsize.width, Setup.OSDWidth, OSDsize.height, Setup.OSDHeight);
