@@ -53,7 +53,7 @@
 #error THIS VERSION OF THE SKINELCHIHD-PLUGIN REQUIRES AT LEAST VDR 2.4.3
 #endif
 
-static const char *VERSION      = "0.5.3" ;
+static const char *VERSION      = "0.5.4" ;
 static const char *DESCRIPTION  = trNOOP("ElchiHD skin");
 const char *OSDSKIN             = "ElchiHD";
 
