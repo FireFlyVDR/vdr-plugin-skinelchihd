@@ -52,3 +52,6 @@ VDR Plugin 'skinelchiHD' Revision History
 - refactored integration of EPG image into OSD
 - added an additional EPG image size ("huge")
 - fixed recording menu of undelete plugin
+
+2021-05-xx Version 0.5.4
+- improved responsiveness during textscrolling

@@ -62,7 +62,7 @@ private:
    int direction;
    int xoffset, maxXoffset;
    bool active;
-   cTimeMs timer;
+   cTimeMs spmTimer;
    int Delay;
    cString text;
    cPixmap *pixmap;

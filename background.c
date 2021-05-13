@@ -13,7 +13,8 @@
 #include "background.h"
 #include "config.h"
 
-#define DELAY 20   // 20ms = 50 updates per second (fps)
+#define DELAY (uint64_t)20   // 20ms = 50 updates per second (fps)
+
 
 ///
 /// ================================== class cElchiBackground ===================================================
@@ -77,7 +78,8 @@ void cElchiBackground::Del(cBgObject* bgObject)
 void cElchiBackground::Action(void)
 {
    cTimeMs timer;
-
+   uint64_t delay = -1;
+   
    while (Running()) {
       mtxBg.Lock(); // Multicore Lst 3.10
       while (Running() && bgObjectList.Count() == 0) {
@@ -99,8 +101,8 @@ void cElchiBackground::Action(void)
          osd->Flush();
       }
 
-      uint64_t delay = DELAY - min((uint64_t)DELAY, timer.Elapsed());
-      if (Running() && delay > 0) {
+      delay = std::max(DELAY - std::min(DELAY, timer.Elapsed()), DELAY/10);
+      if (Running()) {
          cwDelay.Wait(delay);
       }
 
@@ -170,7 +172,7 @@ void cScrollingPixmap::SetText(const char *Text, const cFont *Font)
    {
       xoffset = 0;
       maxXoffset = textWidth - vPort.Width();
-      timer.Set(0);
+      spmTimer.Set(0);
       direction = -1;
       Delay = 5*10;
    }
@@ -218,7 +220,7 @@ bool cScrollingPixmap::Update()
    // check if update is needed
    if (direction) {
 
-      uint64_t elapsed = timer.Elapsed() / intervall;
+      uint64_t elapsed = spmTimer.Elapsed() / intervall;
       if (elapsed) {
          if (Delay > 0) {
             int x = elapsed / Delay;
@@ -228,7 +230,7 @@ bool cScrollingPixmap::Update()
                changed = true;
             }
             else {
-               timer.Set();
+               spmTimer.Set();
                changed = false;
             }
          }
@@ -249,7 +251,7 @@ bool cScrollingPixmap::Update()
                }
             }
             Delay = delay - ((maxXoffset - xoffset > xoffset) ? xoffset : maxXoffset - xoffset);
-            timer.Set();
+            spmTimer.Set();
          }
       }
 
