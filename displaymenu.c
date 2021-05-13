@@ -19,7 +19,9 @@
 #include "vdr/videodir.h"
 #include "vdr/cutter.h"
 
+#ifdef DEBUG_TIMING
 #include <sys/time.h>  // for timing debugging
+#endif
 
 extern cSkinElchiStatus *ElchiStatus;
 
@@ -424,7 +426,6 @@ void cSkinElchiHDDisplayMenu::Clear(void)
 
    lastDate = NULL;
 
-   textScroller.Reset();
    tColor clrBG = Theme.Color(clrBackground);
 
    LOCK_PIXMAPS;
@@ -920,8 +921,23 @@ bool cSkinElchiHDDisplayMenu::SetItemChannel(const cChannel *Channel, int Index,
          cString buffer;
          if (WithProvider)
             buffer = cString::sprintf("%s - %s", Channel->Provider(), Channel->Name());
-         else
+         else {
+//#define CHANNELS_WITH_BAND 1
+#ifdef CHANNELS_WITH_BAND
+            int tp = Channel->Transponder();
+            int f = 0;
+            cString pol;
+            if (tp > 200000) {
+               f = tp - 200000; pol = "V";
+            } else if (tp > 100000) {
+               f = tp - 100000; pol = "H";
+            }
+            cString band = (f > Setup.LnbSLOF) ? "H": "L";
+            buffer = cString::sprintf("%d %s%s, %s", f, *pol, *band, Channel->Name());
+#else
             buffer = cString::sprintf("%s", Channel->Name());
+#endif
+         }
          
          if (Current)
             spmCurrentItem->SetText(buffer, font);
@@ -1659,8 +1675,29 @@ void cSkinElchiHDDisplayMenu::SetText(const char *Text, bool FixedFont)
    ///< the Scroll() function will be called to drive scrolling that text if
    ///< necessary.
    DSYSLOG("skinelchiHD: DisplayMenu::SetText(%s,%s)", Text, FixedFont ? "'FixedFont'" : "'nonFixedFont'")
-   //TODO replace textScroller
-   textScroller.Set(osd, x1, menuTop, GetTextAreaWidth(), menuHeight, Text, GetTextAreaFont(FixedFont), Theme.Color(clrMenuText), Theme.Color(clrBackground));
+   if (!isempty(Text)) {
+      cTextWrapper tw;
+      const cFont *font = cFont::GetFont(FixedFont ? fontFix : fontOsd);
+      int fh = font->Height();
+      scrollShownLines = (y5 - y3)/fh;
+      scrollOffsetLines = 0;
+      int upperLines = 0;
+      
+      tw.Set(Text, font, x5 - x1);
+      scrollTotalLines = tw.Lines();
+      scrollbarTop = y3;
+      scrollbarHeight = y5 - y3;
+   
+      LOCK_PIXMAPS;
+      if (pmEvent)
+         osd->DestroyPixmap(pmEvent);
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y3, x5 - x1, scrollShownLines * fh), cRect(0, 0, x5 - x1, scrollTotalLines * fh)); 
+      pmEvent->Clear();
+
+      for (int i = 0; i < tw.Lines(); i++) {
+         pmEvent->DrawText(cPoint(0, i*fh), tw.GetLine(i), Theme.Color(clrMenuText), clrTransparent, font);
+      }   
+   }
    SetTextScrollbar();
 }
 
