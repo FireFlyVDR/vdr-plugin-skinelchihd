@@ -55,18 +55,18 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
    x0 = 0;
    x1 = x0 + lh2;
    x4 = min(OSDsize.width, ItemsWidth + 2*lh);
-   
+
    x2 = x4 - lh;
    x3 = x4 - lh2;
-   
+
    y0 = 0;
    y1 = y0 + lh;
    y2 = y1 + lh;
-   
+
    maxTracks = numTracks;
    if ( numTracks * lh > OSDsize.height/2)
       maxTracks = OSDsize.height / lh / 2;
-   
+
    y3 = y2 + maxTracks * lh;
    y4 = y3 + lh;
    y5 = y4 + lh;
@@ -80,7 +80,7 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
    tColor clrTitleFG = Theme.Color(clrMenuTitleFg);
 
    pmBG = osd->CreatePixmap(LYR_BG, cRect(x0, y0, x4 - x0, y5 - y0));
-   
+
    int w = x4 - x0;
    // header
    DrawShadedRectangle(pmBG, clrTitleBG, cRect(x0, y0, w, lh));
@@ -104,12 +104,12 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
    pmSelectorBG->DrawEllipse(cRect(x2 - lh2, lh - lh2, lh2, lh2), Theme.Color(clrBackground), -4);
 
    pmSelector = osd->CreatePixmap(LYR_TEXT, cRect(x0, y0, x2 - x0, lh));
-   
+
    int MaxTracks = maxTracks;
    Clear();
    if (MaxTracks > (numTracks - offset))
       MaxTracks = numTracks - offset;
-   
+
    for (int i = offset; i < offset + MaxTracks; i++)
       SetItem(Tracks[i], i, false);
 }
@@ -127,11 +127,11 @@ void cSkinElchiHDDisplayTracks::Clear(void)
    pmBG->DrawRectangle(cRect(x0, y1, x4, y4 - y1), Theme.Color(clrBackground));
    pmBG->DrawBitmap(cPoint(x2 + (lh - elchiSymbols.Width(SYM_ARROW_UP))/2, y1 + (lh - elchiSymbols.Height(SYM_ARROW_UP)) / 2), elchiSymbols.Get(SYM_ARROW_UP, (offset > 0) ? clrSelectable : clrBG, clrBG));
    pmBG->DrawBitmap(cPoint(x2 + (lh - elchiSymbols.Width(SYM_ARROW_DOWN))/2, y3 + (lh - elchiSymbols.Height(SYM_ARROW_DOWN)) / 2), elchiSymbols.Get(SYM_ARROW_DOWN, (numTracks > (offset + maxTracks)) ? clrSelectable : clrBG, clrBG));
-   
+
    if (numTracks > maxTracks) {
       int tt = (y3 - y2) * offset / numTracks;
       int tb = (y3 - y2) * (offset + maxTracks) / numTracks;
-   
+
       pmBG->DrawRectangle(cRect(x2 + 3*lh/8, y2, lh/4, y3 - y2), Theme.Color(clrMenuScrollbarTotal));
       pmBG->DrawRectangle(cRect(x2 + 3*lh/8, y2+tt, lh/4, tb-tt), Theme.Color(clrMenuScrollbarShown));
    }

@@ -36,7 +36,7 @@ cOSDImage::cOSDImage(cString Filename, int Width, int Height)
 {
    DSYSLOG2("skinelchiHD: cOSDImage EPG: %s", *imagefilename)
    InitializeMagick(NULL);
-   
+
    imagefilename = Filename;
    width = Width;
    height = Height;
@@ -50,7 +50,7 @@ cOSDImage::cOSDImage(cString Filename, int Width, int Height, int Border)
 {
    DSYSLOG2("skinelchiHD: cOSDImage Logo: %s", *imagefilename)
    InitializeMagick(NULL);
-   
+
    imagefilename = Filename;
    width = Width;
    height = Height;
@@ -66,7 +66,7 @@ cOSDImage::~cOSDImage()
 }
 
 bool cOSDImage::LoadImage(bool isLogo)
-{   
+{
    DSYSLOG2("skinelchiHD: Loading cOSDImage: %s", *imagefilename)
 
 #ifdef DEBUG_IMAGETIMES
@@ -118,7 +118,7 @@ bool cOSDImage::LoadImage(bool isLogo)
          }
          wImg = mgkImage.columns();
          hImg = mgkImage.rows();
- 
+
 #ifdef DEBUG_IMAGETIMES
          tp3 = GetTimeMS();
 #endif
@@ -126,13 +126,13 @@ bool cOSDImage::LoadImage(bool isLogo)
          mgkImage.depth(8);
          mgkImage.getPixels (0, 0, wImg, hImg); // x, y, w, h
          image = new cImage( cSize(wImg, hImg), NULL);
-         
+
 #ifdef GRAPHICSMAGICK
          mgkImage.writePixels(RGBAQuantum, (unsigned char *) image->Data());
-#else         
+#else
          mgkImage.writePixels(MagickCore::BGRAQuantum, (unsigned char *) image->Data());
 #endif
-         
+
 #ifdef DEBUG_IMAGETIMES
          tp4 = GetTimeMS();
 #endif
@@ -147,17 +147,17 @@ bool cOSDImage::LoadImage(bool isLogo)
             cvrt->c.B = buffer.c.R;
             cvrt->c.R = buffer.c.B;
          }
-#endif         
+#endif
       }
    }
-   
+
    catch( Exception &error_ ) 
    { 
       esyslog("skinelchiHD: exception reading cOSDImage '%s': %s", (const char *)imagefilename, error_.what());
 #ifdef DEBUG_IMAGETIMES
       tp2 = tp3 = tp4 = tp1;
 #endif
-                  
+
       return false;
    }
 
@@ -179,11 +179,11 @@ void DrawShadedRectangle(cPixmap *Pm, tColor Color, const cRect &Area)
    int x = shadeArea.Left();
    int y = shadeArea.Top();
 
-#ifdef DEBUG_IMAGETIMES   
+#ifdef DEBUG_IMAGETIMES
    double tp1, tp2;
    tp1 = GetTimeMS();
 #endif
-   
+
    double shaded = h/2;
    LOCK_PIXMAPS;
    for (int line = 0; line < h; line++) {
@@ -193,7 +193,7 @@ void DrawShadedRectangle(cPixmap *Pm, tColor Color, const cRect &Area)
       Pm->DrawRectangle(cRect(x, y+line, w, 1), RgbShade(Color, factor));
    }
 
-#ifdef DEBUG_IMAGETIMES   
+#ifdef DEBUG_IMAGETIMES
    tp2 = GetTimeMS();
    isyslog("skinelchiHD: DrawShadedRect: %d %d %d-%d %d-%d  %4.3f ms", h, w, x, Pm->DrawPort().X(), y, Pm->DrawPort().Y(), tp2 - tp1);
 #endif

@@ -66,7 +66,7 @@ private:
    int Delay;
    cString text;
    cPixmap *pixmap;
-   
+
 public:
    cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Font, int max_char, tColor ColorFg, tColor ColorBg = clrTransparent, bool centered = false, int Alignment = taDefault|taBorder);
    ~cScrollingPixmap();
@@ -86,7 +86,7 @@ private:
    virtual void Action(void);
    void Stop(void);
    void Clear();
-   
+
    cPixmap *pixmap;
    int w, h, frameSize;
    bool active;

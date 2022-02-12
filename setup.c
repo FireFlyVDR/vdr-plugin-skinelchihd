@@ -18,210 +18,6 @@ extern const char *OSDSKIN;
 
 extern cSkinElchiHDConfig ElchiConfig;
 
-// --- cMenuEditColorItem ------------------------------------------------------
-union clrArray {
-   tColor color;
-   unsigned char argb[4];
-};
-
-class cMenuEditColorItem : public cMenuEditItem {
-private:
-   tColor orgcolor;
-   int pos;
-   clrArray *clr;
-   virtual void Set(void);
-public:
-   cMenuEditColorItem(const char *Name, tColor *Value);
-   virtual eOSState ProcessKey(eKeys Key);
-};
-
-
-cMenuEditColorItem::cMenuEditColorItem(const char *Name, tColor *Value)
-:cMenuEditItem(Name)
-{
-   orgcolor = *Value;
-   clr = (clrArray *)Value;
-   pos = 0;
-   Set();
-}
-
-void cMenuEditColorItem::Set(void)
-{
-   char buf[16];
-   int strpos = 0;
-
-   for (int i=1; i<5; i++) {
-      strpos += snprintf(&buf[strpos], sizeof(buf) - strpos, (pos==i)?"[%02X] ":"%02X ", clr->argb[4-i]);
-   }
-   SetValue(buf);
-}
-
-eOSState cMenuEditColorItem::ProcessKey(eKeys Key)
-{
-   eOSState state = cMenuEditItem::ProcessKey(Key);
-   bool changed = false;
-
-   if (state == osUnknown) {
-      Key = NORMALKEY(Key);
-      switch (Key & ~k_Repeat) {
-         case kNone: break;
-
-         //case kLeft|k_Repeat:
-         case kLeft:
-               if (pos > 0) {
-                  pos--;
-                  changed = true;
-               }
-               break;
-
-         //case kRight|k_Repeat:
-         case kRight:
-               if (pos < 4) {
-                  pos++;
-                  changed = true;
-               }
-               break;
-         //case kUp|k_Repeat:
-         case kUp:
-         //case kDown|k_Repeat:
-         case kDown:
-               if (pos > 0) {
-                  clr->argb[4-pos] += (NORMALKEY(Key) == kUp) ? 1 : -1;
-                  changed = true;
-               }
-               else
-                  return cMenuEditItem::ProcessKey(Key);
-               break;
-
-         case kBack:
-         case kOk:
-            if (pos > 0) {
-               if (Key == kBack) {
-                  clr->color = orgcolor;
-               }
-               pos = 0;
-               changed = true;
-               break;
-            }
-            return cMenuEditItem::ProcessKey(Key);
-
-         default:
-            return state;
-      }
-
-      state = osContinue;
-      if (changed) {
-         Set();
-      }
-   }
-   return state;
-}
-
-
-// --- cSkinElchiHDSetupColor ------------------------------------------------------
-/*
-   static const char * ColorNames [] = {
-   "clrBackground",
-   "clrButtonRedFg","clrButtonRedBg","clrButtonGreenFg","clrButtonGreenBg","clrButtonYellowFg","clrButtonYellowBg","clrButtonBlueFg","clrButtonBlueBg",
-   "clrMessageStatusFg","clrMessageStatusBg","clrMessageInfoFg","clrMessageInfoBg","clrMessageWarningFg","clrMessageWarningBg","clrMessageErrorFg","clrMessageErrorBg",
-   "clrVolumePrompt","clrVolumeBarUpper","clrVolumeBarLower","clrVolumeSymbolMuteFg","clrVolumeSymbolMuteBg","clrVolumeSymbolVolumeFg","clrVolumeSymbolVolumeBg",
-   "clrChannelNameFg","clrChannelNameBg","clrChannelDateFg","clrChannelDateBg","clrChannelEpgTimeFg","clrChannelEpgTimeBg","clrChannelEpgTitleFg","clrChannelEpgTitleBg","clrChannelEpgShortText",
-   "clrChannelSymbolOn","clrChannelSymbolOff","clrSymbolRecFg","clrSymbolRecBg", "clrReplayProgressPassed", "clrReplayProgressRest",
-   "clrChannelTimebarSeen","clrChannelTimebarRest",
-   "clrMenuTitleFg","clrMenuTitleBg","clrMenuDate","clrMenuItemCurrentFg","clrMenuItemCurrentBg","clrMenuItemSelectable","clrMenuItemNonSelectable","clrMenuEventTime","clrMenuEventVpsFg","clrMenuEventVpsBg",
-      "clrMenuEventTitle","clrMenuEventShortText","clrMenuEventDescription","clrMenuScrollbarTotal","clrMenuScrollbarShown","clrMenuText",
-   "clrReplayTitleFg","clrReplayTitleBg","clrReplayCurrent","clrReplayTotal","clrReplayModeJump",
-      "clrReplayProgressSeen","clrReplayProgressRest","clrReplayProgressSelected","clrReplayProgressMark","clrReplayProgressCurrent","clrReplaySymbolOn","clrReplaySymbolOff",
-   "clrChanging",
-};
-
-
-class cSkinElchiHDSetupColor : public cOsdMenu
-{
-private:
-   int numColors;
-   tColor lastcolor;
-   tColor ThemeColors[MAX_ELCHI_THEME_COLORS - 1];
-   void Setup(void);
-
-protected:
-   virtual eOSState ProcessKey(eKeys Key);
-
-public:
-   cSkinElchiHDSetupColor(void);
-   virtual ~cSkinElchiHDSetupColor(void);
-};
-
-cSkinElchiHDSetupColor::cSkinElchiHDSetupColor(void)
-:cOsdMenu("", 33)
-{
-   SetTitle(cString::sprintf("%s - '%s' %s", trVDR("Setup"), "skinElchiHD", tr("Colors")));
-
-   numColors = MAX_ELCHI_THEME_COLORS - 1;
-
-   for (int i = 0; i < numColors; i++) {
-      ThemeColors[i] = Theme.Color(i);
-   }
-
-   Setup();
-   ElchiConfig.clrdlgActive = true;
-}
-
-cSkinElchiHDSetupColor::~cSkinElchiHDSetupColor()
-{
-   ElchiConfig.clrdlgActive = false;
-}
-
-void cSkinElchiHDSetupColor::Setup(void)
-{
-   Add(new cOsdItem(cString::sprintf("%s\t%s", tr("theme name"), Skins.Current()->Theme()->Name()), osUnknown, false));
-
-   for (int i = 0; i < numColors; i++)
-      Add(new cMenuEditColorItem(ColorNames[i], &ThemeColors[i]));
-}
-
-
-eOSState cSkinElchiHDSetupColor::ProcessKey(eKeys Key)
-{
-   eOSState state = cOsdMenu::ProcessKey(Key);
-
-   int current = Current()-1;
-   if (lastcolor != ThemeColors[current]) {
-      //isyslog("skinelchiHD: clr: %08X-%08X", lastcolor, ThemeColors[current]);
-      lastcolor = ThemeColors[current];
-      ElchiConfig.clrDlgFg = lastcolor;
-      ElchiConfig.clrDlgBg = lastcolor;
-      if (strcasestr(ColorNames[current], "Fg"))
-         ElchiConfig.clrDlgBg = ThemeColors[current + 1];
-      else if (strcasestr(ColorNames[current], "Bg")) {
-            ElchiConfig.clrDlgFg = ThemeColors[current - 1];
-         }
-
-      Display(); // kompletter Refresh: Clear, Title, Buttons, items, Flush
-   }
-
-   if (state == osUnknown) {
-      switch (Key) {
-         case kOk:
-               for (int i = 0; i < numColors; i++)
-                  Theme.AddColor(ColorNames[i], ThemeColors[i]);
-
-               Theme.Save(cString::sprintf("%s/../../themes/%s-%s.theme",
-                     cPlugin::ConfigDirectory(PLUGIN_NAME_I18N),
-                     Skins.Current()->Name(),
-                     Theme.Name()));
-               Display();
-               // fall through
-         case kBack:
-               state = osBack;
-               break;
-         default: break;
-      }
-   }
-   return state;
-}
-*/
-
 // --- cSkinElchiHDSetupGeneral ------------------------------------------------------
 class cSkinElchiHDSetupGeneral : public cOsdMenu
 {
@@ -274,7 +70,7 @@ cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *TmpConfig
    ErrorWarningItems[0] = trVDR("no");
    ErrorWarningItems[1] = tr("only uncut recordings");
    ErrorWarningItems[2] = tr("all recordings");
-   
+
    EpgDetails[0]   = trVDR("EPG");
    EpgDetails[1]   = tr("EPG + Details");
    EpgDetails[2]   = tr("EPG + Details + Genre");
@@ -372,7 +168,7 @@ cSkinElchiHDSetupChannelDisplay::cSkinElchiHDSetupChannelDisplay(cSkinElchiHDCon
    ShowLogoItems[0] = trVDR("no");
    ShowLogoItems[1] = tr("normal size");
    ShowLogoItems[2] = tr("large size");
-   
+
    LogoTypeItems[0] = "SVG";
    LogoTypeItems[1] = "PNG";
 
@@ -388,9 +184,9 @@ void cSkinElchiHDSetupChannelDisplay::Setup(void)
    Add(new cMenuEditBoolItem(tr("show audio Info"), &tmpConfig->showAudioInfo));
    Add(new cMenuEditStraItem(tr("show recording Info"), &tmpConfig->showRecInfo, 3, RecInfoItems));
    Add(new cMenuEditStraItem(tr("show channel logos"), &tmpConfig->showLogo, 3, ShowLogoItems));
-#ifndef GRAPHICSMAGICK   
+#ifndef GRAPHICSMAGICK
    Add(new cMenuEditStraItem(tr("search logos first as"), &tmpConfig->LogoSVGFirst, 2, LogoTypeItems));
-#endif   
+#endif
    Add(new cMenuEditBoolItem(tr("show signal bars"), &tmpConfig->showSignalBars));
    Add(new cMenuEditBoolItem(tr("show remote timers"), &tmpConfig->ShowRemoteTimers));
    Add(new cMenuEditBoolItem(tr("write logo messages to syslog"), &tmpConfig->LogoMessages));
@@ -434,14 +230,7 @@ void cSkinElchiHDSetup::Setup(void)
    Add(new cOsdItem("image lib: GraphicsMagick", osUnknown, false));
 #else
    Add(new cOsdItem("image lib: ImageMagick", osUnknown, false));
-#endif   
-   
-   /* disable Color menu for now
-   if (Skins.Current()->Name() && !strcmp(OSDSKIN, Skins.Current()->Name()))
-      Add(new cOsdItem(tr("Colors"), osUser3));
-   else  // disable color dialog if current skin is not skinelchi
-      Add(new cOsdItem(tr("Colors"), osUnknown, false));
-   */
+#endif
 }
 
 eOSState cSkinElchiHDSetup::ProcessKey(eKeys Key)
@@ -461,11 +250,6 @@ eOSState cSkinElchiHDSetup::ProcessKey(eKeys Key)
          AddSubMenu(new cSkinElchiHDSetupChannelDisplay(&tmpElchiConfig));
          state=osContinue;
          break;
-/*    case osUser3:
-         AddSubMenu(new cSkinElchiHDSetupColor());
-         state=osContinue;
-         break;
-*/
       default:
          break;
    }

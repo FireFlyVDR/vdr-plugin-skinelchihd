@@ -10,6 +10,8 @@
 #include <vdr/menu.h>
 #include <vdr/device.h>
 
+//#define DEBUG
+//#define DEBUG2
 #include "displayreplay.h"
 #include "setup.h"
 #include "common.h"
@@ -96,7 +98,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
 
    xMode = x9 - lh + lh2 - xSymbols[xSYM_FFWD] - elchiSymbols.Width(SYM_FFWD) - SymbolGap;
    int wMode = x9 - xMode;
-   
+
    x4 = x6 - 2 * lh;
    x2 = xMode;
 
@@ -112,7 +114,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    tArea Area[] = { { x0, y0, x9 - 1, y3 - 1, 32 } };
    osd->SetAreas(Area, 1);
    clrBG = Theme.Color(clrBackground);
-   
+
    pmBG = osd->CreatePixmap(LYR_BG, cRect(x0, y0, x9, y2));
    pmBG->Clear();
    pmTitleBG = osd->CreatePixmap(LYR_BG, cRect(x0, y0, x4 - x0, lh));
@@ -145,7 +147,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    else {
       pmBG->DrawSlope(cRect(x4, y0, 2*lh, lh), clrBG, 0);
       pmBG->DrawRectangle(cRect(x6, y0, x9 -x6, lh), clrBG);
-      
+
       pmProgress->DrawRectangle(cRect(0, 0, x9 - lh2, lh), clrBG);
       pmProgress->DrawEllipse(cRect(0, 0, lh - lh2, lh2), clrTransparent, -2);
       pmProgress->DrawEllipse(cRect(0, lh - lh2, lh - lh2, lh2), clrTransparent, -3);
@@ -162,7 +164,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
       else {
          pmBG->DrawEllipse(cRect(x9 - lh2, y2 - lh2, lh2, lh2), clrTransparent, -4);
       }
-      
+
       const char *separator = " / ";
       xTotalWidth = smallfont->Width("00:00:00");
       xTotal = x9 - xTotalWidth - y1 / 2;
@@ -197,6 +199,7 @@ void cSkinElchiHDDisplayReplay::SetRecording(const cRecording *Recording)
 
 void cSkinElchiHDDisplayReplay::SetMarks(const cMarks *Marks)
 {
+   DSYSLOG("skinelchiHD: cSkinElchiHDDisplayReplay::SetMarks")
    marks = Marks;
 }
 
@@ -219,7 +222,7 @@ void cSkinElchiHDDisplayReplay::SetScrollTitle(const char *Title)
    int w = smallFont->Width(Title);
    if (showVolume)
       w += 2*smallFont->Height()/TEXT_ALIGN_BORDER;
-   
+
    if(ElchiConfig.showVideoInfo > 1 && !showVolume)
       w += smallFont->Width(STR_VIDEOSIZE);
 
@@ -231,7 +234,7 @@ void cSkinElchiHDDisplayReplay::SetScrollTitle(const char *Title)
    spmTitle = new cScrollingPixmap(osd, cRect(x0, y0, w, smallFont->Height()),
                                    smallFont, 256, Theme.Color(clrMenuTitleFg));
    spmTitle->SetText(Title, smallFont);
-   
+
    LOCK_PIXMAPS;
    pmTitleBG->Clear();
    pmTitleBG->SetLayer(LYR_BG);
@@ -260,7 +263,7 @@ void cSkinElchiHDDisplayReplay::SetMode(bool Play, bool Forward, int Speed)
 
       isCutting = RecordingsHandler.Active();
       pmMode->DrawBitmap(cPoint(xSymbols[xSYM_CUTTING], ySymbolARcutRec), elchiSymbols.Get(SYM_CUTTING, isCutting ? clrOn : clrOff, clrBG));
-      
+
       cBitmap *bmp = NULL;
       if ((Speed > -1) && Play && !Forward) {
          switch (Speed) {
@@ -279,7 +282,7 @@ void cSkinElchiHDDisplayReplay::SetMode(bool Play, bool Forward, int Speed)
       }
       else
          pmMode->DrawBitmap(cPoint(xSymbols[xSYM_FREW], ySymbols), elchiSymbols.Get(SYM_FREW, clrOff, clrBG));
-      
+
       if ((Speed > -1) && !Play && !Forward) {
          switch (Speed) {
             case 0:
@@ -338,7 +341,7 @@ void cSkinElchiHDDisplayReplay::SetMode(bool Play, bool Forward, int Speed)
       }
       else
          pmMode->DrawBitmap(cPoint(xSymbols[xSYM_FFWD], ySymbols), elchiSymbols.Get(SYM_FFWD, clrOff, clrBG));
-      
+
       changed = true;
    }
 }
@@ -388,7 +391,7 @@ void cSkinElchiHDDisplayReplay::DrawMark(int xStart, int xEnd, int x, int yOffse
    {
       int y = Start ? d - i : Height - d + i - 1;
       int l = MarksWidth + i + i;
-      
+
       if (x - i < xStart)
          l -= xStart - x + i;
 
@@ -396,7 +399,7 @@ void cSkinElchiHDDisplayReplay::DrawMark(int xStart, int xEnd, int x, int yOffse
          l = xEnd - x + i;
 
       pmProgress->DrawRectangle(cRect(std::max(xStart, x - i), yOffset + y, l, 1), Current ? Theme.Color(clrReplayProgressCurrent) : Theme.Color(clrReplayProgressMark));
-   }    
+   }
 }
 
 void cSkinElchiHDDisplayReplay::SetCurrent(const char *Current)
@@ -409,13 +412,13 @@ void cSkinElchiHDDisplayReplay::SetCurrent(const char *Current)
 
       if (oldLength > Length)
          pmBG->DrawRectangle(cRect(xCurrent, y0, xCurrentWidth - xTotalWidth - 1, lh), Theme.Color(clrBackground));
-  
+
       pmBG->DrawText(cPoint(Length > 8 ? xCurrent : xCurrent + xCurrentWidth - xTotalWidth, y0), Current, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), cFont::GetFont(fontSml), Length > 8 ? xCurrentWidth : xTotalWidth, 0, taLeft);
 
       changed = true;
    }
    else
-      DSYSLOG2("skinelchiHD: skipped cSkinElchiHDDisplayReplay::SetCurrent(%s)", Current)
+      DSYSLOG2("skinelchiHD: cSkinElchiHDDisplayReplay::SetCurrent(%s) skipped", Current)
 }
 
 void cSkinElchiHDDisplayReplay::SetTotal(const char *Total)
@@ -450,7 +453,7 @@ void cSkinElchiHDDisplayReplay::SetMessage(eMessageType Type, const char *Messag
       if (showVolume) {  // destroy Volume Display first
          showVolume = false;
          pmVolume->SetLayer(LYR_HIDDEN);
-         
+
          if (modeonly) {
             DELETENULL(spmTitle);
             pmTitleBG->SetLayer(LYR_HIDDEN);
@@ -468,7 +471,7 @@ void cSkinElchiHDDisplayReplay::SetMessage(eMessageType Type, const char *Messag
       pmMessageBG->DrawEllipse(cRect(x0, lh - lh2, lh2, lh - lh2), clrTransparent, -3);
       pmMessageBG->DrawEllipse(cRect(x9 - lh2 - lh2, 0, lh2, lh2), modeonly ? clrTransparent:Theme.Color(clrBackground), -1);
       pmMessageBG->DrawEllipse(cRect(x9 - lh2 - lh2, lh - lh2, lh2, lh - lh2), modeonly ? clrTransparent:Theme.Color(clrBackground), -4);
-      
+
       spmMessage->SetColor(Theme.Color(clrMessageStatusFg + 2 * Type), clrTransparent);
       spmMessage->SetText(Message, cFont::GetFont(fontOsd));
 
@@ -499,7 +502,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
       volumechange = newVolumechange;
       int w = x9 - 3*lh2;
       int y = lh/4;
-      
+
       if (!showVolume) {
          showVolume = true;
          pmVolume->SetLayer(LYR_BG);
@@ -558,7 +561,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
 
       if (ElchiConfig.showVideoInfo == 2 && !modeonly && !showVolume) {
          if ((old_width != videoinfo.width) || (old_height != videoinfo.height)) {
-            
+
             if (videoinfo.width && videoinfo.height) {
                title = cString::sprintf("%s %dx%d", (const char *)rectitle, videoinfo.width, videoinfo.height);
             }

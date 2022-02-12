@@ -53,7 +53,7 @@
 #error THIS VERSION OF THE SKINELCHIHD-PLUGIN REQUIRES AT LEAST VDR 2.4.3
 #endif
 
-static const char *VERSION      = "0.5.4" ;
+static const char *VERSION      = "0.5.5" ;
 static const char *DESCRIPTION  = trNOOP("ElchiHD skin");
 const char *OSDSKIN             = "ElchiHD";
 
@@ -222,7 +222,7 @@ bool cPluginSkinElchiHD::Start(void)
    if (isempty(ElchiConfig.GetLogoBaseDir()))
       ElchiConfig.SetLogoBaseDir(cString::sprintf("%s/logos",cPlugin::ResourceDirectory(PLUGIN_NAME_I18N)));
    isyslog("skinElchiHD: using channel logo path '%s'", ElchiConfig.GetLogoBaseDir());
-   
+
    if (isempty(ElchiConfig.GetEpgImageDir()))
       ElchiConfig.SetEpgImageDir(cString::sprintf("%s/epgimages", cPlugin::CacheDirectory(PLUGIN_NAME_I18N)));
    isyslog("skinElchiHD: using EPG image path '%s'", ElchiConfig.GetEpgImageDir());

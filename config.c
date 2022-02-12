@@ -42,9 +42,6 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    showSignalBars = 1;
    LogoMessages = 0;
    ShowRemoteTimers = 1;
-   
-   // clr dialog
-   //clrdlgActive = false;
 }
 
 cSkinElchiHDConfig::~cSkinElchiHDConfig()

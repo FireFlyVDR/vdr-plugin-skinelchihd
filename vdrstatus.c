@@ -94,7 +94,7 @@ void cSkinElchiStatus::Recording(const cDevice *Device, const char *Name, const 
       bool found = false;
       while (entry && !(found = !strcmp(entry->GetFilename(), FileName)))
          entry = recordinglist.Next(entry);
-      
+
       if (found)
          recordinglist.Del(entry, true);
    }
@@ -108,22 +108,22 @@ cString cSkinElchiStatus::GetRecordingsString(cString prefix)
    cString tmp;
    cString recDevice;
    int prevCardIndex = recordinglist.First()->GetDevice()->CardIndex();
-   
+
    for (cRecordingEntry *entry = recordinglist.First(); entry; entry = recordinglist.Next(entry)) {
-      if (prevCardIndex != entry->GetDevice()->CardIndex()) {  
+      if (prevCardIndex != entry->GetDevice()->CardIndex()) {
          recDevice = cString::sprintf("%s DVB%d (%s)", (const char *)recordingstring, prevCardIndex, (const char *)recs);
          recordingstring = recDevice;
          recs = NULL;
       }
-      
+
       tmp = cString::sprintf("%s%s%s", (const char *)recs?(const char *)recs:"", (const char *)recs?", ":"", entry->GetName());
       recs = tmp;
-      
+
       prevCardIndex = entry->GetDevice()->CardIndex();
    }
    recDevice = cString::sprintf("%s DVB%d (%s)", (const char *)recordingstring, prevCardIndex, (const char *)recs);
    recordingstring = recDevice;
-   
+
    return recordingstring;
 }
 

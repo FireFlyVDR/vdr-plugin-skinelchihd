@@ -22,14 +22,14 @@ private:
    eMenuCategory menuCategory;
    int epgimagesize;
    cEpgImage *epgimageThread;
-  
+
    void DrawScrollbar(int Total, int Offset, int Shown, int Top, int Height);
    void SetTextScrollbar(void);
    void DrawTitle(void);
    void DrawImageFrame(void);
    void SetItemBackground(int Index, bool Current, bool Selectable, int xScrollArea);
    int scrollTotalLines, scrollShownLines, scrollOffsetLines, scrollbarTop, scrollbarHeight;
-   
+
    bool showMessage, showVolume, timersDisplayed;
    cTimeMs volumeTimer;
    int volumechange;
@@ -41,12 +41,12 @@ private:
    int lh, lh2, menuTop, menuHeight, currentIndex, area;
    cString lastDate;
    bool previousHasEPGimages;
-   
+
    cPixmap *pmBG, *pmMenu, *pmEvent, *pmCurrentItemBG, *pmEPGImage;
    cScrollingPixmap *spmTitle, *spmCurrentItem, *spmMessage;
    cPixmap *pmButton0BG, *pmButton1BG, *pmButton2BG, *pmButton3BG;
    cPixmap *pmButton0inactive, *pmButton1inactive, *pmButton2inactive, *pmButton3inactive;
-   
+
    tOSDsize OSDsize;
    cString lastCurrentText;
    int xScrollStart;

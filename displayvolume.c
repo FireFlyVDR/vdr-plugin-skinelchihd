@@ -49,7 +49,7 @@ cSkinElchiHDDisplayVolume::cSkinElchiHDDisplayVolume(void)
    w = osd->Width();
    h = 2 * lh;
    pmBG = osd->CreatePixmap(LYR_BG, cRect(0, 0, w, h));
-   
+
    isMuted = -1;
    currentVolume = -1;
 }
@@ -65,7 +65,7 @@ void cSkinElchiHDDisplayVolume::SetVolume(int CurrentVolume, int TotalVolume, bo
 {
    const cFont *font = cFont::GetFont(fontOsd);
    int xVolume = font->Width(trVDR("Volume ")) + lh2;
-   
+
    if (Mute) {
       if (isMuted != 1){
          currentVolume = 0;

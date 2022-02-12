@@ -37,7 +37,7 @@ enum eSymbols
    SYM_RECSML,
    SYM_VPSSML,
    SYM_VPS,
-   
+
    SYM_ARROW_DOWN,
    SYM_ARROW_UP,
    SYM_AUDIO_LEFT,

@@ -61,7 +61,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    OSDsize.top    = cOsd::OsdTop();
    OSDsize.width  = cOsd::OsdWidth();
    OSDsize.height = cOsd::OsdHeight();
-   
+
    OSDHeight = 720;
    int OSDWidth = 1280;
    double OSDAspect = 16.0/9.0;
@@ -107,7 +107,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
       bLogo += bLogo/2;
    }
    elchiSymbols.Refresh(OSDHeight);
-      
+
    if (!ElchiConfig.showLogo) {
       wLogo = hLogo = 0;
       pmLogo = NULL;
@@ -122,17 +122,17 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
 
    xTimeBar = xEvTime + wEvTime;
    wTimeBar = lh/4;
-             
+
    xEvText = xTimeBar + Gap + wTimeBar + Gap;  // Text window (not text itself?)
    wEvText = xRight - xEvText - lh2;
    xChName = ElchiConfig.showLogo ? (wLogo + Gap/2) : xLeft;
    wChNumber = font->Width("00000-");
-   
+
    xDateTime = xChName + wChNumber;
    wDateTime = smallfont->Width("_MMM 00.00 00:00_");
 
    wChDateTime = wChNumber + wDateTime + lh2;
-   
+
    xSymbols[xSYM_AR]           = SymbolGap;
    xSymbols[xSYM_VPS]          = (ElchiConfig.showVideoInfo ? xSymbols[xSYM_AR] + elchiSymbols.Width(SYM_AR_HD) + SymbolGap : SymbolGap);
    xSymbols[xSYM_Teletext]     = xSymbols[xSYM_VPS] + elchiSymbols.Width(SYM_VPS) + SymbolGap;
@@ -141,10 +141,10 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    xSymbols[xSYM_encrypted]    = xSymbols[xSYM_DolbyDigital] + elchiSymbols.Width(SYM_DOLBYDIGITAL) + SymbolGap;
    xSymbols[xSYM_cutting]      = xSymbols[xSYM_encrypted] + elchiSymbols.Width(SYM_ENCRYPTED) + SymbolGap;
    xSymbols[xSYM_REC]          = xSymbols[xSYM_cutting] + elchiSymbols.Width(SYM_CUTTING) + SymbolGap;
-   
+
    xSymbolStart = xRight - lh2 - lh - xSymbols[xSYM_REC];
    wChName = xSymbolStart - xChName -lh;
-   
+
    yLogo = 0;                      // Logo Top
    yChDateTime = (ElchiConfig.showLogo &&  hLogo > 3*lh2) ?  hLogo - 3*lh2 : 0;  // Date Time Top
    yChName = yChDateTime + lh + SymbolGap;    //Channel Name Top
@@ -180,7 +180,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
    }
    if (ElchiConfig.showLogo)
       pmLogo = osd->CreatePixmap(LYR_TEXT, cRect(xLogo, yLogo, wLogo, hLogo));
-   
+
    DrawBackground();
 
    spmPresentTitle = new cScrollingPixmap(osd, cRect(xEvText, yEvText, wEvText, lh),
@@ -205,7 +205,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
                                                  xRight - lh2 - elchiSymbols.Width(SYM_SIGNAL) -lh2 - (xChName + wChDateTime + lh + lh2) , lh),
                                                  smallfont, MAXCHARS, Theme.Color(clrChannelSymbolOn), clrTransparent, false, taRight);
    }
-   
+
    spmRecording = NULL;
    if (yRecordings != yEvText)
       spmRecording = new cScrollingPixmap(osd, cRect(xLeft + lh2, yRecordings, xRight - xLeft -lh , lh),
@@ -236,7 +236,7 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
                                             cFont::GetFont(fontSml), MAXCHARS, Theme.Color(clrChannelNameFg));
 
    pmMessageBG = osd->CreatePixmap(LYR_HIDDEN, cRect(xLeft, yChName, xRight - xLeft, lh));
-   
+
    spmMessage = new cScrollingPixmap(osd, cRect(xChName + lh2, yChName, xRight -xLeft - lh, lh),
                                          cFont::GetFont(fontOsd), MAXCHARS, Theme.Color(clrChannelNameFg), clrTransparent, true);
    spmMessage->SetLayer(LYR_HIDDEN);
@@ -277,7 +277,7 @@ void cSkinElchiHDDisplayChannel::DrawBackground()
    DrawShadedRectangle(pmBG, Theme.Color(clrChannelDateBg), cRect(xLeft, yChDateTime, wChDateTime + wLogo + lh2, lh));
    pmBG->DrawEllipse(cRect(xLeft+wChDateTime + wLogo, yChDateTime, lh2, lh2), Theme.Color(clrBackground), -1);
    pmBG->DrawEllipse(cRect(xLeft+wChDateTime + wLogo, yChDateTime + lh - lh2, lh2, lh2), Theme.Color(clrBackground), -4);
-   
+
    /// Channel Name BG
    DrawShadedRectangle(pmChannelNameBg, Theme.Color(clrChannelNameBg));
    pmChannelNameBg->DrawEllipse(cRect(xSymbolStart - xLeft - lh2, 0, lh2, lh2), Theme.Color(clrBackground), -1);
@@ -288,8 +288,8 @@ void cSkinElchiHDDisplayChannel::DrawBackground()
 
       // recording info BG
       if (yRecordings != yEvText)
-         pmBG->DrawRectangle(cRect(xLeft, yRecordings, xRight - xLeft,  lh), Theme.Color(clrChannelEpgTitleBg));      
-      
+         pmBG->DrawRectangle(cRect(xLeft, yRecordings, xRight - xLeft,  lh), Theme.Color(clrChannelEpgTitleBg));
+
       // EPG Time BG
       pmBG->DrawRectangle(cRect(xEvTime, yEvText, wEvTime, hEvents), Theme.Color(clrChannelEpgTimeBg));
       pmBG->DrawEllipse  (cRect(xEvTime, yBottom - lh2, lh2, lh2), clrTransparent, -3);
@@ -298,7 +298,7 @@ void cSkinElchiHDDisplayChannel::DrawBackground()
       // EPG Event BG
       pmBG->DrawRectangle(cRect(xTimeBar, yEvText, xRight - xTimeBar,  hEvents), Theme.Color(clrChannelEpgTitleBg));
       pmBG->DrawEllipse  (cRect(xRight - lh2, yBottom - lh2, lh2, lh2), clrTransparent, -4);
-      
+
       if (ElchiConfig.showLogo) {
          // empty Logo area
          pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo + Gap/2, hLogo + Gap/2), clrTransparent);
@@ -345,10 +345,10 @@ cString cSkinElchiHDDisplayChannel::CheckLogoFile(const cChannel *Channel, const
 
    cString ext[2];
 #ifdef GRAPHICSMAGICK
-#define MAX_LOGO_FMT 1   
+#define MAX_LOGO_FMT 1
    ext[0] = cString("png");
-#else   
-#define MAX_LOGO_FMT 2   
+#else
+#define MAX_LOGO_FMT 2
    if (ElchiConfig.LogoSVGFirst == 0)
    {
       ext[0] = cString("svg");
@@ -358,7 +358,7 @@ cString cSkinElchiHDDisplayChannel::CheckLogoFile(const cChannel *Channel, const
       ext[1] = cString("svg");
    }
 #endif
-      
+
    cString filename;
    char *lowerFilename = strdup(Channel->Name());
    toLowerCase(lowerFilename);
@@ -403,7 +403,7 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
    changed = true;
    LastSignalStrength = -1;  // force display refresh of signal indicators
    LastSignalQuality = -1;
-   
+
    if (!Channel) {
       // if no channel object is available (e.g., while entering new channel number), update at least Channelnumber
       if (ChannelNumber)
@@ -451,7 +451,7 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
                }
                if (ElchiConfig.showVideoInfo) {
                   pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_AR], ySymbolARRec), elchiSymbols.Get(SYM_RADIO, Theme.Color(clrChannelSymbolOn), bg));
-               
+
                }
             }
          }
@@ -459,7 +459,7 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
       } // end not GroupSep()
 
       spmChannelName->SetText(Channel->Name(), cFont::GetFont(fontSml));
-       
+
       pmChDateTime->DrawRectangle(cRect(0, 0, wChNumber, lh), clrTransparent);
       pmChDateTime->DrawText(cPoint(0, 0), Channelnumber, Theme.Color(clrChannelDateFg), clrTransparent, cFont::GetFont(fontOsd));
 
@@ -471,7 +471,7 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
          {
             cString filename;
             filename = CheckLogoFile(Channel, ElchiConfig.GetLogoBaseDir());
-            
+
             pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
             if (isempty(filename)) {
                if (ElchiConfig.LogoMessages) {
@@ -519,14 +519,14 @@ void cSkinElchiHDDisplayChannel::SetEvents(const cEvent *Present, const cEvent *
    if (withInfo) {
       const cFont *smallfont = cFont::GetFont(fontSml);
       const cFont *font = cFont::GetFont(fontOsd);
-      
+
       spmPresentTitle->SetText(Present ? Present->Title() : NULL, font);
       spmPresentShort->SetText(Present ? Present->ShortText() : NULL, smallfont);
 
       spmFollowingTitle->SetText(Following ? Following->Title() : NULL, font);
       spmFollowingShort->SetText(Following ? Following->ShortText() : NULL, smallfont);
       LOCK_PIXMAPS;  // after SetText() to avoid deadlock
-      
+
       if (!Present || !Present->StartTime()) {
          pmBG->DrawRectangle(cRect(xTimeBar + Gap, yEvText, wTimeBar, hEvents), Theme.Color(clrChannelEpgTitleBg));
          changed = true;
@@ -564,22 +564,22 @@ void cSkinElchiHDDisplayChannel::SetMessage(eMessageType Type, const char *Text)
       if (showVolume) {
          showVolume = false;
       }
-      
+
       tColor clrMsgFG = Theme.Color(clrMessageStatusFg + 2 * Type);
       tColor clrMsgBG = Theme.Color(clrMessageStatusBg + 2 * Type);
-      
+
       pmChannelNameBg->SetLayer(LYR_HIDDEN);
       spmChannelName->SetLayer(LYR_HIDDEN);
       pmSymbols->SetLayer(LYR_HIDDEN);
       if (pmVideoSize)
          pmVideoSize->SetLayer(LYR_HIDDEN);
-      
+
       DrawShadedRectangle(pmMessageBG, clrMsgBG);
       pmMessageBG->SetLayer(LYR_TEXTBG);
       spmMessage->SetLayer(LYR_SCROLL);
       spmMessage->SetColor(clrMsgFG, clrTransparent);
       showMessage = true;
-      
+
       if (withInfo) {
          if (ElchiConfig.showLogo) {
             // clear Logo Area
@@ -595,7 +595,7 @@ void cSkinElchiHDDisplayChannel::SetMessage(eMessageType Type, const char *Text)
             pmMessageBG->DrawEllipse(cRect(0, lh - lh2, lh2, lh2), clrTransparent, -3);
          }
       }
-      
+
       spmMessage->SetText(Text, cFont::GetFont(fontOsd));
       changed = true;
    }
@@ -606,7 +606,7 @@ void cSkinElchiHDDisplayChannel::SetMessage(eMessageType Type, const char *Text)
          pmSymbols->SetLayer(LYR_BG);
          if (pmVideoSize)
             pmVideoSize->SetLayer(LYR_TEXT);
-         
+
          pmMessageBG->SetLayer(LYR_HIDDEN);
          spmMessage->SetLayer(LYR_HIDDEN);
 
@@ -678,7 +678,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
          if (hasVideo) { // Channel has video and is allowed to display
             cVideoInfo videoinfo;
             ElchiStatus->GetVideoInfo(&videoinfo);
-            
+
             //  draw AR symbol
             if (old_ar != videoinfo.aspectratio ) {
                cBitmap *bmp = NULL;
@@ -747,7 +747,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
       {
          cDevice *Device = cDevice::PrimaryDevice();
          cString newaudiostring;
-         
+
          int numaudiotracks = Device->NumAudioTracks();
          if (!numaudiotracks)
             newaudiostring = trVDR("No audio available!");
@@ -785,11 +785,11 @@ void cSkinElchiHDDisplayChannel::Flush(void)
                                     newaudiostring = cString::sprintf("%s (%s)", Track?Track->description:"?", Track?Track->language:"?");
             }
          }
-         
+
          spmAudio->SetText(newaudiostring, cFont::GetFont(fontSml));
       }
-      
-      
+
+
       // ----------------------- recording --------------------------------
       if (yRecordings != yEvText)
       {
@@ -817,7 +817,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
       pmSymbols->DrawBitmap(cPoint(xSymbols[xSYM_cutting], ySymbolARRec), elchiSymbols.Get(SYM_CUTTING, Theme.Color(isCutting ? clrChannelSymbolOn : clrChannelSymbolOff), bg));
       changed = true;
    }
-   
+
    // ----------------------- recording symbol --------------------------------
    bool rectemp = cRecordControls::Active();
    if (!showVolume && !showMessage && isRecording != rectemp) {
@@ -844,7 +844,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
 
       pmChDateTime->Clear();
       pmChDateTime->DrawText(cPoint(0, 0), cString::sprintf("%s %d%%", trVDR("Volume "), volume * 100 / 255), Theme.Color(clrChannelDateFg), clrTransparent, smallfont, wChNumber+wDateTime);
-      
+
       // draw volume bar and set timeout
       pmMessageBG->Fill(Theme.Color(clrBackground));
       int wVolumeBar = (pmMessageBG->DrawPort().Width() - xChName + xLeft - lh) * volume / 255;
@@ -866,7 +866,7 @@ void cSkinElchiHDDisplayChannel::Flush(void)
             pmMessageBG->DrawEllipse(cRect(0, lh - lh2, lh2, lh2), clrTransparent, -3);
          }
       }
-      
+
       changed = true;
       volumeTimer.Set(1000);
    }

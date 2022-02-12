@@ -93,7 +93,7 @@ public:
 
    //const char *GetAudioTrack(void) { return audioTrack; };     // unused
    //int GetAudioTrackIndex(void) { return audioTrackIndex; };   //unused
-   
+
    //const char *GetAudioChannel(void) { return audioChannel; }; // unused, but channel uses directly device query
    //int GetAudioChange(void) { return audioChange; };
 

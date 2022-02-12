@@ -355,7 +355,7 @@ cSymbolCache elchiSymbols;
 cSymbolCache::cSymbolCache()
 {
    DSYSLOG("skinelchiHD: cSymbolCache is called")
- 
+
    OsdHeight = 0;
    for(int i =  0; i < SYM_MAX_COUNT; i++)
    {
@@ -388,7 +388,7 @@ void cSymbolCache::clearCache()
 
 void cSymbolCache::Refresh(int newHeight)
 {
-#ifdef DEBUG   
+#ifdef DEBUG
    DSYSLOG("skinelchiHD: cSymbolCache::Refresh(%d, %d) is called", OsdHeight, newHeight);
    double tp1, tp2;
    tp1 = GetTimeMS();
@@ -398,7 +398,7 @@ void cSymbolCache::Refresh(int newHeight)
    {
       clearCache();
       OsdHeight = newHeight;
-      
+
       if (OsdHeight >= 2160) {
          cache[SYM_AR_169]            = &bmAr169_2160;
          cache[SYM_AR_43]             = &bmAr43_2160;
@@ -496,7 +496,7 @@ void cSymbolCache::Refresh(int newHeight)
          cache[SYM_VPSSML]            = &bmVpsSml_576;
          cache[SYM_VPS]               = &bmVps_576;
       }
-      
+
       double factor = OsdHeight/2160.0;
       DSYSLOG("skinelchiHD: cSymbolCache::Refresh() factor=%.2f", factor);
 
@@ -580,13 +580,13 @@ cBitmap &cSymbolCache::Get(eSymbols symbol, tColor clrSymbol, tColor clrBackgrou
       cPalette palSymbol(8);
       int colors;
       bmpSymbol->Colors(colors);
-   
+
       for(int i =  0; i < colors; i++)
       {
          int blend = bmpSymbol->Color(i) & 0x000000FF;
          palSymbol.SetColor(i, Multiply(clrBackground, blend) + Multiply(clrSymbol, 255 - blend));
       }
-      bmpSymbol->Replace(palSymbol);   
+      bmpSymbol->Replace(palSymbol);
    }
    return *bmpSymbol;
 }
