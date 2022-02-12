@@ -100,6 +100,15 @@ General:
 - Show timer and conflicts in menu: no / next recording / Timer-Conflict / all
   displays selected info in menus below header line 
 
+- show logo if recording is HD/UHD: yes / no
+  show a HD or UHD logo in front of recordings if it's detected as HD or UHD
+  format. However, the detection is not perfect (e.g. for DVB-T2), so disable
+  it in case of wrong detection
+
+- Show warning if recording has errors: no / only uncut recordings / all recordings
+  show an exclamation sign in front of recordings if it has errors (available
+  for VDR 2.5.6+)
+
 - Show recording details:           EPG / EPG + details  / EPG + details + genre
   select detail range of recordings
 
@@ -121,6 +130,13 @@ General:
   - duration of each EPG image [s]: 5
     select time until next images is displayed
 
+  - search for EPG images with      channel ID + event ID / event ID only
+    recommended is "channel ID + event ID" because "event ID only" might pick
+    wrong pictures when the event ID appears on several channels
+
+- show remote timers in EPG
+  in addition to local timers show remote timers in EPG
+
 
 Channel Display
 - show audio info:                  yes / no  
@@ -137,10 +153,16 @@ Channel Display
   choose if channel logos should be displayed and which size
 
 - search logos first as             SVG / PNG 
-  search the logo files first with extension .svg or .png. This option is only available when compiled with ImageMagick++
+  search the logo files first with extension .svg or .png. This option is only
+  available when compiled with ImageMagick++
 
 - show signal bars:                 yes / no
-  choose if signal bars should be displayed (upper: signal strength, lower: signal qualitiy)
+  choose if signal bars should be displayed 
+  (upper bar: signal strength, lower bar: signal qualitiy)
+
+- show remote timers                yes / no
+  show a timer symbol in front of events if there's a remote timer, otherwise 
+  a symbol is only shown for local timers
 
 - write logo messages to syslog:    yes / no
   write a message (found / not found) for each requested channel logo in the syslog
