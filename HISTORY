@@ -60,3 +60,4 @@ VDR Plugin 'skinelchiHD' Revision History
 2022-02-12 Version 0.5.5
 - added support for displaying TS errors of VDR 2.5.6+
 - optionally hide TS error symbol for cutted recordings
+- fixed segfault when displaying messages while display is detached

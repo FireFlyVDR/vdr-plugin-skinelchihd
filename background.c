@@ -125,7 +125,7 @@ cScrollingPixmap::cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Fo
    centered = Centered;
    alignment = Alignment;
    cSize const maxSize = osd->MaxPixmapSize();  //TODO  create and scroll multiple pixmaps if one is not sufficient
-   maxwidth = std::min(maxSize.Width(), max_char * Font->Width("M")); // assuming M is widest character
+   maxwidth = maxSize.Width() ? std::min(maxSize.Width(), max_char * Font->Width("M")) : 720; // assuming M is widest character
    direction = 0;
    active = false;
    text = cString(NULL);
