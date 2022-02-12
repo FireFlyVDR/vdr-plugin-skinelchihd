@@ -89,6 +89,11 @@
 #include "symbols/encrypted_720.xpm"
 #include "symbols/encrypted_576.xpm"
 
+#include "symbols/error_2160.xpm"
+#include "symbols/error_1080.xpm"
+#include "symbols/error_720.xpm"
+#include "symbols/error_576.xpm"
+
 #include "symbols/newsml_2160.xpm"
 #include "symbols/newsml_1080.xpm"
 #include "symbols/newsml_720.xpm"
@@ -251,6 +256,11 @@ static cBitmap bmEncrypted_1080(encrypted_1080);
 static cBitmap bmEncrypted_720(encrypted_720);
 static cBitmap bmEncrypted_576(encrypted_576);
 
+static cBitmap bmError_2160(error_2160);
+static cBitmap bmError_1080(error_1080);
+static cBitmap bmError_720(error_720);
+static cBitmap bmError_576(error_576);
+
 static cBitmap bmNewSml_2160(newsml_2160);
 static cBitmap bmNewSml_1080(newsml_1080);
 static cBitmap bmNewSml_720(newsml_720);
@@ -405,6 +415,7 @@ void cSymbolCache::Refresh(int newHeight)
          cache[SYM_CUTTING]           = &bmCutting_2160;
          cache[SYM_DOLBYDIGITAL]      = &bmDolbydigital_2160;
          cache[SYM_ENCRYPTED]         = &bmEncrypted_2160;
+         cache[SYM_ERROR]             = &bmError_2160;
          cache[SYM_NEWSML]            = &bmNewSml_2160;
          cache[SYM_RADIO]             = &bmRadio_2160;
          cache[SYM_REC]               = &bmRec_2160;
@@ -428,6 +439,7 @@ void cSymbolCache::Refresh(int newHeight)
          cache[SYM_CUTTING]           = &bmCutting_1080;
          cache[SYM_DOLBYDIGITAL]      = &bmDolbydigital_1080;
          cache[SYM_ENCRYPTED]         = &bmEncrypted_1080;
+         cache[SYM_ERROR]             = &bmError_1080;
          cache[SYM_NEWSML]            = &bmNewSml_1080;
          cache[SYM_RADIO]             = &bmRadio_1080;
          cache[SYM_REC]               = &bmRec_1080;
@@ -451,6 +463,7 @@ void cSymbolCache::Refresh(int newHeight)
          cache[SYM_CUTTING]           = &bmCutting_720;
          cache[SYM_DOLBYDIGITAL]      = &bmDolbydigital_720;
          cache[SYM_ENCRYPTED]         = &bmEncrypted_720;
+         cache[SYM_ERROR]             = &bmError_720;
          cache[SYM_NEWSML]            = &bmNewSml_720;
          cache[SYM_RADIO]             = &bmRadio_720;
          cache[SYM_REC]               = &bmRec_720;
@@ -474,6 +487,7 @@ void cSymbolCache::Refresh(int newHeight)
          cache[SYM_CUTTING]           = &bmCutting_576;
          cache[SYM_DOLBYDIGITAL]      = &bmDolbydigital_576;
          cache[SYM_ENCRYPTED]         = &bmEncrypted_576;
+         cache[SYM_ERROR]             = &bmError_576;
          cache[SYM_NEWSML]            = &bmNewSml_576;
          cache[SYM_RADIO]             = &bmRadio_576;
          cache[SYM_REC]               = &bmRec_576;

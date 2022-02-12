@@ -299,9 +299,14 @@ void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, in
          /* 0 Date     */ tabs[0] = 0;
          /* 1 Time     */ tabs[1] = tabs[0] + 8 * avgCharWidth;
          /* 2 Duration */ tabs[2] = tabs[1] + avgCharWidth2 + 5 * avgCharWidth;
-         /* 3 new      */ tabs[3] = tabs[2] + avgCharWidth2 + 5 * avgCharWidth;
-         /* 4 HD/UHD   */ tabs[4] = tabs[3] + 2*symbolGap + elchiSymbols.Width(SYM_NEWSML);
-         /* 5 Name     */ tabs[5] = tabs[4] + (ElchiConfig.showRecHD ? elchiSymbols.Width(SYM_AR_HD) + symbolGap : 0);
+#if defined(APIVERSNUM) && APIVERSNUM >= 20506
+         /* 3 error    */ tabs[3] = tabs[2] + avgCharWidth2 + 5 * avgCharWidth;
+         /* 4 new      */ tabs[4] = tabs[3] + 2*symbolGap + elchiSymbols.Width(SYM_ERROR);
+#else
+         /* 4 new      */ tabs[4] = tabs[3] = tabs[2] + avgCharWidth2 + 5 * avgCharWidth;
+#endif
+         /* 5 HD/UHD   */ tabs[5] = tabs[4] + 2*symbolGap + elchiSymbols.Width(SYM_NEWSML);
+         /* 6 Name     */ tabs[6] = tabs[5] + (ElchiConfig.showRecHD ? elchiSymbols.Width(SYM_AR_HD) + symbolGap : 0);
          break;
       case mcTimer:
          /* symbol         */ tabs[0] = 0;
@@ -970,7 +975,7 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
       const cFont *font = cFont::GetFont(fontOsd);
       tColor ColorFg;
       int y = menuTop + Index * lh;
-      SetItemBackground(Index, Current, Selectable, x1 + tabs[5] + 2*symbolGap);
+      SetItemBackground(Index, Current, Selectable, x1 + tabs[6] + 2*symbolGap);
       
       if (Total) {  // folder
          const char* tmp = Recording->Title(' ', true, Level);
@@ -983,7 +988,7 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
          }
          else { // non-current
             ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-            pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
+            pmMenu->DrawText(cPoint(x1 + tabs[6] + 2*symbolGap, y), name, ColorFg, clrTransparent, font, x5 - lh/2- tabs[6] - 2*symbolGap);
          }
          // both
          pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%d", Total), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
@@ -1029,17 +1034,23 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
             }
             else { // non-current
                ColorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
-               pmMenu->DrawText(cPoint(x1 + tabs[5] + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- tabs[5] - 2*symbolGap);
+               pmMenu->DrawText(cPoint(x1 + tabs[6] + 2*symbolGap, y), cString::sprintf("%s", s), ColorFg, clrTransparent, font, x5 - lh/2- tabs[6] - 2*symbolGap);
             }
             // both
             pmMenu->DrawText(cPoint(x1 + tabs[0], y), cString::sprintf("%02d.%02d.%02d", t->tm_mday, t->tm_mon + 1, t->tm_year % 100), ColorFg, clrTransparent, font, tabs[1] - tabs[0], font->Height(), taRight|taBorder);
             pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%02d:%02d", t->tm_hour, t->tm_min), ColorFg, clrTransparent, font, tabs[2] - tabs[1], font->Height(), taRight|taBorder);
             pmMenu->DrawText(cPoint(x1 + tabs[2], y), *Length, ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
             
+#if defined(APIVERSNUM) && APIVERSNUM >= 20506
+            if (ElchiConfig.showRecErrors > 0 && Recording->Info() && Recording->Info()->Errors() > 0) {
+               if (ElchiConfig.showRecErrors == 2 || (ElchiConfig.showRecErrors == 1 && !startswith(Recording->BaseName(), "%")))
+                  pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_ERROR))), elchiSymbols.Get(SYM_ERROR, clrYellow, clrTransparent));
+            }
+#endif
             if (Recording->IsNew())
-               pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
+               pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
             if (ARSymbol != SYM_MAX_COUNT)
-               pmMenu->DrawBitmap(cPoint(x1 + tabs[4] + symbolGap, y + center(lh, elchiSymbols.Height(ARSymbol))), elchiSymbols.Get(ARSymbol, ColorFg, clrTransparent));
+               pmMenu->DrawBitmap(cPoint(x1 + tabs[5] + symbolGap, y + center(lh, elchiSymbols.Height(ARSymbol))), elchiSymbols.Get(ARSymbol, ColorFg, clrTransparent));
          }
       }
       return true;
@@ -1502,6 +1513,10 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          else
             text.Append(cString::sprintf(" (%s: %llu MB)", tr("cutted"), recsizecutted/MEGABYTE(1)));
 
+#if defined(APIVERSNUM) && APIVERSNUM >= 20506
+      if (Info->Errors() >= 0)
+         text.Append(cString::sprintf("\n%s: %d", trVDR("errors"), Info->Errors()));
+#endif
       text.Append(cString::sprintf("\n%s: %d, %s: %d", trVDR("Priority"), Recording->Priority(), trVDR("Lifetime"), Recording->Lifetime()));
 
       if (lastIndex) {

@@ -21,6 +21,7 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    useScrolling = 1;
    showTimer = 0;
    showRecHD = 1;
+   showRecErrors = 1;
    showRecDetails = 1;
    showEPGDetails = 0;
    showVideoInfo = 0;
@@ -72,6 +73,7 @@ bool cSkinElchiHDConfig::SetupParse(const char *Name, const char *Value)
    if      (strcmp(Name, "useScrolling") == 0)                 useScrolling = atoi(Value);
    else if (strcmp(Name, "showTimer") == 0)                    showTimer = atoi(Value);
    else if (strcmp(Name, "showRecHD") == 0)                    showRecHD = atoi(Value);
+   else if (strcmp(Name, "showRecErrors") == 0)                showRecErrors = atoi(Value);
    else if (strcmp(Name, "showRecDetails") == 0)               showRecDetails = atoi(Value);
    else if (strcmp(Name, "showEPGDetails") == 0)               showEPGDetails = atoi(Value);
    else if (strcmp(Name, "showVideoInfo") == 0)                showVideoInfo = atoi(Value);

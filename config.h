@@ -36,6 +36,7 @@ public:
    int useScrolling;
    int showTimer;
    int showRecHD;
+   int showRecErrors;
    int showRecDetails;
    int showEPGDetails;
    int showVideoInfo;

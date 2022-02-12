@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2021-04-01 19:01+0200\n"
+"POT-Creation-Date: 2022-02-06 12:21+0100\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Christoph Haubrich <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -94,6 +94,12 @@ msgstr "Timer-Konflikt"
 msgid "all"
 msgstr "alle"
 
+msgid "only uncut recordings"
+msgstr "nur ungeschnittene Aufnahmen"
+
+msgid "all recordings"
+msgstr "alle Aufnahmen"
+
 msgid "EPG + Details"
 msgstr "EPG + Details"
 
@@ -114,6 +120,9 @@ msgstr "Timer und Konflikte im Menü anzeigen"
 
 msgid "show logo if recording is HD/UHD"
 msgstr "HD/UHD-Logo vor Aufnahmen anzeigen"
+
+msgid "show warning if recording has errors"
+msgstr "Zeige Warnsymbol bei fehlerhaften Aufnahmen"
 
 msgid "show recording details"
 msgstr "Aufnahmedetails anzeigen"

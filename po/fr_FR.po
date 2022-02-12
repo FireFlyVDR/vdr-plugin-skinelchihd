@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2021-04-01 19:01+0200\n"
+"POT-Creation-Date: 2022-02-06 12:21+0100\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Patrice Staudt <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -94,6 +94,12 @@ msgstr "Conflit de programmation"
 msgid "all"
 msgstr "tous"
 
+msgid "only uncut recordings"
+msgstr ""
+
+msgid "all recordings"
+msgstr ""
+
 msgid "EPG + Details"
 msgstr "Détails EPG"
 
@@ -113,6 +119,9 @@ msgid "show timer and conflict in menu"
 msgstr ""
 
 msgid "show logo if recording is HD/UHD"
+msgstr ""
+
+msgid "show warning if recording has errors"
 msgstr ""
 
 msgid "show recording details"

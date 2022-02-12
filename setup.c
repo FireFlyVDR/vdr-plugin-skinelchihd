@@ -235,6 +235,7 @@ private:
    const char * RecInfoItems[3];
    const char * VideoFormatItems[3];
    const char * TimerCheckItems[4];
+   const char * ErrorWarningItems[3];
    const char * MailIconItems[3];
    const char * EpgDetails[3];
    const char * EpgImageSearch[2];
@@ -270,6 +271,10 @@ cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *TmpConfig
    TimerCheckItems[2] = tr("Timer-Conflict");
    TimerCheckItems[3] = tr("all");
 
+   ErrorWarningItems[0] = trVDR("no");
+   ErrorWarningItems[1] = tr("only uncut recordings");
+   ErrorWarningItems[2] = tr("all recordings");
+   
    EpgDetails[0]   = trVDR("EPG");
    EpgDetails[1]   = tr("EPG + Details");
    EpgDetails[2]   = tr("EPG + Details + Genre");
@@ -290,6 +295,9 @@ void cSkinElchiHDSetupGeneral::Setup(void)
    Add(new cMenuEditBoolItem(tr("scroll text"), &tmpConfig->useScrolling));
    Add(new cMenuEditStraItem(tr("show timer and conflict in menu"), &tmpConfig->showTimer, 4, TimerCheckItems));
    Add(new cMenuEditBoolItem(tr("show logo if recording is HD/UHD"), &tmpConfig->showRecHD));
+#if defined(APIVERSNUM) && APIVERSNUM >= 20506
+   Add(new cMenuEditStraItem(tr("show warning if recording has errors"), &tmpConfig->showRecErrors, 3, ErrorWarningItems));
+#endif
    Add(new cMenuEditStraItem(tr("show recording details"), &tmpConfig->showRecDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show EPG details"), &tmpConfig->showEPGDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show video format info (if available)"), &tmpConfig->showVideoInfo, 3, VideoFormatItems));
@@ -472,6 +480,9 @@ void cSkinElchiHDSetup::Store(void)
    SetupStore("useScrolling", ElchiConfig.useScrolling);
    SetupStore("showTimer", ElchiConfig.showTimer);
    SetupStore("showRecHD", ElchiConfig.showRecHD);
+#if defined(APIVERSNUM) && APIVERSNUM >= 20506
+   SetupStore("showRecErrors", ElchiConfig.showRecErrors);
+#endif
    SetupStore("showRecDetails", ElchiConfig.showRecDetails);
    SetupStore("showEPGDetails", ElchiConfig.showEPGDetails);
    SetupStore("showVideoInfo", ElchiConfig.showVideoInfo);
