@@ -32,6 +32,7 @@ clrChannelEpgTimeBg = AABB0000
 clrChannelEpgTitleFg = FF00FCFC
 clrChannelEpgTitleBg = 88000000
 clrChannelEpgShortText = FFCCBB22
+clrChannelLogoBg = FFFCFCFC
 clrChannelSymbolOn = FFFCC024
 clrChannelSymbolOff = 77777777
 clrChannelTimebarSeen = FFFCC024

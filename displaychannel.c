@@ -466,13 +466,13 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
       // load Logo
       if (ElchiConfig.showLogo)
       {
-         pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
+         pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelLogoBg));
          if (NULL != Channel && NULL != Channel->Name())
          {
             cString filename;
             filename = CheckLogoFile(Channel, ElchiConfig.GetLogoBaseDir());
 
-            pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelDateBg));
+            pmBG->DrawRectangle(cRect(xLogo, yLogo, wLogo, hLogo), Theme.Color(clrChannelLogoBg));
             if (isempty(filename)) {
                if (ElchiConfig.LogoMessages) {
                   esyslog("skinElchiHD: no logo found for \"%s\" (%s) in %s", *cString(strreplace(strdup(Channel->Name()), '/', '~'), true), *Channel->GetChannelID().ToString(), ElchiConfig.GetLogoBaseDir());

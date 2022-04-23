@@ -101,6 +101,7 @@ THEME_CLR(Theme, clrChannelEpgTimeBg,       0xAABB0000);
 THEME_CLR(Theme, clrChannelEpgTitleFg,      0xFF00FCFC);
 THEME_CLR(Theme, clrChannelEpgTitleBg,      0x88000000);
 THEME_CLR(Theme, clrChannelEpgShortText,    0xFFCCBB22);
+THEME_CLR(Theme, clrChannelLogoBg,          clrWhite);
 THEME_CLR(Theme, clrChannelSymbolOn,        clrYellow);
 THEME_CLR(Theme, clrChannelSymbolOff,       0x77777777);
 THEME_CLR(Theme, clrChannelTimebarSeen,     clrYellow);
