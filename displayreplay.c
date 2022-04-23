@@ -186,7 +186,6 @@ cSkinElchiHDDisplayReplay::~cSkinElchiHDDisplayReplay()
 
    ElchiBackground->SetOSD(NULL);
    DELETENULL(osd);
-   changed = true;
 }
 
 /*
