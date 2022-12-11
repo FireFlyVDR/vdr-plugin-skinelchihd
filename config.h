@@ -37,6 +37,7 @@ public:
    int showTimer;
    int showRecHD;
    int showRecErrors;
+   int showRecNumErrors;
    int showRecDetails;
    int showEPGDetails;
    int showVideoInfo;

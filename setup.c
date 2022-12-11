@@ -24,6 +24,7 @@ class cSkinElchiHDSetupGeneral : public cOsdMenu
 private:
    cSkinElchiHDConfig *tmpConfig;
    int oldepgimagesize;
+   int oldshowRecErrors;
    void Setup(void);
    const char * EpgImageSizeItems[6];
    const char * ResizeItems[3];
@@ -50,6 +51,8 @@ cSkinElchiHDSetupGeneral::cSkinElchiHDSetupGeneral(cSkinElchiHDConfig *TmpConfig
    SetTitle(cString::sprintf("%s - '%s' %s", trVDR("Setup"), "skinElchiHD", tr("General")));
 
    tmpConfig = TmpConfig;
+   oldepgimagesize = tmpConfig->EpgImageSize;
+   oldshowRecErrors = tmpConfig->showRecErrors;
 
    EpgImageSizeItems[0] = tr("don't show");
    EpgImageSizeItems[1] = tr("small");
@@ -93,13 +96,16 @@ void cSkinElchiHDSetupGeneral::Setup(void)
    Add(new cMenuEditBoolItem(tr("show logo if recording is HD/UHD"), &tmpConfig->showRecHD));
 #if defined(APIVERSNUM) && APIVERSNUM >= 20506
    Add(new cMenuEditStraItem(tr("show warning if recording has errors"), &tmpConfig->showRecErrors, 3, ErrorWarningItems));
+   if (tmpConfig->showRecErrors > 0) {
+      // TRANSLATORS: note the two leading spaces
+      Add(new cMenuEditIntItem(tr("  show warning only if recording errors are more than"), &tmpConfig->showRecNumErrors, 0, 10));
+   }
 #endif
    Add(new cMenuEditStraItem(tr("show recording details"), &tmpConfig->showRecDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show EPG details"), &tmpConfig->showEPGDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show video format info (if available)"), &tmpConfig->showVideoInfo, 3, VideoFormatItems));
    Add(new cMenuEditBoolItem(tr("use graphical progressbar"), &tmpConfig->GraphicalProgressbar));
    Add(new cMenuEditBoolItem(tr("show symbols"), &tmpConfig->showIcons));
-   oldepgimagesize = tmpConfig->EpgImageSize;
    Add(new cMenuEditStraItem(tr("EPG picture size"), &tmpConfig->EpgImageSize, 6, EpgImageSizeItems));
    if (tmpConfig->EpgImageSize) {
       // TRANSLATORS: note the two leading spaces
@@ -124,8 +130,9 @@ eOSState cSkinElchiHDSetupGeneral::ProcessKey(eKeys Key)
       }
    }
 
-   if (oldepgimagesize != tmpConfig->EpgImageSize) {
+   if (oldepgimagesize != tmpConfig->EpgImageSize || oldshowRecErrors != tmpConfig->showRecErrors) {
       oldepgimagesize = tmpConfig->EpgImageSize;
+      oldshowRecErrors = tmpConfig->showRecErrors;
       int oldcurrent = Current();
       Clear();
       Setup();
@@ -266,6 +273,7 @@ void cSkinElchiHDSetup::Store(void)
    SetupStore("showRecHD", ElchiConfig.showRecHD);
 #if defined(APIVERSNUM) && APIVERSNUM >= 20506
    SetupStore("showRecErrors", ElchiConfig.showRecErrors);
+   SetupStore("showRecNumErrors", ElchiConfig.showRecNumErrors);
 #endif
    SetupStore("showRecDetails", ElchiConfig.showRecDetails);
    SetupStore("showEPGDetails", ElchiConfig.showEPGDetails);

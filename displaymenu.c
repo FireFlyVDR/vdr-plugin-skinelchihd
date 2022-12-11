@@ -1040,7 +1040,7 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
             pmMenu->DrawText(cPoint(x1 + tabs[2], y), *Length, ColorFg, clrTransparent, font, tabs[3] - tabs[2], font->Height(), taRight|taBorder);
 
 #if defined(APIVERSNUM) && APIVERSNUM >= 20506
-            if (ElchiConfig.showRecErrors > 0 && Recording->Info() && Recording->Info()->Errors() > 0) {
+            if (ElchiConfig.showRecErrors > 0 && Recording->Info() && Recording->Info()->Errors() > ElchiConfig.showRecNumErrors) {
                if (ElchiConfig.showRecErrors == 2 || (ElchiConfig.showRecErrors == 1 && !startswith(Recording->BaseName(), "%")))
                   pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_ERROR))), elchiSymbols.Get(SYM_ERROR, clrYellow, clrTransparent));
             }
