@@ -25,6 +25,25 @@
 
 extern cSkinElchiStatus *ElchiStatus;
 
+class cTextFloatingWrapper{
+private:
+   char *text;
+   char *eol;
+   int lines;
+   int lastLine;
+public:
+   cTextFloatingWrapper(void);
+   ~cTextFloatingWrapper();
+   void Set(const char *Text, const cFont *Font, int UpperLines, int WidthLower, int WidthUpper = 0);
+      ///< Wraps the Text to make it fit into the area defined by the given Width
+      ///< when displayed with the given Font.
+      ///< Wrapping is done by inserting the necessary number of newline
+      ///< characters into the string.
+   int Lines(void) { return lines; }
+      ///< Returns the actual number of lines needed to display the full wrapped text.
+   const char *GetLine(int Line);
+      ///< Returns the given Line. The first line is numbered 0.
+};
 
 /* Possible values of the stream content descriptor according to ETSI EN 300 468 */
 enum stream_content
@@ -1253,58 +1272,34 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
       }
    }
 
-   if ( !isempty(text)) {
+   if (!isempty(text)) {
       int slh = smallfont->Height();
-      cTextWrapper tw2;
+      cTextFloatingWrapper tfw;
       scrollShownLines = (y5 - y)/slh;
       scrollOffsetLines = 0;
-      int upperLines = 0;
 
       if (!hasEPGimages)
       {
-         tw.Set(text, smallfont, x5 - x1);
-         scrollTotalLines = tw.Lines();
+         tfw.Set(text, smallfont, 0, x5 - x1);
+         scrollTotalLines = tfw.Lines();
          scrollbarTop = y;
          scrollbarHeight = y5 - y;
       }
       else {
-         tw.Set(text, smallfont, x4 - x1 - lh2);
-         upperLines = (y4-y + slh - 1)/slh;
-         while (tw.Lines() > upperLines && !strlen(tw.GetLine(upperLines))) 
-            upperLines++;
-         scrollTotalLines = upperLines;
+         tfw.Set(text, smallfont, (y4 - y + slh - 1)/slh, x5 - x1, x4 - x1 - lh2);
+         scrollTotalLines = tfw.Lines();
          scrollbarTop = y4;
          scrollbarHeight = y5 - y4;
-
-         if (tw.Lines() > upperLines)
-         {
-            tw2.Set(strstr((char *)*text, (char *)tw.GetLine(upperLines)), smallfont, x5 - x1);
-            scrollTotalLines += tw2.Lines();
-         }
       }
 
       LOCK_PIXMAPS;
       if (pmEvent)
          osd->DestroyPixmap(pmEvent);
-      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines*slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh));
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh)); 
       pmEvent->Clear();
 
-      if (!hasEPGimages)
-         for (int i = 0; i < tw.Lines(); i++) {
-            pmEvent->DrawText(cPoint(0, i*slh), tw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
-         }
-      else
-      {
-         int line = 0;
-         for (int i = 0; i < upperLines; i++) {
-            pmEvent->DrawText(cPoint(0, line*slh), tw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
-            line++;
-         }
-
-         for (int i = 0; i < tw2.Lines(); i++) {
-            pmEvent->DrawText(cPoint(0, line*slh), tw2.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
-            line++;
-         }
+      for (int i = 0; i < tfw.Lines(); i++) {
+         pmEvent->DrawText(cPoint(0, i*slh), tfw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
       }
       SetTextScrollbar();
    }
@@ -1628,32 +1623,22 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
 
    if (!isempty(text)) {
       int slh = smallfont->Height();
-      cTextWrapper tw2;
+      cTextFloatingWrapper tfw;
       scrollShownLines = (y5 - y)/slh;
       scrollOffsetLines = 0;
-      int upperLines = 0;
 
       if (!hasEPGimages)
       {
-         tw.Set(text, smallfont, x5 - x1);
-         scrollTotalLines = tw.Lines();
+         tfw.Set(text, smallfont, 0, x5 - x1);
+         scrollTotalLines = tfw.Lines();
          scrollbarTop = y;
          scrollbarHeight = y5 - y;
       }
       else {
-         tw.Set(text, smallfont, x4 - x1 - lh2);
-         upperLines = (y4 - y + slh - 1)/slh;
-         while (tw.Lines() > upperLines && !strlen(tw.GetLine(upperLines))) 
-            upperLines++;
-         scrollTotalLines = upperLines;
+         tfw.Set(text, smallfont, (y4 - y + slh - 1)/slh, x5 - x1, x4 - x1 - lh2);
+         scrollTotalLines = tfw.Lines();
          scrollbarTop = y4;
          scrollbarHeight = y5 - y4;
-
-         if (tw.Lines() > scrollTotalLines)
-         {
-            tw2.Set(strstr(text,tw.GetLine(upperLines)), smallfont, x5 - x1);
-            scrollTotalLines += tw2.Lines();
-         }
       }
 
       LOCK_PIXMAPS;
@@ -1662,21 +1647,8 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
       pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh)); 
       pmEvent->Clear();
 
-      if (!hasEPGimages)
-         for (int i = 0; i < tw.Lines(); i++) {
-            pmEvent->DrawText(cPoint(0, i*slh), tw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
-         }
-      else
-      {
-         int line = 0;
-         for (int i = 0; i < upperLines; i++) {
-            pmEvent->DrawText(cPoint(0, line*slh), tw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
-            line++;
-         }
-         for (int i = 0; i < tw2.Lines(); i++) {
-            pmEvent->DrawText(cPoint(0, line*slh), tw2.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
-            line++;
-         }
+      for (int i = 0; i < tfw.Lines(); i++) {
+         pmEvent->DrawText(cPoint(0, i*slh), tfw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
       }
       SetTextScrollbar();
    }
@@ -1830,4 +1802,111 @@ void cSkinElchiHDDisplayMenu::Flush(void)
 #endif
 }
 
+// --- cTextFloatingWrapper ----------------------------------------------------------
+// based on VDR's cTextWrapper
+cTextFloatingWrapper::cTextFloatingWrapper(void)
+{
+   text = eol = NULL;
+   lines = 0;
+   lastLine = -1;
+}
 
+cTextFloatingWrapper::~cTextFloatingWrapper()
+{
+   free(text);
+}
+
+void cTextFloatingWrapper::Set(const char *Text, const cFont *Font, int UpperLines, int WidthLower, int WidthUpper)
+{
+   free(text);
+   text = Text ? strdup(Text) : NULL;
+   eol = NULL;
+   lines = 0;
+   lastLine = -1;
+   if (!text)
+      return;
+   lines = 1;
+   if (WidthUpper < 0 || WidthLower <= 0 || UpperLines < 0)
+      return;
+
+   char *Blank = NULL;
+   char *Delim = NULL;
+   int w = 0;
+   int width = UpperLines > 0 ? WidthUpper : WidthLower;
+
+   stripspace(text); // strips trailing newlines
+
+   for (char *p = text; *p; ) {
+      int sl = Utf8CharLen(p);
+      uint sym = Utf8CharGet(p, sl);
+      if (sym == '\n') {
+         lines++;
+         if (lines > UpperLines) 
+            width = WidthLower;
+         w = 0;
+         Blank = Delim = NULL;
+         p++;
+         continue;
+      }
+      else if (sl == 1 && isspace(sym))
+         Blank = p;
+      int cw = Font->Width(sym);
+      if (w + cw > width) {
+         if (Blank) {
+            *Blank = '\n';
+            p = Blank;
+            continue;
+         }
+         else if (w > 0) { // there has to be at least one character before the newline
+            // Here's the ugly part, where we don't have any whitespace to
+            // punch in a newline, so we need to make room for it:
+            if (Delim)
+               p = Delim + 1; // let's fall back to the most recent delimiter
+            char *s = MALLOC(char, strlen(text) + 2); // The additional '\n' plus the terminating '\0'
+            int l = p - text;
+            strncpy(s, text, l);
+            s[l] = '\n';
+            strcpy(s + l + 1, p);
+            free(text);
+            text = s;
+            p = text + l;
+            continue;
+         }
+      }
+      w += cw;
+      if (strchr("-.,:;!?_", *p)) {
+         Delim = p;
+         Blank = NULL;
+      }
+      p += sl;
+   }
+}
+
+const char *cTextFloatingWrapper::GetLine(int Line)
+{
+   char *s = NULL;
+   if (Line < lines) {
+      if (eol) {
+         *eol = '\n';
+         if (Line == lastLine + 1)
+            s = eol + 1;
+         eol = NULL;
+      }
+      if (!s) {
+         s = text;
+         for (int i = 0; i < Line; i++) {
+             s = strchr(s, '\n');
+             if (s)
+                s++;
+             else
+                break;
+         }
+      }
+      if (s) {
+         if ((eol = strchr(s, '\n')) != NULL)
+            *eol = 0;
+      }
+      lastLine = Line;
+   }
+   return s;
+}
