@@ -63,3 +63,8 @@ VDR Plugin 'skinelchiHD' Revision History
 - fixed segfault when displaying messages while display is detached
 - README updated
 - Code cleanup
+
+2022-12-11 Version 1.1.0
+- Add separate colour for channel logo background
+- added configurable limit before displaying error symbol
+- refactored text wrapping for events and recordings
