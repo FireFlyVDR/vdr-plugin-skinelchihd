@@ -170,9 +170,10 @@ Channel Display
 
 Tips & Hints:
 -------------
-- use a script like vdr_copy_epimage.sh with VDR's '--record' parameter to copy
-  the EPG images in the recording folder directly after it has been created
-- to convert SVG channel logs to png (including the links) call the following script in the channel logo folder:
+- use a script like yaVDR's R60copy_epgimage with VDR's '--record' parameter to copy
+  the EPG images (downloaded by an EPG plugin) automatically into the recording's folder
+- to convert SVG channel logs to png (including the links) call the following script
+  in the channel logo folder (requires the 'convert' program from ImageMagick):
 
 !/bin/bash
 #
