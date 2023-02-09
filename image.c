@@ -20,8 +20,12 @@
 using namespace std; //required by exception handling
 using namespace Magick;
 
-#ifndef GRAPHICSMAGICK
-#if MagickLibVersion < 0x700
+#ifdef GRAPHICSMAGICK
+#if !defined(MagickLibVersion)
+#error GraphicsMagick is required
+#endif
+#else
+#if !defined(MagickLibVersion) || MagickLibVersion < 0x700
 #error ImageMagick Version 7.0 or higher is required
 #endif
 #endif
