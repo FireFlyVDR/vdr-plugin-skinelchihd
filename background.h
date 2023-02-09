@@ -64,6 +64,7 @@ private:
    bool active;
    cTimeMs spmTimer;
    int Delay;
+   int fh;
    cString text;
    cPixmap *pixmap;
 
@@ -73,9 +74,9 @@ public:
    void SetColor(tColor ColorFg, tColor ColorBg = clrTransparent) { colorFg = ColorFg; colorBg = ColorBg; }
    void SetLayer(int Layer) { pixmap->SetLayer(Layer); }
    void SeAlpha(int Alpha) { pixmap->SetAlpha(Alpha); }
-   void SetViewPort(const cRect &Rect) { pixmap->SetViewPort(Rect); }
-   bool Update();
    void SetText(const char *Text, const cFont *Font);  // caller must not lock pixmaps
+   void SetOffset(int Offset);
+   bool Update();
 };
 
 #define MAXEPGIMAGES 6

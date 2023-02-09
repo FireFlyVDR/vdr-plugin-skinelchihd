@@ -128,7 +128,8 @@ cScrollingPixmap::cScrollingPixmap(cOsd *Osd, const cRect VPort, const cFont *Fo
    maxwidth = maxSize.Width() ? std::min(maxSize.Width(), max_char * Font->Width("M")) : 720; // assuming M is widest character
    direction = 0;
    active = false;
-   text = cString(NULL);
+   text = NULL;
+   fh = Font->Height();
 
    if ((alignment & taBorder) != 0)
    {
@@ -162,7 +163,7 @@ void cScrollingPixmap::SetText(const char *Text, const cFont *Font)
       ElchiBackground->Del(this);
       active = false;
    }
-   text = cString(Text);
+   text = Text;
    if (Text)
       textWidth = min(maxwidth, Font->Width(*text));
    else
@@ -186,7 +187,7 @@ void cScrollingPixmap::SetText(const char *Text, const cFont *Font)
    {
       LOCK_PIXMAPS;
       pixmap->Clear();
-      if (isempty(text))
+      if (isempty(*text))
          pixmap->Fill(colorBg);
       else
          pixmap->DrawText(cPoint(0, 0), *text, colorFg, colorBg, Font, maxwidth, Font->Height(), taDefault);
@@ -198,7 +199,7 @@ void cScrollingPixmap::SetText(const char *Text, const cFont *Font)
       {  // locking block
          LOCK_PIXMAPS;
          pixmap->Clear();
-         if (NULL == (const char *)text)
+         if (isempty(*text))
             pixmap->Fill(colorBg);
          else
             pixmap->DrawText(cPoint(0, 0), *text, colorFg, colorBg, Font, max(vPort.Width(), textWidth), Font->Height(), alignment & ~taBorder);
@@ -208,6 +209,36 @@ void cScrollingPixmap::SetText(const char *Text, const cFont *Font)
       ElchiBackground->Add(this);
       active = true;
    }
+}
+
+
+void cScrollingPixmap::SetOffset(int Offset)
+{
+   cRect newVPort = vPort;
+   newVPort.SetX(vPort.X() + Offset + max(fh / TEXT_ALIGN_BORDER, 1));
+   newVPort.SetWidth(vPort.Width() - Offset - 2* max(fh / TEXT_ALIGN_BORDER, 1));
+   
+   if (active) {
+      ElchiBackground->Del(this);
+      active = false;
+   }
+
+   if (ElchiConfig.useScrolling && textWidth > newVPort.Width())
+   {
+      xoffset = 0;
+      maxXoffset = textWidth - newVPort.Width();
+      spmTimer.Set(0);
+      direction = -1;
+   }
+   else
+   {
+      xoffset = 0;
+      direction = 0; // no scrolling
+   }
+
+   pixmap->SetViewPort(newVPort);
+   ElchiBackground->Add(this);
+   active = true;
 }
 
 

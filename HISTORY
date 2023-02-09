@@ -68,3 +68,7 @@ VDR Plugin 'skinelchiHD' Revision History
 - Add separate colour for channel logo background
 - added configurable limit before displaying error symbol
 - refactored text wrapping for events and recordings
+
+2023-01-12 Version 1.1.1
+- fix scrolling of events in channel display while recording
+

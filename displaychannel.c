@@ -627,28 +627,29 @@ void cSkinElchiHDDisplayChannel::Flush(void)
    int followingOffset = 0;
    eTimerMatch TimerMatch = tmNone;
    const cTimer *Timer;
+   int xEvRec = xEvText + lh / TEXT_ALIGN_BORDER;
    if (PresentEvent) {
       LOCK_TIMERS_READ
       Timer = Timers->GetMatch(PresentEvent, &TimerMatch);
       if (Timer && Timer->Recording()) {
          if (Timer->Local()) {
-            pmBG->DrawBitmap(cPoint(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(SYM_REC,
+            pmBG->DrawBitmap(cPoint(xEvRec, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(SYM_REC,
                              Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
             changed = true;
-            presentOffset = elchiSymbols.Width(SYM_REC) + Gap;
+            presentOffset = lh / TEXT_ALIGN_BORDER + elchiSymbols.Width(SYM_REC);
          }
          else if (ElchiConfig.ShowRemoteTimers) {
-            pmBG->DrawBitmap(cPoint(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(Timer->Local() ? SYM_REC : SYM_REC_REMOTE,
+            pmBG->DrawBitmap(cPoint(xEvRec, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(Timer->Local() ? SYM_REC : SYM_REC_REMOTE,
                              Theme.Color(clrChannelEpgTitleBg), Theme.Color(clrChannelEpgShortText)));
             changed = true;
-            presentOffset = elchiSymbols.Width(SYM_REC) + Gap;
+            presentOffset = lh / TEXT_ALIGN_BORDER + elchiSymbols.Width(SYM_REC);
          }
       }
    }
    if (presentOffset != presentLastOffset) {
       if (presentOffset < presentLastOffset)
-         pmBG->DrawRectangle(cRect(xEvText, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2, elchiSymbols.Width(SYM_REC), elchiSymbols.Height(SYM_REC)), Theme.Color(clrBackground));
-      spmPresentTitle->SetViewPort(cRect(xEvText + presentOffset, yEvText, wEvText - presentOffset, lh));
+         pmBG->DrawRectangle(cRect(xEvRec, yEvText + (lh - elchiSymbols.Height(SYM_REC))/2, elchiSymbols.Width(SYM_REC), elchiSymbols.Height(SYM_REC)), Theme.Color(clrBackground));
+      spmPresentTitle->SetOffset(presentOffset);
       presentLastOffset = presentOffset;
       changed = true;
    }
@@ -659,14 +660,14 @@ void cSkinElchiHDDisplayChannel::Flush(void)
       if (Timer && TimerMatch == tmFull && Timer->HasFlags(tfActive) && (Timer->Local() || ElchiConfig.ShowRemoteTimers)) {
          changed = true;
          followingOffset = elchiSymbols.Width(SYM_REC) + Gap;
-         pmBG->DrawBitmap(cPoint(xEvText, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(Timer->Local() ? SYM_REC : SYM_REC_REMOTE,
+         pmBG->DrawBitmap(cPoint(xEvRec, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2), elchiSymbols.Get(Timer->Local() ? SYM_REC : SYM_REC_REMOTE,
                          Theme.Color(clrChannelEpgTitleBg), Theme.Color(clrChannelEpgShortText)));
       }
    }
    if (followingOffset != followingLastOffset) {
       if (followingOffset < followingLastOffset)
-         pmBG->DrawRectangle(cRect(xEvText, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2, elchiSymbols.Width(SYM_REC), elchiSymbols.Height(SYM_REC)), Theme.Color(clrBackground));
-      spmFollowingTitle->SetViewPort(cRect(xEvText + followingOffset, yEvText + 2*lh, wEvText - followingOffset, lh));
+         pmBG->DrawRectangle(cRect(xEvRec, yEvText + 2*lh + (lh - elchiSymbols.Height(SYM_REC))/2, elchiSymbols.Width(SYM_REC), elchiSymbols.Height(SYM_REC)), Theme.Color(clrBackground));
+      spmFollowingTitle->SetOffset(followingOffset);
       followingLastOffset = followingOffset;
       changed = true;
    }
