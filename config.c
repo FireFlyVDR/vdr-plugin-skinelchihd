@@ -34,8 +34,6 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    EpgShowRemoteTimers = 1;
 
    // channel display
-   strcpy(logoBaseDir, "");
-   strcpy(epgimageDir, "");
    showAudioInfo = 1;
    showRecInfo = 0;
    showLogo = 1;
@@ -52,8 +50,8 @@ cSkinElchiHDConfig::~cSkinElchiHDConfig()
 void cSkinElchiHDConfig::SetLogoBaseDir(const char *dir)
 {
    if (dir) {
-      strncpy(logoBaseDir, dir, sizeof(logoBaseDir));
-      DSYSLOG("skinElchiHD: setting logoBaseDir to '%s'", logoBaseDir)
+      logoBaseDir = dir;
+      DSYSLOG("skinElchiHD: setting logoBaseDir to '%s'", *logoBaseDir)
    }
 }
 
@@ -61,8 +59,8 @@ void cSkinElchiHDConfig::SetLogoBaseDir(const char *dir)
 void cSkinElchiHDConfig::SetEpgImageDir(const char *dir)
 {
    if (dir) {
-      strncpy(epgimageDir, dir, sizeof(epgimageDir));
-      DSYSLOG("skinelchiHD: setting epgimageDir to '%s'", epgimageDir)
+      epgimageDir = dir;
+      DSYSLOG("skinelchiHD: setting epgimageDir to '%s'", *epgimageDir)
    }
 }
 

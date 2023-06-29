@@ -20,17 +20,17 @@
 class cSkinElchiHDConfig
 {
 private:
-   char logoBaseDir[MaxFileName];
-   char epgimageDir[MaxFileName];
+   cString logoBaseDir;
+   cString epgimageDir;
 
 public:
    cSkinElchiHDConfig(void);
    ~cSkinElchiHDConfig();
    bool SetupParse(const char *Name, const char *Value);
    void SetLogoBaseDir(const char *dir);
-   char *GetLogoBaseDir(void) { return logoBaseDir; }
+   const char *GetLogoBaseDir(void) { return *logoBaseDir; }
    void SetEpgImageDir(const char *dir);
-   char *GetEpgImageDir(void) { return epgimageDir; }
+   const char *GetEpgImageDir(void) { return *epgimageDir; }
 
    // general
    int useScrolling;
