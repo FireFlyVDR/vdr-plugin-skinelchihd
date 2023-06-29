@@ -42,8 +42,8 @@ cOSDImage::cOSDImage(cString Filename, int Width, int Height)
    InitializeMagick(NULL);
 
    imagefilename = Filename;
-   width = Width;
-   height = Height;
+   width = widthImage = Width;
+   height = heightImage = Height;
    border = 0;
    image = NULL;
    if (!isempty(imagefilename))
@@ -56,8 +56,8 @@ cOSDImage::cOSDImage(cString Filename, int Width, int Height, int Border)
    InitializeMagick(NULL);
 
    imagefilename = Filename;
-   width = Width;
-   height = Height;
+   width = widthImage = Width;
+   height = heightImage = Height;
    border = Border;
    image = NULL;
    if (!isempty(imagefilename))
@@ -120,16 +120,16 @@ bool cOSDImage::LoadImage(bool isLogo)
                mgkImage.shave(Geometry(((int)mgkImage.columns() - (width - 2*border))/2, 0, 0, 0));
             }
          }
-         wImg = mgkImage.columns();
-         hImg = mgkImage.rows();
+         widthImage = mgkImage.columns();
+         heightImage = mgkImage.rows();
 
 #ifdef DEBUG_IMAGETIMES
          tp3 = GetTimeMS();
 #endif
          // convert to cImage
          mgkImage.depth(8);
-         mgkImage.getPixels (0, 0, wImg, hImg); // x, y, w, h
-         image = new cImage( cSize(wImg, hImg), NULL);
+         mgkImage.getPixels (0, 0, widthImage, heightImage); // x, y, w, h
+         image = new cImage( cSize(widthImage, heightImage), NULL);
 
 #ifdef GRAPHICSMAGICK
          mgkImage.writePixels(RGBAQuantum, (unsigned char *) image->Data());
@@ -145,7 +145,7 @@ bool cOSDImage::LoadImage(bool isLogo)
          union uColor *cvrt, buffer;
 
          cvrt = (union uColor *)image->Data();
-         for(int i=0; i<wImg*hImg; i++, cvrt++)
+         for(int i=0; i<widthImage*heightImage; i++, cvrt++)
          {
             buffer.clr = cvrt->clr;
             cvrt->c.B = buffer.c.R;

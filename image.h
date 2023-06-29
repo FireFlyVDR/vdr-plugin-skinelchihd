@@ -20,12 +20,12 @@ public:
    cOSDImage(cString Filename, int Width, int Height, int Border);
    ~cOSDImage();
    inline cImage *GetImage() { return image; }
-   inline int Width() { return width; }
-   inline int Height() { return height; }
+   inline int Width() { return widthImage; }
+   inline int Height() { return heightImage; }
 
 private:
    cString imagefilename;
-   int width, height, border;
+   int width, height, border, widthImage, heightImage;
    cImage *image;
 
    bool LoadImage(bool isLogo);

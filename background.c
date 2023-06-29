@@ -465,7 +465,10 @@ bool cEpgImage::Update()
 
          {  // locking block
             LOCK_PIXMAPS;
-            pixmap->DrawImage(cPoint(frameSize, frameSize), *imgEPG[currentImage]->GetImage());
+            int xOffset = (w - imgEPG[currentImage]->Width())/2;
+            if (xOffset > 0)
+               pixmap->DrawRectangle(cRect(frameSize, frameSize, w, h), 0xFF808080);
+            pixmap->DrawImage(cPoint(frameSize + xOffset, frameSize), *imgEPG[currentImage]->GetImage());
             pixmap->SetLayer(LYR_TEXT);
          }
 
