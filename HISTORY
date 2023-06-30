@@ -74,3 +74,8 @@ VDR Plugin 'skinelchiHD' Revision History
 
 2023-05-16 Version 1.1.2
 - fix array out-of-bounds in SetItemRecording (reported by MarkusE @VDR-Portal)
+
+2023-06-30 Version 1.2.0
+- added support for non-4:3 (e.g. portrait) EPG images (requested by MarkusE @VDR-Portal)
+- optimized storing config pathes
+- implemented SetItemEvent and simplified SetItem
