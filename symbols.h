@@ -110,6 +110,6 @@ public:
 
 extern cSymbolCache elchiSymbols;
 
-int center(int Gap, int Length);
+inline int center(int Gap, int Length) { return (Gap - Length)/2; }
 
 #endif  //__ELCHIHD_SYMBOLS_H

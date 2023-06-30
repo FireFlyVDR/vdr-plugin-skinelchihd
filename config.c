@@ -27,7 +27,6 @@ cSkinElchiHDConfig::cSkinElchiHDConfig(void)
    showEPGDetails = 0;
    showVideoInfo = 0;
    GraphicalProgressbar = 1;
-   showIcons = 1;
    EpgImageSize = 3;
    EpgImageDisplayTime = 3;
    EpgImageEventIdOnly = 0;
@@ -75,7 +74,6 @@ bool cSkinElchiHDConfig::SetupParse(const char *Name, const char *Value)
    else if (strcmp(Name, "showEPGDetails") == 0)               showEPGDetails = atoi(Value);
    else if (strcmp(Name, "showVideoInfo") == 0)                showVideoInfo = atoi(Value);
    else if (strcmp(Name, "GraphicalProgressbar") == 0)         GraphicalProgressbar = atoi(Value);
-   else if (strcmp(Name, "showIcons") == 0)                    showIcons = atoi(Value);
    else if (strcmp(Name, "EpgImageSize") == 0)                 EpgImageSize = atoi(Value);
    else if (strcmp(Name, "EpgImageDisplayTime") == 0)          EpgImageDisplayTime = atoi(Value);
    else if (strcmp(Name, "EpgImageEventIdOnly") == 0)          EpgImageEventIdOnly = atoi(Value);

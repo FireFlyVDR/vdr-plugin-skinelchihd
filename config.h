@@ -42,7 +42,6 @@ public:
    int showEPGDetails;
    int showVideoInfo;
    int GraphicalProgressbar;
-   int showIcons;
    int EpgImageSize;
    int EpgImageDisplayTime;
    int EpgImageEventIdOnly;

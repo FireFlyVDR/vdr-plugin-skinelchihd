@@ -305,11 +305,12 @@ void cSkinElchiHDDisplayMenu::SetMenuCategory(eMenuCategory MenuCategory)
 
 void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, int Tab5)
 {
+   DSYSLOG("skinelchiHD: DisplayMenu::SetTabs(%s %d-%d-%d-%d-%d)", GetCategoryName(menuCategory), Tab1, Tab2, Tab3, Tab4, Tab5);
    cSkinDisplayMenu::SetTabs(Tab1, Tab2, Tab3, Tab4, Tab5);
 
    const cFont *font = cFont::GetFont(fontOsd);
-   int avgCharWidth = font->Width('8');
-   if (!avgCharWidth) avgCharWidth = AvgCharWidth();
+   int avgCharWidth = AvgCharWidth();
+   if (!avgCharWidth) avgCharWidth = font->Width('8');
    int avgCharWidth2 = avgCharWidth / 2;
 
    switch(menuCategory)
@@ -624,6 +625,10 @@ void cSkinElchiHDDisplayMenu::SetItem(const char *Text, int Index, bool Current,
    ///< with Current set to true.
 
    DSYSLOG("skinelchiHD: DisplayMenu::SetItem(\"%s\",%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Text, Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5));
+
+   if (menuCategory == mcSchedule || menuCategory == mcScheduleNow || menuCategory == mcScheduleNext ||
+       menuCategory == mcRecording || menuCategory == mcTimer)
+      isyslog("UNSUPPORTED - skinelchiHD: DisplayMenu::SetItem() category %s", GetCategoryName(menuCategory)); 
    tColor ColorFg = Theme.Color(Current ? clrMenuItemCurrentFg : Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable); 
    const cFont *font = cFont::GetFont(fontOsd);
    int y = menuTop + Index * lh;
@@ -642,70 +647,11 @@ void cSkinElchiHDDisplayMenu::SetItem(const char *Text, int Index, bool Current,
    for (int i = 0; i < MaxTabs; i++) {
       bool isLastText = NULL == GetTabbedText(Text, i+1);
       s = GetTabbedText(Text, i);
-      if (s) {  // symbol and progress bar detection
-         char buffer[15];
-         bool isTimerItem = false;
-         bool isEventItem = false;
-         bool isNewRecording = false;
+      if (s) {
          bool isProgressBar = false;
-         bool hasEventTimer = false;
-         bool hasPartitialEventTimer = false;
-         bool hasDisabledEventTimer = false;
-         bool hasDisabledPartitialEventTimer = false;
-         bool hasRemoteEventTimer = false;
-         bool isRecording = false;
-         bool hasVPS = false;
-         bool isRunning = false;
-
-         if (ElchiConfig.showIcons) {
-            // check for timer info symbols: " !#>"
-            if (menuCategory == mcTimer && i == 0 && strlen(s) == 1 && strchr(" !#>", s[0])) {
-               isTimerItem = true; // update status
-            }
-            else
-            // check for new recording: "10:10*", "1:10*", "01.01.06*"
-               if (menuCategory == mcRecording && (strlen(s) == 6 && s[5] == '*' && s[2] == ':' && isdigit(*s)
-                      && isdigit(*(s + 1)) && isdigit(*(s + 3)) && isdigit(*(s + 4)))
-                  || (strlen(s) == 5 && s[4] == '*' && s[1] == ':' && isdigit(*s)
-                      && isdigit(*(s + 2)) && isdigit(*(s + 3)))
-                  || (strlen(s) == 9 && s[8] == '*' && s[5] == '.' && s[2] == '.'
-                      && isdigit(*s) && isdigit(*(s + 1)) && isdigit(*(s + 3))
-                      && isdigit(*(s + 4)) && isdigit(*(s + 6)) && isdigit(*(s + 7)))) {
-                  isNewRecording = true;  // update status
-                  strncpy(buffer, s, min(sizeof(buffer), strlen(s)));   // make a copy
-                  buffer[min(sizeof(buffer), strlen(s)) - 1] = '\0';  // remove the '*' character
-               }
-               else
-                  if (menuCategory == mcSchedule || menuCategory == mcScheduleNow || menuCategory == mcScheduleNext) {
-                     if ((strlen(s) == 3) && ( i == 2 || i == 3 || i == 4)) {
-                        isEventItem = true;
-                        if (s[0] == 'R') isRecording = true;
-                        if (s[0] == 'T') hasEventTimer = true;
-                        if (s[0] == 't') hasPartitialEventTimer = true;
-                        if (s[0] == 'I') hasDisabledEventTimer = true;
-                        if (s[0] == 'i') hasDisabledPartitialEventTimer = true;
-                        if (s[0] == 'S') hasRemoteEventTimer = true;
-                        if (s[1] == 'V') hasVPS = true;
-                        if (s[2] == '*') isRunning = true;
-                     }
-                     else
-                        if ((strlen(s) == 4) && ( i == 2 || i == 3 || i == 4 ) && ( s[0] == ' ' )) { //epgsearch What's on now default
-                           isEventItem = true;
-                           if (s[1] == 'R') isRecording = true;
-                           if (s[1] == 'T') hasEventTimer = true;
-                           if (s[1] == 't') hasPartitialEventTimer = true;
-                           if (s[1] == 'I') hasDisabledEventTimer = true;
-                           if (s[1] == 'i') hasDisabledPartitialEventTimer = true;
-                           if (s[1] == 'S') hasRemoteEventTimer = true;
-                           if (s[2] == 'V') hasVPS = true;
-                           if (s[3] == '*') isRunning = true;
-                        }
-                  }
-          }
-
          int current = 0, total = 0;
          // check for progress bar: "[|||||||   ]"
-         if (!isTimerItem && !isNewRecording && ElchiConfig.GraphicalProgressbar &&
+         if (ElchiConfig.GraphicalProgressbar &&
             (strlen(s) > 5 && s[0] == '[' && s[strlen(s) - 1] == ']')) {
             const char *p = s + 1;
             isProgressBar = true; // update status
@@ -722,55 +668,7 @@ void cSkinElchiHDDisplayMenu::SetItem(const char *Text, int Index, bool Current,
          }
          xOffset = x1 + Tab(i);
 
-         if (isTimerItem)
-         {
-            // timer menu  =========================================================
-            // NOTICE should be not be used anymore
-            pmMenu->DrawRectangle(cRect(xOffset, y, x5, lh - 1), clrTransparent);
-            switch(s[0]) {
-            case '!': 
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_ARROW_TURN)) / 2), elchiSymbols.Get(SYM_ARROW_TURN, ColorFg, clrTransparent));
-               break;
-            case '#':
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_RECSML)) / 2), elchiSymbols.Get(SYM_RECSML, Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
-               break;
-            case '>':
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK)) / 2), elchiSymbols.Get(SYM_CLOCK, ColorFg, clrTransparent));
-               break;
-            case ' ':
-            default:
-               break;
-            }
-         } else if (isEventItem)
-         {  // program schedule menu  =========================================================
-            if (isRecording) {
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_RECSML)) / 2), elchiSymbols.Get(SYM_RECSML, Theme.Color(clrSymbolRecFg), Theme.Color(clrSymbolRecBg)));
-            }
-            else {
-               if (hasEventTimer)
-                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK) ) / 2), elchiSymbols.Get(SYM_CLOCK, ColorFg, clrTransparent));
-               if (hasPartitialEventTimer)
-                  pmMenu->DrawBitmap(cPoint(xOffset + (elchiSymbols.Width(SYM_CLOCK) - elchiSymbols.Width(SYM_CLOCKSML) ) / 2, y + (lh - elchiSymbols.Height(SYM_CLOCKSML)) / 2), elchiSymbols.Get(SYM_CLOCKSML, ColorFg, clrTransparent));
-               if (hasDisabledEventTimer)
-                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK_INACTIVE) ) / 2), elchiSymbols.Get(SYM_CLOCK_INACTIVE, ColorFg, clrTransparent));
-               if (hasDisabledPartitialEventTimer)
-                  pmMenu->DrawBitmap(cPoint(xOffset + (elchiSymbols.Width(SYM_CLOCK_INACTIVE) - elchiSymbols.Width(SYM_CLOCKSML_INACTIVE) ) / 2, y + (lh - elchiSymbols.Height(SYM_CLOCKSML_INACTIVE)) / 2), elchiSymbols.Get(SYM_CLOCKSML_INACTIVE, ColorFg, clrTransparent));
-               if (hasRemoteEventTimer && ElchiConfig.EpgShowRemoteTimers)
-                  pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_CLOCK_REMOTE) ) / 2), elchiSymbols.Get(SYM_CLOCK_REMOTE, ColorFg, clrTransparent));
-            }
-            xOffset += elchiSymbols.Width(SYM_CLOCK); // clock is wider than rec
-
-            if (hasVPS)
-               pmMenu->DrawBitmap(cPoint(xOffset, y + (lh - elchiSymbols.Height(SYM_VPSSML)) / 2), elchiSymbols.Get(SYM_VPSSML, ColorFg, clrTransparent));
-            xOffset += elchiSymbols.Width(SYM_VPSSML);
-         } else if (isNewRecording)
-         {  // recordings menu ==================================
-            // replaced by: SetItemRecording()
-            pmMenu->DrawText(cPoint(xOffset, y), buffer, ColorFg, clrTransparent, font, x5 - xOffset);
-            // draw symbol "new" centered
-            int gap = std::max(0, (Tab(i+1)-Tab(i)- font->Width(buffer) - elchiSymbols.Height(SYM_NEWSML)) / 2);
-            pmMenu->DrawBitmap(cPoint(xOffset + font->Width(buffer) + gap, y + (lh - elchiSymbols.Height(SYM_NEWSML)) / 2), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
-         } else if (isProgressBar)
+         if (isProgressBar)
          {  // progressbar ==================================
             // define x coordinates of progressbar
             int pxs = xOffset;
@@ -819,6 +717,196 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
    ///< The default implementation does nothing and returns false, which results in
    ///< a call to SetItem() with a proper text.
 
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItemEvent(%d,%s,%s) %s %s @ %s (%s)", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Event?Event->Title():"noEvent", Channel?Channel->Name():"NoChannel", WithDate?"WithDate":"");
+
+   if (Event)
+   {
+      const cFont *font = cFont::GetFont(fontOsd);
+      tColor colorFg, colorBg = clrTransparent;
+      int y = menuTop + Index * lh;
+
+      eSymbols symTimer = SYM_MAX_COUNT;
+      eSymbols symVPS = SYM_MAX_COUNT;
+      bool symRecColors = false;
+      int symTimerXoffset = 0;
+      int symTimerYoffset = 0;
+      int offsetChannel = -1;
+      int offsetDate = -1;
+      int offsetTime = -1;
+      int offsetProgress = -1;
+      int offsetSymbols = -1;
+      int offsetTitle = -1;
+
+      if (!(Channel && WithDate))
+      {
+         LOCK_TIMERS_READ
+         eTimerMatch timerMatch;
+         const cTimer *timer = Timers->GetMatch(Event, &timerMatch);
+         if (timer) {
+            bool timerLocal = timer->Local();
+            bool timerActive = timer->HasFlags(tfActive);
+            if (timerMatch == tmFull)
+               if (timer->Recording()) {
+                  symTimer = timerLocal ? SYM_REC : ElchiConfig.EpgShowRemoteTimers ? SYM_REC_REMOTE : SYM_MAX_COUNT;
+                  symRecColors = true;
+               }
+               else
+                  if (timerActive)
+                     symTimer = timerLocal ? SYM_CLOCK : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE : SYM_MAX_COUNT;
+                  else
+                     symTimer = timerLocal ? SYM_CLOCK_INACTIVE : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE_INACTIVE : SYM_MAX_COUNT;
+            else
+               if (timerLocal)
+                  symTimer = timerActive ? SYM_CLOCKSML : SYM_CLOCKSML_INACTIVE;
+         }
+      }
+      else { // search results give lock sequence warning
+         if (TimerMatch == tmFull)
+            symTimer = TimerActive ? SYM_CLOCK : SYM_CLOCK_INACTIVE;
+         else if (TimerMatch == tmPartial)
+            symTimer = TimerActive ? SYM_CLOCKSML : SYM_CLOCKSML_INACTIVE;
+      }
+      if (symTimer != SYM_MAX_COUNT) {
+         symTimerXoffset = center(elchiSymbols.Width(SYM_REC), elchiSymbols.Width(symTimer));
+         symTimerYoffset = center(lh, elchiSymbols.Height(symTimer));
+      }
+
+      if( Event->Vps() && (Event->Vps() - Event->StartTime()))
+         symVPS = SYM_VPS;
+
+      switch (menuCategory) {
+         case mcSchedule:
+            {  // Date - Time - Sym - Title~Shorttext
+               if (!Channel && WithDate) {
+                  offsetChannel = -1;
+                  offsetDate = 0;
+                  offsetTime = 1;
+                  offsetProgress = -1;
+                  offsetSymbols = 2;
+                  offsetTitle = 3;
+                  tabs[0] = 0;
+                  tabs[1] = tabs[0] + 7 * AvgCharWidth();
+                  tabs[2] = tabs[1] + 6 * AvgCharWidth();
+                  tabs[3] = tabs[2] +  elchiSymbols.Width(SYM_REC) + symbolGap + elchiSymbols.Width(SYM_VPS) + AvgCharWidth()/2;
+               }
+               else if(Channel && !WithDate)
+               {  //Channel - Time - Sym - Title~Shorttext
+                  offsetChannel = 0;
+                  offsetDate = -1;
+                  offsetTime = 1;
+                  offsetProgress = -1;
+                  offsetSymbols = 2;
+                  offsetTitle = 3;
+                  tabs[0] = 0;
+                  tabs[1] = tabs[0] + 12 * AvgCharWidth();
+                  tabs[2] = tabs[1] +  7 * AvgCharWidth();
+                  tabs[4] = tabs[3] +  elchiSymbols.Width(SYM_REC) + symbolGap + elchiSymbols.Width(SYM_VPS) + AvgCharWidth()/2;
+               }
+               else if(Channel && WithDate)
+               {  // Channel - Date - Time - Sym - Title~Shorttext
+                  offsetChannel = 0;
+                  offsetDate = 1;
+                  offsetTime = 2;
+                  offsetProgress = -1;
+                  offsetSymbols = 3;
+                  offsetTitle = 4;
+                  tabs[0] = 0;
+                  tabs[1] = tabs[0] + 12 * AvgCharWidth();
+                  tabs[2] = tabs[1] +  6 * AvgCharWidth();
+                  tabs[3] = tabs[2] +  6 * AvgCharWidth();
+                  tabs[4] = tabs[3] +  elchiSymbols.Width(SYM_REC) + symbolGap + elchiSymbols.Width(SYM_VPS) + AvgCharWidth()/2;
+               }
+               break;
+            }
+
+         case mcScheduleNow:
+            {  // Channel - Time - Progress - Sym - Title~Shorttext
+               if (!Channel) return false;
+               offsetChannel = 0;
+               offsetDate = -1;
+               offsetTime = 1;
+               offsetProgress = 2;
+               offsetSymbols = 3;
+               offsetTitle = 4;
+               tabs[0] = 0;
+               tabs[1] = tabs[0] + 12 * AvgCharWidth();
+               tabs[2] = tabs[1] +  6 * AvgCharWidth();
+               tabs[3] = tabs[2] +  4 * AvgCharWidth();
+               tabs[4] = tabs[3] +  elchiSymbols.Width(SYM_REC) + symbolGap + elchiSymbols.Width(SYM_VPS) + AvgCharWidth()/2;
+
+               break;
+            }
+
+         case mcScheduleNext:
+            {  // Channel - Time - Sym - Title~Shorttext
+               if (!Channel) return false;
+               offsetChannel = 0;
+               offsetDate = -1;
+               offsetTime = 1;
+               offsetProgress = -1;
+               offsetSymbols = 2;
+               offsetTitle = 3;
+               tabs[0] = 0;
+               tabs[1] = tabs[0] + 12 * AvgCharWidth();
+               tabs[2] = tabs[1] +  7 * AvgCharWidth();
+               tabs[3] = tabs[2] +  elchiSymbols.Width(SYM_REC) + symbolGap + elchiSymbols.Width(SYM_VPS) + AvgCharWidth()/2;
+
+               break;
+            }
+         default:
+            return false;
+      }
+
+      SetItemBackground(Index, Current, Selectable, x1 + tabs[offsetTitle]);
+
+      bool hasShortText = !isempty(Event->ShortText());
+      cString text = cString::sprintf("%s%s%s", Event->Title(), hasShortText ? " ~ " : "", hasShortText ? Event->ShortText() : "");
+      if (Current) {
+         colorFg = Theme.Color(clrMenuItemCurrentFg);
+         spmCurrentItem->SetText(text, font);
+      }
+      else { // non-current
+         colorFg = Theme.Color(Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
+         pmMenu->DrawText(cPoint(x1 + tabs[offsetTitle], y), text, colorFg, colorBg, font, x5 - lh/2 - tabs[offsetTitle]);
+      }
+
+      if (offsetChannel >= 0)
+         pmMenu->DrawText(cPoint(x1 + tabs[offsetChannel], y), cString::sprintf("%s", Channel->Name()), colorFg, colorBg, font, tabs[offsetChannel+1] - tabs[offsetChannel]);
+
+      if (offsetDate >= 0) {
+         struct tm tm_r;
+         time_t starttime = Event->StartTime();
+         tm *tm = localtime_r(&starttime, &tm_r);
+         pmMenu->DrawText(cPoint(x1 + tabs[offsetDate], y), cString::sprintf("%s %2d.", *WeekDayName(tm->tm_wday), tm->tm_mday), colorFg, colorBg, font, tabs[offsetDate+1] - tabs[offsetDate]);
+      }
+
+      if (offsetTime >= 0)
+         pmMenu->DrawText(cPoint(x1 + tabs[offsetTime], y), cString::sprintf("%s", *Event->GetTimeString()), colorFg, colorBg, font, tabs[offsetTime+1] - tabs[offsetTime]);
+
+      if (offsetProgress == 2 && ElchiConfig.GraphicalProgressbar) {
+         int pxs = x1 + tabs[2];
+         int pxe = pxs + tabs[3] - tabs[2] - AvgCharWidth()/2;
+         int px = pxs;
+         if (Event->Duration() > 0) {
+            float seen = (time(NULL) - Event->StartTime()) / (float) Event->Duration();
+            px += std::max((int)(seen * (pxe - pxs)), 1);
+         }
+         int pys = y + lh/4;
+         int pye = y + lh - lh/4;
+
+         DrawShadedRectangle(pmMenu, Theme.Color(clrProgressBarUpper), cRect(pxs, pys, px-pxs, pye-pys));
+         DrawShadedRectangle(pmMenu, Theme.Color(clrProgressBarLower), cRect(px, pys, pxe-px, pye-pys));
+      }
+      if (symTimer != SYM_MAX_COUNT) {
+         tColor symTimerFg = symRecColors ? Theme.Color(clrSymbolRecFg) : colorFg;
+         tColor symTimerBg = symRecColors ? Theme.Color(clrSymbolRecBg) : colorBg;
+         pmMenu->DrawBitmap(cPoint(x1 + tabs[offsetSymbols] + symTimerXoffset, y + symTimerYoffset), elchiSymbols.Get(symTimer, symTimerFg, symTimerBg));
+      }
+      if (symVPS != SYM_MAX_COUNT)
+         pmMenu->DrawBitmap(cPoint(x1 + tabs[offsetSymbols] + elchiSymbols.Width(SYM_REC) + symbolGap, y + center(lh, elchiSymbols.Height(symVPS))), elchiSymbols.Get(symVPS, colorFg, clrTransparent));
+
+      return true;
+   }
    return false;
 }
 
@@ -916,6 +1004,7 @@ bool cSkinElchiHDDisplayMenu::SetItemChannel(const cChannel *Channel, int Index,
    ///< The default implementation does nothing and returns false, which results in
    ///< a call to SetItem() with a proper text.
 
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItemChannel(%d,%s,%s)", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'");
    if (Channel) {
       const cFont *font = cFont::GetFont(fontOsd);
       tColor colorFg, colorBg = clrTransparent;

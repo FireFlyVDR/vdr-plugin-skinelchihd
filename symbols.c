@@ -346,7 +346,6 @@ static cBitmap bmTeletext(teletext);
 static cBitmap bmUnmute(unmute);// unused
 static cBitmap bmVolume(volume);
 
-int center(int Gap, int Length) { return (Gap - Length)/2; }
 
 cSymbolCache elchiSymbols;
 //

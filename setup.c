@@ -105,7 +105,6 @@ void cSkinElchiHDSetupGeneral::Setup(void)
    Add(new cMenuEditStraItem(tr("show EPG details"), &tmpConfig->showEPGDetails, 3, EpgDetails));
    Add(new cMenuEditStraItem(tr("show video format info (if available)"), &tmpConfig->showVideoInfo, 3, VideoFormatItems));
    Add(new cMenuEditBoolItem(tr("use graphical progressbar"), &tmpConfig->GraphicalProgressbar));
-   Add(new cMenuEditBoolItem(tr("show symbols"), &tmpConfig->showIcons));
    Add(new cMenuEditStraItem(tr("EPG picture size"), &tmpConfig->EpgImageSize, 6, EpgImageSizeItems));
    if (tmpConfig->EpgImageSize) {
       // TRANSLATORS: note the two leading spaces
@@ -279,7 +278,7 @@ void cSkinElchiHDSetup::Store(void)
    SetupStore("showEPGDetails", ElchiConfig.showEPGDetails);
    SetupStore("showVideoInfo", ElchiConfig.showVideoInfo);
    SetupStore("GraphicalProgressbar", ElchiConfig.GraphicalProgressbar);
-   SetupStore("showIcons", ElchiConfig.showIcons);
+   SetupStore("showIcons");
    SetupStore("EpgImageSize", ElchiConfig.EpgImageSize);
    SetupStore("EpgImageDisplayTime", ElchiConfig.EpgImageDisplayTime);
    SetupStore("EpgImageEventIdOnly", ElchiConfig.EpgImageEventIdOnly);
