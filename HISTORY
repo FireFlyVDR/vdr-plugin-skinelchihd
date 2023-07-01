@@ -79,3 +79,6 @@ VDR Plugin 'skinelchiHD' Revision History
 - added support for non-4:3 (e.g. portrait) EPG images (requested by MarkusE @VDR-Portal)
 - optimized storing config pathes
 - implemented SetItemEvent and simplified SetItem
+
+2023-07-01 Version 1.2.1
+- remove symbol for inactive partitial timers to conform with previous behaviour

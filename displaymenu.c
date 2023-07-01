@@ -756,15 +756,15 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
                   else
                      symTimer = timerLocal ? SYM_CLOCK_INACTIVE : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE_INACTIVE : SYM_MAX_COUNT;
             else
-               if (timerLocal)
-                  symTimer = timerActive ? SYM_CLOCKSML : SYM_CLOCKSML_INACTIVE;
+               if (timerLocal && timerActive)
+                  symTimer = SYM_CLOCKSML;
          }
       }
       else { // search results give lock sequence warning
          if (TimerMatch == tmFull)
             symTimer = TimerActive ? SYM_CLOCK : SYM_CLOCK_INACTIVE;
-         else if (TimerMatch == tmPartial)
-            symTimer = TimerActive ? SYM_CLOCKSML : SYM_CLOCKSML_INACTIVE;
+         else if (TimerMatch == tmPartial && TimerActive)
+            symTimer = SYM_CLOCKSML;
       }
       if (symTimer != SYM_MAX_COUNT) {
          symTimerXoffset = center(elchiSymbols.Width(SYM_REC), elchiSymbols.Width(symTimer));
