@@ -1882,7 +1882,7 @@ void cSkinElchiHDDisplayMenu::Flush(void)
    //DSYSLOG2("skinelchiHD: DisplayMenu::Flush()")
    gettimeofday(&tp1, NULL);
 #endif
-   osd->Flush();
+   ElchiBackground->Flush();
 #ifdef DEBUG_TIMING
    gettimeofday(&tp2, NULL);
    //dsyslog("skinelchiHD: DisplayMenu::osd->Flush() %4.3f ms",

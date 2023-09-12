@@ -40,7 +40,8 @@ public:
    ~cElchiBackground();
    void Start();
    void Stop();
-   void SetOSD(cOsd *Osd) { osd = Osd; }
+   void SetOSD(cOsd *Osd);
+   void Flush(void);
    void Add(cBgObject*);
    void Del(cBgObject*);
 };

@@ -230,5 +230,5 @@ void cSkinElchiHDDisplayTracks::SetAudioChannel(int AudioChannel)
 
 void cSkinElchiHDDisplayTracks::Flush(void)
 {
-   osd->Flush();
+   ElchiBackground->Flush();
 }

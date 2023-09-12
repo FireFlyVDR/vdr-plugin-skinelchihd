@@ -595,7 +595,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
 
    if (changed) {
       DSYSLOG2("skinelchiHD: cSkinElchiHDDisplayReplay::Flush()ing!")
-      osd->Flush();
+      ElchiBackground->Flush();
       changed = false;
    }
 }

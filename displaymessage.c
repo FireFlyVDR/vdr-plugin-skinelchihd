@@ -65,7 +65,7 @@ void cSkinElchiHDDisplayMessage::SetMessage(eMessageType Type, const char *Text)
 void cSkinElchiHDDisplayMessage::Flush(void)
 {
    if (changed) {
-      osd->Flush();
+      ElchiBackground->Flush();
       changed = false;
    }
 }

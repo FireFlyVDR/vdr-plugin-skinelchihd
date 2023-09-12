@@ -32,11 +32,9 @@ cElchiBackground::~cElchiBackground()
 {
    Stop();
 
-   int cnt = 0;
    mtxBg.Lock();
    while (bgObjectList.Count() > 0) {
       cvBlock.TimedWait(mtxBg, 2);
-      cnt++;
    }
    mtxBg.Unlock(); 
 }
@@ -56,6 +54,23 @@ void cElchiBackground::Stop()
       cvBlock.Broadcast();
       Cancel(10);
    }
+}
+
+void cElchiBackground::SetOSD(cOsd *Osd)
+{
+   mtxBg.Lock();
+   if (bgObjectList.Count() > 0)
+      esyslog("skinelchiHD: bgObjectList=%d osd=%08lX new OSD=%08lX", bgObjectList.Count(), (uint64_t)osd, (uint64_t)Osd);
+   osd = Osd;
+   mtxBg.Unlock();
+}
+void cElchiBackground::Flush(void)
+{
+   mtxBg.Lock();
+   if (osd) {
+      osd->Flush();
+   }
+   mtxBg.Unlock();
 }
 
 
@@ -95,11 +110,10 @@ void cElchiBackground::Action(void)
          doFlush |= bgObj->Update();
       }
 
-      mtxBg.Unlock();  // give mtxBg back
-
       if (Running() && osd && doFlush) {
          osd->Flush();
       }
+      mtxBg.Unlock();  // give mtxBg back
 
       delay = std::max(DELAY - std::min(DELAY, timer.Elapsed()), DELAY/10);
       if (Running()) {

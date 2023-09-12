@@ -116,7 +116,7 @@ void cSkinElchiHDDisplayVolume::Flush(void)
 {
    if (changed) {
       DSYSLOG("skinelchiHD: cSkinElchiHDDisplayVolume::Flush()")
-      osd->Flush();
+      ElchiBackground->Flush();
       changed = false;
    }
 }
