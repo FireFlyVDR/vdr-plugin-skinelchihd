@@ -106,6 +106,7 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    lastDate = NULL;
    lh = std::max(font->Height(), elchiSymbols.Height(SYM_NEWSML)); //not smaller than NEW symbol
    int slh = cFont::GetFont(fontSml)->Height();
+   scrlh = lh;
 
    OSDsize.left   = cOsd::OsdLeft();
    OSDsize.top    = cOsd::OsdTop();
@@ -385,21 +386,20 @@ void cSkinElchiHDDisplayMenu::Scroll(bool Up, bool Page)
    ///< text shall be scrolled up or down, and Page is true if it shall be
    ///< scrolled by a full page, rather than a single line. An object of the
    ///< cTextScroller class can be used to implement the scrolling text area.
-   int slh = cFont::GetFont(fontSml)->Height();
    if (Up) {
       if (scrollOffsetLines > 0) {
          scrollOffsetLines -= Page ? scrollShownLines : 1;
          if (scrollOffsetLines < 0)
             scrollOffsetLines = 0;
          LOCK_PIXMAPS;
-         pmEvent->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * slh));
+         pmEvent->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * scrlh));
          DSYSLOG("skinelchiHD: DisplayMenu::Scroll Up line %d", -scrollOffsetLines)
 
          if (pmEPGImage)
          {
-            pmEPGImage->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * slh));
+            pmEPGImage->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * scrlh));
             cRect vPort = pmEPGImage->ViewPort();
-            vPort.SetHeight(epgImageLines * slh - scrollOffsetLines * slh);
+            vPort.SetHeight(epgImageLines * scrlh - scrollOffsetLines * scrlh);
             pmEPGImage->SetViewPort(vPort);
          }
       }
@@ -412,13 +412,13 @@ void cSkinElchiHDDisplayMenu::Scroll(bool Up, bool Page)
          if (scrollOffsetLines + scrollShownLines > scrollTotalLines)
             scrollOffsetLines = scrollTotalLines - scrollShownLines;
          LOCK_PIXMAPS;
-         pmEvent->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * slh));
+         pmEvent->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * scrlh));
          DSYSLOG("skinelchiHD: DisplayMenu::Scroll Up line %d", -scrollOffsetLines)
          if (pmEPGImage)
          {
-            pmEPGImage->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * slh));
+            pmEPGImage->SetDrawPortPoint(cPoint(0, -scrollOffsetLines * scrlh));
             cRect vPort = pmEPGImage->ViewPort();
-            vPort.SetHeight(epgImageLines * slh - scrollOffsetLines * slh);
+            vPort.SetHeight(epgImageLines * scrlh - scrollOffsetLines * scrlh);
             pmEPGImage->SetViewPort(vPort);
          }
       }
@@ -1365,9 +1365,9 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
    }
 
    if (!isempty(text)) {
-      int slh = smallfont->Height();
+      scrlh = smallfont->Height();
       cTextFloatingWrapper tfw;
-      scrollShownLines = (y5 - y)/slh;
+      scrollShownLines = (y5 - y)/scrlh;
       scrollOffsetLines = 0;
 
       if (!hasEPGimages)
@@ -1378,7 +1378,7 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
          scrollbarHeight = y5 - y;
       }
       else {
-         tfw.Set(text, smallfont, (y4 - y + slh - 1)/slh, x5 - x1, x4 - x1 - lh2);
+         tfw.Set(text, smallfont, (y4 - y + scrlh - 1)/scrlh, x5 - x1, x4 - x1 - lh2);
          scrollTotalLines = tfw.Lines();
          scrollbarTop = y4;
          scrollbarHeight = y5 - y4;
@@ -1387,11 +1387,11 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
       LOCK_PIXMAPS;
       if (pmEvent)
          osd->DestroyPixmap(pmEvent);
-      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh)); 
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * scrlh), cRect(0, 0, x5 - x1, scrollTotalLines * scrlh)); 
       pmEvent->Clear();
 
       for (int i = 0; i < tfw.Lines(); i++) {
-         pmEvent->DrawText(cPoint(0, i*slh), tfw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
+         pmEvent->DrawText(cPoint(0, i*scrlh), tfw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
       }
       SetTextScrollbar();
    }
@@ -1716,9 +1716,9 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
    }
 
    if (!isempty(text)) {
-      int slh = smallfont->Height();
+      scrlh = smallfont->Height();
       cTextFloatingWrapper tfw;
-      scrollShownLines = (y5 - y)/slh;
+      scrollShownLines = (y5 - y)/scrlh;
       scrollOffsetLines = 0;
 
       if (!hasEPGimages)
@@ -1729,7 +1729,7 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          scrollbarHeight = y5 - y;
       }
       else {
-         tfw.Set(text, smallfont, (y4 - y + slh - 1)/slh, x5 - x1, x4 - x1 - lh2);
+         tfw.Set(text, smallfont, (y4 - y + scrlh - 1)/scrlh, x5 - x1, x4 - x1 - lh2);
          scrollTotalLines = tfw.Lines();
          scrollbarTop = y4;
          scrollbarHeight = y5 - y4;
@@ -1738,11 +1738,11 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
       LOCK_PIXMAPS;
       if (pmEvent)
          osd->DestroyPixmap(pmEvent);
-      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * slh), cRect(0, 0, x5 - x1, scrollTotalLines * slh)); 
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y, x5 - x1, scrollShownLines * scrlh), cRect(0, 0, x5 - x1, scrollTotalLines * scrlh)); 
       pmEvent->Clear();
 
       for (int i = 0; i < tfw.Lines(); i++) {
-         pmEvent->DrawText(cPoint(0, i*slh), tfw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
+         pmEvent->DrawText(cPoint(0, i*scrlh), tfw.GetLine(i), Theme.Color(clrMenuEventDescription), clrTransparent, smallfont);
       }
       SetTextScrollbar();
    }
@@ -1757,8 +1757,8 @@ void cSkinElchiHDDisplayMenu::SetText(const char *Text, bool FixedFont)
    if (!isempty(Text)) {
       cTextWrapper tw;
       const cFont *font = cFont::GetFont(FixedFont ? fontFix : fontOsd);
-      int fh = font->Height();
-      scrollShownLines = (y5 - y3)/fh;
+      scrlh = font->Height();
+      scrollShownLines = (y5 - y3)/scrlh;
       scrollOffsetLines = 0;
       int upperLines = 0;
 
@@ -1770,11 +1770,11 @@ void cSkinElchiHDDisplayMenu::SetText(const char *Text, bool FixedFont)
       LOCK_PIXMAPS;
       if (pmEvent)
          osd->DestroyPixmap(pmEvent);
-      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y3, x5 - x1, scrollShownLines * fh), cRect(0, 0, x5 - x1, scrollTotalLines * fh)); 
+      pmEvent = osd->CreatePixmap(LYR_SCROLL, cRect(x1, y3, x5 - x1, scrollShownLines * scrlh), cRect(0, 0, x5 - x1, scrollTotalLines * scrlh)); 
       pmEvent->Clear();
 
       for (int i = 0; i < tw.Lines(); i++) {
-         pmEvent->DrawText(cPoint(0, i*fh), tw.GetLine(i), Theme.Color(clrMenuText), clrTransparent, font);
+         pmEvent->DrawText(cPoint(0, i*scrlh), tw.GetLine(i), Theme.Color(clrMenuText), clrTransparent, font);
       }
    }
    SetTextScrollbar();

@@ -38,7 +38,7 @@ private:
    int y0, y11, y2, y3, y4, y5, y6, y17, y8, y9;
    int btn0, btn1, btn2, btn3, btn4;
 
-   int lh, lh2, menuTop, menuHeight, currentIndex, area;
+   int lh, lh2, scrlh, menuTop, menuHeight, currentIndex, area;
    cString lastDate;
    bool previousHasEPGimages;
 
