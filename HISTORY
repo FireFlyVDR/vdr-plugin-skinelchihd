@@ -81,4 +81,11 @@ VDR Plugin 'skinelchiHD' Revision History
 - implemented SetItemEvent and simplified SetItem
 
 2023-07-01 Version 1.2.1
-- remove symbol for inactive partitial timers to conform with previous behaviour
+- remove symbol for inactive partial timers to conform with previous behavior
+
+2023-09-12 Version 1.2.2
+- limit progress bar length of current event display to duration
+- avoid triggering index generation for recordings with empty/missing indexes
+- protect flush by mutex
+- fixed scrolling amount of text windows
+
