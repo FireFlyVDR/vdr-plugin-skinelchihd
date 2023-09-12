@@ -889,7 +889,7 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
          int px = pxs;
          if (Event->Duration() > 0) {
             float seen = (time(NULL) - Event->StartTime()) / (float) Event->Duration();
-            px += std::max((int)(seen * (pxe - pxs)), 1);
+            px += std::min(std::max((int)(seen * (pxe - pxs)), 1), pxe - pxs);
          }
          int pys = y + lh/4;
          int pye = y + lh - lh/4;
