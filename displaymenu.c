@@ -1508,10 +1508,12 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          text.Append(cString::sprintf("%s: %s\n", trVDR("Channel"), Info->ChannelName()));
 
       cMarks marks;
-
-      bool hasMarks = marks.Load(Recording->FileName(), Recording->FramesPerSecond(), Recording->IsPesRecording()) && marks.Count();
-
-      cIndexFile *index = new cIndexFile(Recording->FileName(), false, Recording->IsPesRecording());
+      bool hasMarks = false;
+      cIndexFile *index = NULL;
+      if (Recording->NumFrames() > 0) {
+         hasMarks = marks.Load(Recording->FileName(), Recording->FramesPerSecond(), Recording->IsPesRecording()) && marks.Count();
+         index = new cIndexFile(Recording->FileName(), false, Recording->IsPesRecording());
+      }
       int lastIndex = 0;
 
       int cuttedLength = 0;
