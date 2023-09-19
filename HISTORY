@@ -89,3 +89,5 @@ VDR Plugin 'skinelchiHD' Revision History
 - protect flush by mutex
 - fixed scrolling amount of text windows
 
+2023-09-12 Version 1.2.3
+- fixed display of events when called without channel (thanks to zimuland @VDR-Portal)
