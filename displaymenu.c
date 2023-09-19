@@ -717,7 +717,7 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
    ///< The default implementation does nothing and returns false, which results in
    ///< a call to SetItem() with a proper text.
 
-   DSYSLOG("skinelchiHD: DisplayMenu::SetItemEvent(%d,%s,%s) %s %s @ %s (%s)", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Event?Event->Title():"noEvent", Channel?Channel->Name():"NoChannel", WithDate?"WithDate":"");
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItemEvent(%d,%s,%s) %s %s @ %s,%s", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Event?Event->Title():"noEvent", Channel?Channel->Name():"NoChannel", WithDate?"WithDate":"NoDate");
 
    if (Event)
    {
@@ -738,7 +738,7 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
       int offsetTitle = -1;
 
       if (!(Channel && WithDate))
-      {
+      {  // if not called by EPGsearch: check if timer is local or remote
          LOCK_TIMERS_READ
          eTimerMatch timerMatch;
          const cTimer *timer = Timers->GetMatch(Event, &timerMatch);
@@ -760,7 +760,7 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
                   symTimer = SYM_CLOCKSML;
          }
       }
-      else { // search results give lock sequence warning
+      else { // EPGsearch results give lock sequence warning - no check of local/remote
          if (TimerMatch == tmFull)
             symTimer = TimerActive ? SYM_CLOCK : SYM_CLOCK_INACTIVE;
          else if (TimerMatch == tmPartial && TimerActive)
@@ -776,8 +776,9 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
 
       switch (menuCategory) {
          case mcSchedule:
-            {  // Date - Time - Sym - Title~Shorttext
-               if (!Channel && WithDate) {
+            {
+               if (!Channel)  // do not check WithDate as it's not set properly
+               {  // Date - Time - Sym - Title~Shorttext
                   offsetChannel = -1;
                   offsetDate = 0;
                   offsetTime = 1;
