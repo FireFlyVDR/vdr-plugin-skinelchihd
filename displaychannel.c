@@ -33,9 +33,9 @@ cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel(bool WithInfo)
 {
    DSYSLOG("skinelchiHD: cSkinElchiHDDisplayChannel::cSkinElchiHDDisplayChannel()")
    hasVideo = true;
-   old_ar = ar_unknown;
-   old_width = -1;
-   old_height = -1;
+   oldVideoFormat = videofmt_unknown;
+   oldWidth = -1;
+   oldHeight = -1;
    LastSignalStrength = -1;
    LastSignalQuality = -1; 
    showMessage = false;
@@ -426,9 +426,9 @@ void cSkinElchiHDDisplayChannel::SetChannel(const cChannel *Channel, int Channel
          // clear and redraw complete display
          DrawBackground();
 
-         old_ar = ar_unknown;
-         old_width = -1;
-         old_height = -1;
+         oldVideoFormat = videofmt_unknown;
+         oldWidth = -1;
+         oldHeight = -1;
 
          //  draw symbols: rec, encrypted, DD, Audio, Teletext
          LOCK_PIXMAPS;
@@ -681,13 +681,13 @@ void cSkinElchiHDDisplayChannel::Flush(void)
             ElchiStatus->GetVideoInfo(&videoinfo);
 
             //  draw AR symbol
-            if (old_ar != videoinfo.aspectratio ) {
+            if (oldVideoFormat != videoinfo.videoFormat ) {
                cBitmap *bmp = NULL;
-               switch (videoinfo.aspectratio) {
-                  case arHD:     bmp = &elchiSymbols.Get(SYM_AR_HD, Theme.Color(clrChannelSymbolOn), bg); break;
-                  case arUHD:    bmp = &elchiSymbols.Get(SYM_AR_UHD, Theme.Color(clrChannelSymbolOn), bg); break;
-                  case ar4_3:    bmp = &elchiSymbols.Get(SYM_AR_43, Theme.Color(clrChannelSymbolOn), bg); break;
-                  case ar16_9:   bmp = &elchiSymbols.Get(SYM_AR_169, Theme.Color(clrChannelSymbolOn), bg); break;
+               switch (videoinfo.videoFormat) {
+                  case videofmt_HD:     bmp = &elchiSymbols.Get(SYM_AR_HD, Theme.Color(clrChannelSymbolOn), bg); break;
+                  case videofmt_UHD:    bmp = &elchiSymbols.Get(SYM_AR_UHD, Theme.Color(clrChannelSymbolOn), bg); break;
+                  case videofmt_4_3:    bmp = &elchiSymbols.Get(SYM_AR_43, Theme.Color(clrChannelSymbolOn), bg); break;
+                  case videofmt_16_9:   bmp = &elchiSymbols.Get(SYM_AR_169, Theme.Color(clrChannelSymbolOn), bg); break;
                   default:       break;
                }
 
@@ -697,12 +697,12 @@ void cSkinElchiHDDisplayChannel::Flush(void)
                   pmSymbols->DrawRectangle(cRect(xSymbols[xSYM_AR], ySymbolARRec, elchiSymbols.Width(SYM_AR_HD), elchiSymbols.Height(SYM_AR_HD)), bg);
 
                changed = true;
-               old_ar = videoinfo.aspectratio;
+               oldVideoFormat = videoinfo.videoFormat;
             }
 
             //  display width x height
             if (2 == ElchiConfig.showVideoInfo) {
-               if ((old_width != videoinfo.width) || (old_height != videoinfo.height)) {
+               if ((oldWidth != videoinfo.width) || (oldHeight != videoinfo.height)) {
                   cString videoformatstring;
                   if ((videoinfo.width != 0) && (videoinfo.height != 0))
                      videoformatstring = cString::sprintf(" %dx%d", videoinfo.width, videoinfo.height);
@@ -714,8 +714,8 @@ void cSkinElchiHDDisplayChannel::Flush(void)
 
                   changed = true;
 
-                  old_width = videoinfo.width;
-                  old_height = videoinfo.height;
+                  oldWidth = videoinfo.width;
+                  oldHeight = videoinfo.height;
                }
             }
          }

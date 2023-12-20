@@ -174,11 +174,11 @@ void cSkinElchiStatus::GetVideoInfo(cVideoInfo *videoinfo)
    cDevice::PrimaryDevice()->GetVideoSize(Width, Height, VideoAspect);
    videoinfo->height      = Height;
    videoinfo->width       = Width;
-   if (Height >= 2160) videoinfo->aspectratio = arUHD;
-   else if (Height >= 720) videoinfo->aspectratio = arHD;
-      else if (Height == 0 && Width == 0) videoinfo->aspectratio = ar_unknown;
-         else if (VideoAspect == 4.0/3.0) videoinfo->aspectratio = ar4_3;
-            else if(VideoAspect == 16.0/9.0) videoinfo->aspectratio = ar16_9;
-               else videoinfo->aspectratio = ar_unknown;
+   if (Height >= 2160) videoinfo->videoFormat = videofmt_UHD;
+   else if (Height >= 720) videoinfo->videoFormat = videofmt_HD;
+      else if (Height == 0 && Width == 0) videoinfo->videoFormat = videofmt_unknown;
+         else if (VideoAspect == 4.0/3.0) videoinfo->videoFormat = videofmt_4_3;
+            else if(VideoAspect == 16.0/9.0) videoinfo->videoFormat = videofmt_16_9;
+               else videoinfo->videoFormat = videofmt_unknown;
    return;
 }

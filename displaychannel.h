@@ -40,8 +40,8 @@ private:
    int volumechange, recordingchange;
    cString lastdate;
    bool changed, hasVideo;
-   int old_width, old_height, OSDHeight;
-   eAspectRatio old_ar;
+   int oldWidth, oldHeight, OSDHeight;
+   eVideoFormat oldVideoFormat;
    int LastSignalStrength, LastSignalQuality; 
    int presentLastOffset, followingLastOffset;
    cPixmap *pmBG, *pmLogo, *pmChannelNameBg, *pmChDateTime, *pmVideoSize, *pmSymbols, *pmMessageBG;

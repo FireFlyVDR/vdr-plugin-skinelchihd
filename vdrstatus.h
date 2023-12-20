@@ -31,18 +31,18 @@ public:
 };
 
 typedef enum {
-   ar_unknown,
-   ar4_3,
-   ar16_9,
-   arHD,
-   arUHD
-} eAspectRatio;
+   videofmt_unknown,
+   videofmt_4_3,
+   videofmt_16_9,
+   videofmt_HD,
+   videofmt_UHD
+} eVideoFormat;
 
 struct cVideoInfo
 {
    int width;       // in pixels
    int height;      // in pixels
-   eAspectRatio aspectratio; // aspect ratio
+   eVideoFormat videoFormat; // aspect ratio
 };
 
 

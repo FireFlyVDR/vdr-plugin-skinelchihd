@@ -41,9 +41,9 @@ private:
    cString oldCurrent;
    cString title;
    cString rectitle;
-   int old_width;
-   int old_height;
-   eAspectRatio old_ar;
+   int oldWidth;
+   int oldHeight;
+   eVideoFormat oldVideoFormat;
 
    int Gap;
    int SymbolGap;

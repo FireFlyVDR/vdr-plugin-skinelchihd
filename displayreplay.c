@@ -37,9 +37,9 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    title = NULL;
    marks = NULL;
    oldCurrent = NULL;
-   old_ar = ar_unknown;
-   old_width = -1;
-   old_height = -1;
+   oldVideoFormat = videofmt_unknown;
+   oldWidth = -1;
+   oldHeight = -1;
    const cFont *font = cFont::GetFont(fontOsd);
    const cFont *smallfont = cFont::GetFont(fontSml);
    lh = font->Height();
@@ -459,7 +459,7 @@ void cSkinElchiHDDisplayReplay::SetMessage(eMessageType Type, const char *Messag
          }
          else {
             SetScrollTitle(rectitle);
-            old_width = -1;
+            oldWidth = -1;
          }
       } // end if show Volume
 
@@ -528,7 +528,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
          else {
             pmProgress->SetLayer(LYR_BG);
             SetScrollTitle(rectitle);
-            old_width = -1;
+            oldWidth = -1;
          }
          changed = true;
       }
@@ -539,13 +539,13 @@ void cSkinElchiHDDisplayReplay::Flush(void)
       cVideoInfo videoinfo;
 
       ElchiStatus->GetVideoInfo(&videoinfo);
-      if (Setup.ShowReplayMode && !showMessage && old_ar != videoinfo.aspectratio) {
+      if (Setup.ShowReplayMode && !showMessage && oldVideoFormat != videoinfo.videoFormat) {
          cBitmap *bmp = NULL;
-         switch (videoinfo.aspectratio) {
-            case arHD:     bmp = &elchiSymbols.Get(SYM_AR_HD,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
-            case arUHD:    bmp = &elchiSymbols.Get(SYM_AR_UHD, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
-            case ar4_3:    bmp = &elchiSymbols.Get(SYM_AR_43,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
-            case ar16_9:   bmp = &elchiSymbols.Get(SYM_AR_169, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
+         switch (videoinfo.videoFormat) {
+            case videofmt_HD:     bmp = &elchiSymbols.Get(SYM_AR_HD,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
+            case videofmt_UHD:    bmp = &elchiSymbols.Get(SYM_AR_UHD, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
+            case videofmt_4_3:    bmp = &elchiSymbols.Get(SYM_AR_43,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
+            case videofmt_16_9:   bmp = &elchiSymbols.Get(SYM_AR_169, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
             default:       break;
          }
 
@@ -555,11 +555,11 @@ void cSkinElchiHDDisplayReplay::Flush(void)
             pmMode->DrawRectangle(cRect(xSymbols[xSYM_AR], ySymbolARcutRec, elchiSymbols.Width(SYM_AR_HD), elchiSymbols.Height(SYM_AR_HD)), Theme.Color(clrBackground));
 
          changed = true;
-         old_ar = videoinfo.aspectratio;
+         oldVideoFormat = videoinfo.videoFormat;
       }
 
       if (ElchiConfig.showVideoInfo == 2 && !modeonly && !showVolume) {
-         if ((old_width != videoinfo.width) || (old_height != videoinfo.height)) {
+         if ((oldWidth != videoinfo.width) || (oldHeight != videoinfo.height)) {
 
             if (videoinfo.width && videoinfo.height) {
                title = cString::sprintf("%s %dx%d", (const char *)rectitle, videoinfo.width, videoinfo.height);
@@ -568,8 +568,8 @@ void cSkinElchiHDDisplayReplay::Flush(void)
                title = rectitle;
             }
             spmTitle->SetText(title, cFont::GetFont(fontSml));
-            old_width = videoinfo.width;
-            old_height = videoinfo.height;
+            oldWidth = videoinfo.width;
+            oldHeight = videoinfo.height;
             changed = true;
          }
       }
