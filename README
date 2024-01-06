@@ -19,7 +19,7 @@ VDR features like True Color support.
 
 Requirements:
 -------------
-VDR  2.4.3+
+VDR 2.4.3+ (VDR 2.6.5+ requires at least skinElchiHD 1.2.4 due to conflicting declaration)
 GraphicsMagick++ or ImageMagick++ 7.x
 for SVG channel logos ImageMagick++ is required
 

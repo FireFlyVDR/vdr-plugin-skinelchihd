@@ -91,3 +91,7 @@ VDR Plugin 'skinelchiHD' Revision History
 
 2023-09-12 Version 1.2.3
 - fixed display of events when called without channel (thanks to zimuland @VDR-Portal)
+
+2024-01-06 Version 1.2.4
+- fixed conflicting declaration with VDR 2.6.5
+- added support for frame parameters of VDR 2.6.5
