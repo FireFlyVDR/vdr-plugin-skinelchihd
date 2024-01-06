@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.4.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2022-02-06 12:21+0100\n"
+"POT-Creation-Date: 2024-01-05 13:13+0100\n"
 "PO-Revision-Date: 2007-11-04 15:38+0100\n"
 "Last-Translator: Christoph Haubrich <see README>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
@@ -124,6 +124,10 @@ msgstr "HD/UHD-Logo vor Aufnahmen anzeigen"
 msgid "show warning if recording has errors"
 msgstr "Zeige Warnsymbol bei fehlerhaften Aufnahmen"
 
+#. TRANSLATORS: note the two leading spaces
+msgid "  show warning only if recording errors are more than"
+msgstr "  Zeige Warnung bei mehr Fehler als"
+
 msgid "show recording details"
 msgstr "Aufnahmedetails anzeigen"
 
@@ -135,9 +139,6 @@ msgstr "Video Format Info anzeigen (wenn möglich)"
 
 msgid "use graphical progressbar"
 msgstr "graph. Fortschrittsbalken anzeigen"
-
-msgid "show symbols"
-msgstr "Symbole anzeigen"
 
 msgid "EPG picture size"
 msgstr "EPG Bildgröße"

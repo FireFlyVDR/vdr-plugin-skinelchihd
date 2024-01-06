@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: vdr-skinelchihd 0.5.5\n"
+"Project-Id-Version: vdr-skinelchihd 1.2.4\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2022-02-06 15:27+0100\n"
+"POT-Creation-Date: 2024-01-06 12:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -125,6 +125,10 @@ msgstr ""
 msgid "show warning if recording has errors"
 msgstr ""
 
+#. TRANSLATORS: note the two leading spaces
+msgid "  show warning only if recording errors are more than"
+msgstr ""
+
 msgid "show recording details"
 msgstr ""
 
@@ -135,9 +139,6 @@ msgid "show video format info (if available)"
 msgstr ""
 
 msgid "use graphical progressbar"
-msgstr ""
-
-msgid "show symbols"
 msgstr ""
 
 msgid "EPG picture size"

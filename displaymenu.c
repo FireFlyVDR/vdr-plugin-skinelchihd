@@ -1104,18 +1104,27 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
       }
       else { // recording
          eSymbols ARSymbol = SYM_MAX_COUNT;
-         if (ElchiConfig.showRecHD) {
-            // find radio and H.264/H.265 streams - detection FAILED: RTL/SAT1 etc. do not send a video component :-(
-            if (Recording->Info() && Recording->Info()->Components()) {
-               const cComponents *Components = Recording->Info()->Components();
-               int i = -1;
-               while (++i < Components->NumComponents() && ARSymbol == SYM_MAX_COUNT) {
-                  const tComponent *p = Components->Component(i);
-                  switch (p->stream) {
-                     //case sc_video_MPEG2:     ARSymbol = SYM_MAX_COUNT;   break;
-                     case sc_video_H264_AVC:  ARSymbol = SYM_AR_HD;  break;
-                     case sc_video_H265_HEVC: ARSymbol = SYM_AR_UHD; break;
-                     default:                 break;
+         if (ElchiConfig.showRecHD && Recording->Info()) {
+#if defined(APIVERSNUM) && APIVERSNUM >= 20605
+            uint16_t frameHeight = Recording->Info()->FrameHeight();
+            if (frameHeight > 0 ) {
+               if (frameHeight >= 2160) ARSymbol = SYM_AR_UHD;
+               else if (frameHeight >= 720) ARSymbol = SYM_AR_HD;
+            }
+            else
+#endif
+            {
+               // find radio and H.264/H.265 streams - detection FAILED: RTL/SAT1 etc. do not send a video component :-(
+               if (Recording->Info()->Components()) {
+                  const cComponents *Components = Recording->Info()->Components();
+                  int i = -1;
+                  while (++i < Components->NumComponents() && ARSymbol == SYM_MAX_COUNT) {
+                     const tComponent *p = Components->Component(i);
+                     switch (p->stream) {
+                        case sc_video_H264_AVC:  ARSymbol = SYM_AR_HD;  break;
+                        case sc_video_H265_HEVC: ARSymbol = SYM_AR_UHD; break;
+                        default:                 break;
+                     }
                   }
                }
             }
@@ -1606,13 +1615,28 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          text.Append(cString::sprintf("\n%s: %d", trVDR("errors"), Info->Errors()));
 #endif
       text.Append(cString::sprintf("\n%s: %d, %s: %d", trVDR("Priority"), Recording->Priority(), trVDR("Lifetime"), Recording->Lifetime()));
+#if defined(APIVERSNUM) && APIVERSNUM >= 20605
+      if (Info->FrameWidth() > 0 && Info->FrameHeight() > 0) {
+         text.Append(cString::sprintf("\n%s: %s, %dx%d", tr("format"), (Recording->IsPesRecording() ? "PES" : "TS"), Info->FrameWidth(), Info->FrameHeight()));
+         if (Info->FramesPerSecond() > 0)
+            text.Append(cString::sprintf("@%.2g%c", Info->FramesPerSecond(), Info->ScanTypeChar()));
+         if (Info->AspectRatio() != arUnknown)
+            text.Append(cString::sprintf(" %s", Info->AspectRatioText()));
 
-      if (lastIndex) {
-         text.Append(cString::sprintf("\n%s: %s, %s: ~%.2f MBit/s (Video + Audio)", tr("format"), (Recording->IsPesRecording() ? "PES" : "TS"), tr("bit rate"), (float)recsize/lastIndex*Recording->FramesPerSecond()*8/MEGABYTE(1)));
+         if (lastIndex)
+            text.Append(cString::sprintf("\n%s: ~%.2f MBit/s (Video + Audio)", tr("bit rate"), (float)recsize/lastIndex*Recording->FramesPerSecond()*8/MEGABYTE(1)));
+      }
+      else
+#endif
+      {
+         text.Append(cString::sprintf("\n%s: %s", tr("format"), (Recording->IsPesRecording() ? "PES" : "TS")));
+         if (lastIndex)
+            text.Append(cString::sprintf(", %s: ~%.2f MBit/s (Video + Audio)", tr("bit rate"), (float)recsize/lastIndex*Recording->FramesPerSecond()*8/MEGABYTE(1)));
       }
 
       const cComponents *Components = Info->Components();
       if (Components) {
+         cString video = cString();
          cString audio = cString();
          cString audio_type = cString();
 
@@ -1622,21 +1646,21 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
             switch (comp->stream) {
                case sc_video_MPEG2:
                   if (isempty(comp->description))
-                     text.Append(cString::sprintf("\n%s: MPEG2", tr("Video")));
+                     video = cString::sprintf("MPEG2");
                   else
-                     text.Append(cString::sprintf("\n%s: %s (MPEG2)", tr("Video"), comp->description));
+                     video = cString::sprintf("%s (MPEG2)", comp->description);
                   break;
                case sc_video_H264_AVC:
                   if (isempty(comp->description))
-                     text.Append(cString::sprintf("\n%s: H.264", tr("Video")));
+                     video = cString::sprintf("H.264");
                   else
-                     text.Append(cString::sprintf("\n%s: %s (H.264)", tr("Video"), comp->description));
+                     video = cString::sprintf("%s (H.264)", comp->description);
                   break;
                case sc_video_H265_HEVC:
                   if (isempty(comp->description))
-                     text.Append(cString::sprintf("\n%s: H.265", tr("Video")));
+                     video = cString::sprintf("H.265");
                   else
-                     text.Append(cString::sprintf("\n%s: %s (H.265)", tr("Video"), comp->description));
+                     video = cString::sprintf("%s (H.265)", comp->description);
                   break;
 
                case sc_audio_MP2:
@@ -1677,6 +1701,9 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
                   break;
             }
          }
+         if (!isempty(video))
+            text.Append(cString::sprintf("\n%s: %s", tr("Video"), *video));
+
          if (!isempty(audio))
             text.Append(cString::sprintf("\n%s: %s", tr("Audio"), *audio));
          if (!isempty(subtitle))
