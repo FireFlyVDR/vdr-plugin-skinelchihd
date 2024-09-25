@@ -1410,11 +1410,13 @@ void cSkinElchiHDDisplayMenu::SetEvent(const cEvent *Event)
 cString cSkinElchiHDDisplayMenu::stripXmlTag(cString source, const char* tag)
 // returns the string between start and end tag or an empty string if tag is not found
 {
-   const char *start = strstr((char *)*source, *cString::sprintf("<%s>", tag));
-   const char *end   = strstr((char *)*source, *cString::sprintf("</%s>", tag));
+   if (!isempty(*source)) {
+      const char *start = strstr((char *)*source, *cString::sprintf("<%s>", tag));
+      const char *end   = strstr((char *)*source, *cString::sprintf("</%s>", tag));
 
-   if (NULL != start && NULL != end) 
-      return (cString(start + strlen(tag) +2, end));
+      if (NULL != start && NULL != end)
+         return cString(start + strlen(tag) +2, end);
+   }
 
    return cString();
 }
@@ -1519,47 +1521,46 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
 
       cMarks marks;
       bool hasMarks = false;
+      uint16_t maxFileNum = 0;
       cIndexFile *index = NULL;
+      int lastIndex = 0;
       if (Recording->NumFrames() > 0) {
          hasMarks = marks.Load(Recording->FileName(), Recording->FramesPerSecond(), Recording->IsPesRecording()) && marks.Count();
          index = new cIndexFile(Recording->FileName(), false, Recording->IsPesRecording());
+         if (index) {
+            off_t dummy;
+            lastIndex = index->Last();
+            index->Get(lastIndex, &maxFileNum, &dummy);
+         }
       }
-      int lastIndex = 0;
-
       int cuttedLength = 0;
       long cutinframe = 0;
       unsigned long long recsize = 0;
       unsigned long long recsizecutted = 0;
       unsigned long long cutinoffset = 0;
-      unsigned long long filesize[100000];
+      unsigned long long filesize[maxFileNum];
       filesize[0] = 0;
 
       int i = 0;
-      int imax;
       struct stat filebuf;
       cString filename;
       int rc = 0;
 
       do {
-         if (Recording->IsPesRecording()) {
+         if (Recording->IsPesRecording())
             filename = cString::sprintf("%s/%03d.vdr", Recording->FileName(), ++i);
-            imax = 999;
-         }
-         else {
+         else
             filename = cString::sprintf("%s/%05d.ts", Recording->FileName(), ++i);
-            imax = 99999;
-         }
 
-         rc=stat(filename, &filebuf);
+         rc = stat(filename, &filebuf);
          if (rc == 0)
             filesize[i] = filesize[i-1] + filebuf.st_size;
          else
             if (ENOENT != errno) {
                esyslog ("skinelchiHD: error determining file size of \"%s\" %d (%s)", (const char *)filename, errno, strerror(errno));
-               recsize = 0;
             }
-      } while (i <= imax && !rc);
-      recsize = filesize[i-1];
+      } while (i < maxFileNum && !rc);
+      recsize = filesize[i];
 
       if (hasMarks && index) {
          uint16_t FileNumber;
@@ -1590,11 +1591,11 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
       }
 
       if (index) {
-         lastIndex = index->Last();
          text.Append(cString::sprintf("%s: %s", tr("Length"), *IndexToHMSF(lastIndex, false, Recording->FramesPerSecond())));
 
-         if (hasMarks)
+         if (hasMarks) {
             text.Append(cString::sprintf(" (%s: %s)", tr("cutted"), *IndexToHMSF(cuttedLength, false, Recording->FramesPerSecond())));
+         }
          text.Append("\n");
       }
 
@@ -1604,12 +1605,12 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          text.Append(cString::sprintf("%s: %.2f GB", tr("Size"), (float)recsize / MEGABYTE(1024)));
       else
          text.Append(cString::sprintf("%s: %llu MB", tr("Size"), recsize / MEGABYTE(1)));
-      if (hasMarks)
+      if (hasMarks) {
          if (recsize > MEGABYTE(1023))
             text.Append(cString::sprintf(" (%s: %.2f GB)", tr("cutted"), (float)recsizecutted/MEGABYTE(1024)));
          else
             text.Append(cString::sprintf(" (%s: %llu MB)", tr("cutted"), recsizecutted/MEGABYTE(1)));
-
+      }
 #if defined(APIVERSNUM) && APIVERSNUM >= 20506
       if (Info->Errors() >= 0)
          text.Append(cString::sprintf("\n%s: %d", trVDR("errors"), Info->Errors()));
@@ -1703,14 +1704,13 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          }
          if (!isempty(video))
             text.Append(cString::sprintf("\n%s: %s", tr("Video"), *video));
-
          if (!isempty(audio))
             text.Append(cString::sprintf("\n%s: %s", tr("Audio"), *audio));
          if (!isempty(subtitle))
             text.Append(cString::sprintf("\n%s: %s", tr("Subtitle"), *subtitle));
       }
 
-      if (Info->Aux())
+      if (!isempty(Info->Aux()))
       {
          cString str_epgsearch = stripXmlTag(Info->Aux(), "epgsearch");
 
@@ -1739,7 +1739,6 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
                text.Append(cString::sprintf("VDRadmin-AM: %s: %s", tr("search pattern"), *pattern));
             }
          }
-
       }
    }
 
