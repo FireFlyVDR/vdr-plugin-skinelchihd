@@ -66,6 +66,7 @@ clrReplayProgressSeen = FF22BB22
 clrReplayProgressRest = FFFCFCFC
 clrReplayProgressSelected = FFCC1111
 clrReplayProgressMark = FF000000
+clrReplayProgressError = FF000000
 clrReplayProgressCurrent = FFCC1111
 clrReplaySymbolOn = FFFCC024
 clrReplaySymbolOff = 77777777

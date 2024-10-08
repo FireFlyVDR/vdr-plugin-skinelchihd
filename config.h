@@ -14,9 +14,6 @@
 #include <vdr/config.h>
 
 
-#define MAX_ELCHI_THEME_COLORS 68
-
-
 class cSkinElchiHDConfig
 {
 private:
@@ -54,13 +51,6 @@ public:
    int showSignalBars;
    int LogoMessages;
    int ShowRemoteTimers;
-
-   // clr dialog
-   //bool clrdlgActive;
-   //tColor clrDlgFg;
-   //tColor clrDlgBg;
-
-   tColor ThemeColors[MAX_ELCHI_THEME_COLORS];
 };
 
 
@@ -135,6 +125,7 @@ THEME_CLR(Theme, clrReplayProgressSeen,     0xCC22BB22);
 THEME_CLR(Theme, clrReplayProgressRest,     clrWhite);
 THEME_CLR(Theme, clrReplayProgressSelected, 0xCCCC1111);
 THEME_CLR(Theme, clrReplayProgressMark,     clrBlack);
+THEME_CLR(Theme, clrReplayProgressError,    clrBlack);
 THEME_CLR(Theme, clrReplayProgressCurrent,  0xCCCC1111);
 THEME_CLR(Theme, clrReplaySymbolOn,         clrYellow);
 THEME_CLR(Theme, clrReplaySymbolOff,        0x77777777);

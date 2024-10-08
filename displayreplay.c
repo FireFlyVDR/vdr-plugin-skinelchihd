@@ -42,8 +42,10 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    oldHeight = -1;
    const cFont *font = cFont::GetFont(fontOsd);
    const cFont *smallfont = cFont::GetFont(fontSml);
-   lh = font->Height();
-   lh2 = lh / 2;
+   lh = (font->Height() + 1) & ~0x01;   // should be even
+   lh2 = lh  / 2;
+   lh4 = lh2 / 2;
+   lh8 = lh4 / 2;
 
    tOSDsize OSDsize;
 
@@ -123,8 +125,10 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    pmMode->Clear();
    pmJump = osd->CreatePixmap(LYR_HIDDEN, cRect(0, y2, xMode, lh));
    pmJump->Clear();
-   pmProgress = osd->CreatePixmap(LYR_BG,   cRect(lh2, y1, x9 - lh2, lh));
+   pmProgress = osd->CreatePixmap(LYR_BG, cRect(lh2, y1, x9 - lh2, lh));
    pmProgress->Clear();
+   pmProgressBar = osd->CreatePixmap(LYR_SELECTOR, cRect(lh, y1 + lh8, x9 - 3*lh2, lh - 2*lh8));
+   pmProgressBar->Clear();
    pmVolume = osd->CreatePixmap(LYR_HIDDEN, cRect(lh2, y1, x9 - lh2, lh));
    pmVolume->Fill(clrBG);
 
@@ -351,13 +355,13 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
    if (!showVolume) 
    {
       int width = x9 - 3*lh2;
-      int height = lh - 2*(lh/8);
+      int height = lh - 2*lh8;
       if (Total > 0)
       {
          int p = GetPos(Current, width, Total);
          LOCK_PIXMAPS;
-         DrawShadedRectangle(pmProgress, Theme.Color(clrReplayProgressSeen), cRect(lh2, lh/8, p, height));
-         pmProgress->DrawRectangle(cRect(lh2+p, lh/8, width - p, height), Theme.Color(clrReplayProgressRest));
+         DrawShadedRectangle(pmProgressBar, Theme.Color(clrReplayProgressSeen), cRect(0, 0, p, height));
+         pmProgressBar->DrawRectangle(cRect(p, 0, width - p, height), Theme.Color(clrReplayProgressRest));
          changed = true;
 
          if (marks)
@@ -371,35 +375,59 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
                   const cMark *m2 = marks->Next(m);
                   int p2 = m2 ? GetPos(m2->Position(), width, Total) : width;
                   int h4 = height / 4;
-                  DrawShadedRectangle(pmProgress, Theme.Color(clrReplayProgressSelected), cRect(lh2+p1, lh/8 + h4, p2 - p1, height - h4 - h4));
+                  DrawShadedRectangle(pmProgressBar, Theme.Color(clrReplayProgressSelected), cRect(p1, h4, p2 - p1, height - 2*h4));
                }
-               DrawMark(lh2, lh2 + width, lh2 + p1, lh/8, height, Start, m->Position() == Current, Theme.Color(clrReplayProgressMark), Theme.Color(clrReplayProgressCurrent));
+               DrawMark(width, p1, height, Start, m->Position() == Current, Theme.Color(clrReplayProgressMark), Theme.Color(clrReplayProgressCurrent));
                Start = !Start;
             }
          }
+
+#if APIVERSNUM >= 30004
+         if (errors) {
+            tColor colorError = Theme.Color(clrReplayProgressMark);
+            int LastPos = -1;
+            for (int i = 0; i < errors->Size(); i++) {
+               int p = errors->At(i);
+               if (p != LastPos) {
+                  DrawError(width, GetPos(p, width, Total), height, Theme.Color(clrReplayProgressError));
+                  LastPos = p;
+               }
+            }
+         }
+#endif
       }
    }
 }
 
-void cSkinElchiHDDisplayReplay::DrawMark(int xStart, int xEnd, int x, int yOffset, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent)
+void cSkinElchiHDDisplayReplay::DrawMark(int Width, int Pos, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent)
 {
-   x = std::min(x, xEnd - MarksWidth);
-   pmProgress->DrawRectangle(cRect(x, yOffset, MarksWidth, Height), Theme.Color(clrReplayProgressMark));
+   int x = std::min(Pos, Width - MarksWidth);
+   pmProgressBar->DrawRectangle(cRect(x, 0, MarksWidth, Height), Theme.Color(clrReplayProgressMark));
    int d = Height / (Current ? 3 : 4);
    for (int i = 0; i <= d; i++)
    {
       int y = Start ? d - i : Height - d + i - 1;
-      int l = MarksWidth + i + i;
-
-      if (x - i < xStart)
-         l -= xStart - x + i;
-
-      if (x - i + l > xEnd)
-         l = xEnd - x + i;
-
-      pmProgress->DrawRectangle(cRect(std::max(xStart, x - i), yOffset + y, l, 1), Current ? Theme.Color(clrReplayProgressCurrent) : Theme.Color(clrReplayProgressMark));
+      int l = MarksWidth + 2*i;
+      pmProgressBar->DrawRectangle(cRect(Pos - i, y, l, 1), Current ? Theme.Color(clrReplayProgressCurrent) : Theme.Color(clrReplayProgressMark));
    }
 }
+
+#if APIVERSNUM >= 30004
+void cSkinElchiHDDisplayReplay::DrawError(int Width, int Pos, int Height, tColor ColorError)
+{
+   const int d = (Height / 9) & ~0x01; // must be even
+   const int h = Height / 2;    // Mitte des waagrechten Strichs
+   const int e = Height / 4;    // Abstand oben & unten
+
+   int x = std::min(Pos, Width - MarksWidth);
+   pmProgressBar->DrawRectangle(cRect(x, e - MarksWidth, MarksWidth, h + 2* MarksWidth), ColorError);   // senkrechter Strich
+   pmProgressBar->DrawRectangle(cRect(x - d, h, MarksWidth + d + d, MarksWidth), ColorError);  // waagrechter Strich in der Mitte
+   for (int i = 1; i <= d; i++) {
+      pmProgressBar->DrawRectangle(cRect(x - d + i, h - i, d + d - i - i + MarksWidth, 1), ColorError); // Dreieck oben
+      pmProgressBar->DrawRectangle(cRect(x - d + i, h + i + 1, d + d - i - i + MarksWidth, 1), ColorError); // Dreieck unten
+   }
+}
+#endif
 
 void cSkinElchiHDDisplayReplay::SetCurrent(const char *Current)
 {
@@ -475,6 +503,7 @@ void cSkinElchiHDDisplayReplay::SetMessage(eMessageType Type, const char *Messag
       spmMessage->SetText(Message, cFont::GetFont(fontOsd));
 
       pmProgress->SetLayer(LYR_HIDDEN);
+      pmProgressBar->SetLayer(LYR_HIDDEN);
       pmMessageBG->SetLayer(LYR_TEXTBG);
       spmMessage->SetLayer(LYR_SCROLL);
       changed = true;
@@ -484,6 +513,7 @@ void cSkinElchiHDDisplayReplay::SetMessage(eMessageType Type, const char *Messag
          pmMessageBG->SetLayer(LYR_HIDDEN);
          spmMessage->SetLayer(LYR_HIDDEN);
          pmProgress->SetLayer(LYR_BG);
+         pmProgressBar->SetLayer(LYR_SELECTOR);
          showMessage = false;
          changed = true;
       }
@@ -500,19 +530,21 @@ void cSkinElchiHDDisplayReplay::Flush(void)
    if (volumechange != newVolumechange) {
       volumechange = newVolumechange;
       int w = x9 - 3*lh2;
-      int y = lh/4;
+      int y = lh4;
 
       if (!showVolume) {
          showVolume = true;
          pmVolume->SetLayer(LYR_BG);
-         if (!modeonly)
+         if (!modeonly) {
             pmProgress->SetLayer(LYR_HIDDEN);
+            pmProgressBar->SetLayer(LYR_HIDDEN);
+         }
       }
 
       SetScrollTitle(cString::sprintf("%s %d%%", trVDR("Volume "), 100*volume / 255));
       int p = w * volume / 255;
-      DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarUpper), cRect(lh2, y, p, lh - 2*(lh/4)));
-      DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarLower), cRect(lh2+p, y, w - p, lh - 2*(lh/4)));
+      DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarUpper), cRect(lh2, y, p, lh - 2*lh4));
+      DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarLower), cRect(lh2+p, y, w - p, lh - 2*lh4));
 
       changed = true;
       volumeTimer.Set(1500);
@@ -527,6 +559,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
          }
          else {
             pmProgress->SetLayer(LYR_BG);
+            pmProgressBar->SetLayer(LYR_SELECTOR);
             SetScrollTitle(rectitle);
             oldWidth = -1;
          }
@@ -546,7 +579,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
             case videofmt_UHD:    bmp = &elchiSymbols.Get(SYM_AR_UHD, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
             case videofmt_4_3:    bmp = &elchiSymbols.Get(SYM_AR_43,  Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
             case videofmt_16_9:   bmp = &elchiSymbols.Get(SYM_AR_169, Theme.Color(clrReplaySymbolOn), Theme.Color(clrBackground)); break;
-            default:       break;
+            default:              break;
          }
 
          if (bmp)

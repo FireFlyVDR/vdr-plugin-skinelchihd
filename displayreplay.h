@@ -28,13 +28,13 @@ private:
    int xSymbols[xSYM_MAX];
    int ySymbols, ySymbolARcutRec;
 
-   int lh, lh2, MarksWidth;
+   int lh, lh2, lh4, lh8, MarksWidth;
    int xCurrent, xTotal;
    int xCurrentWidth, xTotalWidth;
    const cRecording *recording;
    const cMarks *marks;
    bool isRecording, isCutting, modeonly, changed, showMessage, showVolume;
-   cPixmap *pmBG, *pmTitleBG, *pmMode, *pmJump, *pmTitle, *pmMessageBG, *pmProgress, *pmVolume;
+   cPixmap *pmBG, *pmTitleBG, *pmMode, *pmJump, *pmTitle, *pmMessageBG, *pmProgress, *pmProgressBar, *pmVolume;
    cScrollingPixmap *spmTitle, *spmMessage;
    cTimeMs volumeTimer;
    int volumechange;
@@ -49,24 +49,11 @@ private:
    int SymbolGap;
    void SetScrollTitle(const char *Title);
    int GetPos(int p, int width, int total) { return int(int64_t(p) * width / total); }
-   //void DrawProgressBar(cRect *Area, int Current, int Total, const cMarks *Marks, tColor ColorSeen, tColor ColorRest, 
-   //                     tColor ColorSelected, tColor ColorMark, tColor ColorCurrent);
-   void DrawMark(int xStart, int xEnd, int x, int yOffset, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent);
+   void DrawMark(int Width, int Pos, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent);
+#if APIVERSNUM >= 30004
+   void DrawError(int Width, int Pos, int Height, tColor ColorError);
+#endif
 
-/*
-protected:
-   const cMarks *marks;
-   class cSkinElchiProgressBar { // : public cPixmap {
-   private:
-      cPixmap *pixmap;
-   protected:
-      int total, width, height;
-      int Pos(int p) { return int(int64_t(p) * width / total); }
-      void Mark(int x, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent);
-   public:
-      cSkinElchiProgressBar(cPixmap *Pixmap, int Current, int Total, const cMarks *Marks, tColor ColorSeen, tColor ColorRest, tColor ColorSelected, tColor ColorMark, tColor ColorCurrent);
-   };
-*/
 public:
    cSkinElchiHDDisplayReplay(bool ModeOnly);
    virtual ~cSkinElchiHDDisplayReplay();
