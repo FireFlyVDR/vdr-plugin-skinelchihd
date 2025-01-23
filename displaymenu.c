@@ -1161,6 +1161,7 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
             if (ElchiConfig.showRecErrors > 0 && Recording->Info() && Recording->Info()->Errors() > ElchiConfig.showRecNumErrors) {
                if (ElchiConfig.showRecErrors == 2 || (ElchiConfig.showRecErrors == 1 && !startswith(Recording->BaseName(), "%")))
                   pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_ERROR))), elchiSymbols.Get(SYM_ERROR, clrYellow, clrTransparent));
+                  //pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + symbolGap, y + center(lh, elchiSymbols.Height(SYM_ERROR))), elchiSymbols.Get(SYM_ERROR, Recording->Info()->Errors() > 1 ? clrYellow : ColorFg, clrTransparent));
             }
             if (Recording->IsNew())
                pmMenu->DrawBitmap(cPoint(x1 + tabs[3] + 2*symbolGap + elchiSymbols.Width(SYM_ERROR), y + center(lh, elchiSymbols.Height(SYM_NEWSML))), elchiSymbols.Get(SYM_NEWSML, ColorFg, clrTransparent));
@@ -1534,33 +1535,32 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          }
       }
       int cuttedLength = 0;
-      long cutinframe = 0;
+      long cutinFrame = 0;
       unsigned long long recsize = 0;
-      unsigned long long recsizecutted = 0;
-      unsigned long long cutinoffset = 0;
-      unsigned long long filesize[maxFileNum];
+      unsigned long long recsizeCutted = 0;
+      unsigned long long cutinOffset = 0;
+      unsigned long long filesize[maxFileNum + 1];
       filesize[0] = 0;
 
-      int i = 0;
-      struct stat filebuf;
-      cString filename;
-      int rc = 0;
-
-      do {
+      for (int i = 1 ; i <= maxFileNum; i++)
+      {
+         cString filename;
+         struct stat filebuf;
          if (Recording->IsPesRecording())
-            filename = cString::sprintf("%s/%03d.vdr", Recording->FileName(), ++i);
+            filename = cString::sprintf("%s/%03d.vdr", Recording->FileName(), i);
          else
-            filename = cString::sprintf("%s/%05d.ts", Recording->FileName(), ++i);
+            filename = cString::sprintf("%s/%05d.ts", Recording->FileName(), i);
 
-         rc = stat(filename, &filebuf);
-         if (rc == 0)
-            filesize[i] = filesize[i-1] + filebuf.st_size;
+         if (stat(*filename, &filebuf) == 0) {
+            recsize = filesize[i] = recsize + filebuf.st_size;
+         }
          else
-            if (ENOENT != errno) {
-               esyslog ("skinelchiHD: error determining file size of \"%s\" %d (%s)", (const char *)filename, errno, strerror(errno));
-            }
-      } while (i < maxFileNum && !rc);
-      recsize = filesize[i];
+         {
+            recsize = 0;
+            hasMarks = false;
+            esyslog ("skinelchiHD: error determining size of file \"%s\" %d (%s)", *filename, errno, strerror(errno));
+         }
+      }
 
       if (hasMarks && index) {
          uint16_t FileNumber;
@@ -1568,25 +1568,25 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
 
          bool cutin = true;
          cMark *mark = marks.First();
-         while (mark) {
+         while (mark) { // cutted frames are from cutinFrame (included) to cutoutFrame (excluded)
             long position = mark->Position();
             index->Get(position, &FileNumber, &FileOffset);
             if (cutin) {
-               cutinframe = position;
+               cutinFrame = position;
                cutin = false;
-               cutinoffset = filesize[FileNumber-1] + FileOffset;
+               cutinOffset = filesize[FileNumber-1] + FileOffset;
             } else {
-               cuttedLength += position - cutinframe;
+               cuttedLength += position - cutinFrame;
                cutin = true;
-               recsizecutted += filesize[FileNumber-1] + FileOffset - cutinoffset;
+               recsizeCutted += filesize[FileNumber-1] + FileOffset - cutinOffset;
             }
             cMark *nextmark = marks.Next(mark);
             mark = nextmark;
          }
          if (!cutin) {
-            cuttedLength += index->Last() - cutinframe;
-            index->Get(index->Last() - 1, &FileNumber, &FileOffset);
-            recsizecutted += filesize[FileNumber-1] + FileOffset - cutinoffset;
+            cuttedLength += index->Last() - cutinFrame;
+            index->Get(index->Last(), &FileNumber, &FileOffset);
+            recsizeCutted += filesize[FileNumber-1] + FileOffset - cutinOffset;
          }
       }
 
@@ -1607,9 +1607,9 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
          text.Append(cString::sprintf("%s: %llu MB", tr("Size"), recsize / MEGABYTE(1)));
       if (hasMarks) {
          if (recsize > MEGABYTE(1023))
-            text.Append(cString::sprintf(" (%s: %.2f GB)", tr("cutted"), (float)recsizecutted/MEGABYTE(1024)));
+            text.Append(cString::sprintf(" (%s: %.2f GB)", tr("cutted"), (float)recsizeCutted/MEGABYTE(1024)));
          else
-            text.Append(cString::sprintf(" (%s: %llu MB)", tr("cutted"), recsizecutted/MEGABYTE(1)));
+            text.Append(cString::sprintf(" (%s: %llu MB)", tr("cutted"), recsizeCutted/MEGABYTE(1)));
       }
 #if defined(APIVERSNUM) && APIVERSNUM >= 20506
       if (Info->Errors() >= 0)
