@@ -99,3 +99,7 @@ VDR Plugin 'skinelchiHD' Revision History
 2024-10-09 Version 1.2.5
 - optimized calculation of recording size
 - refactored progress bar of replay display and added support to display recording errors with VDR 2.7.2+
+
+2025-01-23 Version 1.2.6
+- use unsigned numbers for images
+- improved stability of recordings size calculation
