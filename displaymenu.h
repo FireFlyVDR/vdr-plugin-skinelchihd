@@ -29,6 +29,7 @@ private:
    void DrawImageFrame(void);
    void SetItemBackground(int Index, bool Current, bool Selectable, int xScrollArea);
    int scrollTotalLines, scrollShownLines, scrollOffsetLines, scrollbarTop, scrollbarHeight;
+   bool SetItemEventBase(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, bool TimerActive, bool IsRecording, bool TimerLocal);
 
    bool showMessage, showVolume, timersDisplayed;
    cTimeMs volumeTimer;
@@ -82,6 +83,9 @@ public:
    using cSkinDisplayMenu::SetItemEvent;
 #endif
    virtual bool SetItemEvent(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, bool TimerActive);
+#if defined(APIVERSNUM) && APIVERSNUM >= 30007
+   virtual bool SetItemEvent(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, const cTimer *Timer) override;
+#endif
    virtual bool SetItemTimer(const cTimer *Timer, int Index, bool Current, bool Selectable);
    virtual bool SetItemChannel(const cChannel *Channel, int Index, bool Current, bool Selectable, bool WithProvider);
    virtual bool SetItemRecording(const cRecording *Recording, int Index, bool Current, bool Selectable, int Level, int Total, int New);

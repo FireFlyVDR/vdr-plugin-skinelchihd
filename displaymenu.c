@@ -717,7 +717,42 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
    ///< The default implementation does nothing and returns false, which results in
    ///< a call to SetItem() with a proper text.
 
-   DSYSLOG("skinelchiHD: DisplayMenu::SetItemEvent(%d,%s,%s) %s %s @ %s,%s", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Event?Event->Title():"noEvent", Channel?Channel->Name():"NoChannel", WithDate?"WithDate":"NoDate");
+   bool recordingActive = false;
+   bool timerLocal = true;
+   if (TimerMatch != tmNone)
+   {
+      if (!(Channel && WithDate))
+      {  // EPGsearch results give lock sequence warning, so skip timer checks for them
+         eTimerMatch timerMatch;
+         LOCK_TIMERS_READ
+         const cTimer *timer = Timers->GetMatch(Event, &timerMatch);
+         recordingActive = timer && timer->Recording();
+         timerLocal  = timer && timer->Local();
+      }
+   }
+   return SetItemEventBase(Event, Index, Current, Selectable, Channel, WithDate, TimerMatch, TimerActive, recordingActive, timerLocal);
+}
+
+#if defined(APIVERSNUM) && APIVERSNUM >= 30007
+bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, const cTimer *Timer)
+{  ///< Like SetItemEvent(..., bool TimerActive), but with full access to the Timer.
+   ///< If Timer is NULL, no timer is defined for this event.
+
+   bool timerActive = false;
+   bool recordingActive = false;
+   bool timerLocal = false;
+   if (Timer) {
+      timerActive = Timer->HasFlags(tfActive);
+      recordingActive = Timer->Recording();
+      timerLocal  = Timer->Local();
+   }
+   return SetItemEventBase(Event, Index, Current, Selectable, Channel, WithDate, TimerMatch, timerActive, recordingActive, timerLocal);
+}
+#endif
+
+bool cSkinElchiHDDisplayMenu::SetItemEventBase(const cEvent *Event, int Index, bool Current, bool Selectable, const cChannel *Channel, bool WithDate, eTimerMatch TimerMatch, bool TimerActive, bool RecordingActive, bool TimerLocal)
+{
+   DSYSLOG("skinelchiHD: DisplayMenu::SetItemEventBase(%d,%s,%s) %s %s @ %s,%s", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Event?Event->Title():"noEvent", Channel?Channel->Name():"NoChannel", WithDate?"WithDate":"NoDate");
 
    if (Event)
    {
@@ -737,35 +772,24 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
       int offsetSymbols = -1;
       int offsetTitle = -1;
 
-      if (!(Channel && WithDate))
-      {  // if not called by EPGsearch: check if timer is local or remote
-         LOCK_TIMERS_READ
-         eTimerMatch timerMatch;
-         const cTimer *timer = Timers->GetMatch(Event, &timerMatch);
-         if (timer) {
-            bool timerLocal = timer->Local();
-            bool timerActive = timer->HasFlags(tfActive);
-            if (timerMatch == tmFull)
-               if (timer->Recording()) {
-                  symTimer = timerLocal ? SYM_REC : ElchiConfig.EpgShowRemoteTimers ? SYM_REC_REMOTE : SYM_MAX_COUNT;
-                  symRecColors = true;
-               }
-               else
-                  if (timerActive)
-                     symTimer = timerLocal ? SYM_CLOCK : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE : SYM_MAX_COUNT;
-                  else
-                     symTimer = timerLocal ? SYM_CLOCK_INACTIVE : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE_INACTIVE : SYM_MAX_COUNT;
+      if (TimerMatch != tmNone)
+      {
+         if (TimerMatch == tmFull) {
+            if (RecordingActive) {
+               symTimer = TimerLocal ? SYM_REC : ElchiConfig.EpgShowRemoteTimers ? SYM_REC_REMOTE : SYM_MAX_COUNT;
+               symRecColors = true;
+            }
             else
-               if (timerLocal && timerActive)
-                  symTimer = SYM_CLOCKSML;
+               if (TimerActive)
+                  symTimer = TimerLocal ? SYM_CLOCK : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE : SYM_MAX_COUNT;
+               else
+                  symTimer = TimerLocal ? SYM_CLOCK_INACTIVE : ElchiConfig.EpgShowRemoteTimers ? SYM_CLOCK_REMOTE_INACTIVE : SYM_MAX_COUNT;
          }
+         else
+            if (TimerLocal && TimerActive)
+               symTimer = SYM_CLOCKSML;
       }
-      else { // EPGsearch results give lock sequence warning - no check of local/remote
-         if (TimerMatch == tmFull)
-            symTimer = TimerActive ? SYM_CLOCK : SYM_CLOCK_INACTIVE;
-         else if (TimerMatch == tmPartial && TimerActive)
-            symTimer = SYM_CLOCKSML;
-      }
+
       if (symTimer != SYM_MAX_COUNT) {
          symTimerXoffset = center(elchiSymbols.Width(SYM_REC), elchiSymbols.Width(symTimer));
          symTimerYoffset = center(lh, elchiSymbols.Height(symTimer));
@@ -791,7 +815,7 @@ bool cSkinElchiHDDisplayMenu::SetItemEvent(const cEvent *Event, int Index, bool 
                   tabs[3] = tabs[2] +  elchiSymbols.Width(SYM_REC) + symbolGap + elchiSymbols.Width(SYM_VPS) + AvgCharWidth()/2;
                }
                else if(Channel && !WithDate)
-               {  //Channel - Time - Sym - Title~Shorttext
+               {  // Channel - Time - Sym - Title~Shorttext
                   offsetChannel = 0;
                   offsetDate = -1;
                   offsetTime = 1;
@@ -1525,7 +1549,8 @@ void cSkinElchiHDDisplayMenu::SetRecording(const cRecording *Recording)
       uint16_t maxFileNum = 0;
       cIndexFile *index = NULL;
       int lastIndex = 0;
-      if (Recording->NumFrames() > 0) {
+      if ((Recording->NumFrames() > 0) &&
+          (access(*cIndexFile::IndexFileName(Recording->FileName(), Recording->IsPesRecording()), R_OK) == 0)) {
          hasMarks = marks.Load(Recording->FileName(), Recording->FramesPerSecond(), Recording->IsPesRecording()) && marks.Count();
          index = new cIndexFile(Recording->FileName(), false, Recording->IsPesRecording());
          if (index) {
