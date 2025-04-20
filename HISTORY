@@ -103,3 +103,7 @@ VDR Plugin 'skinelchiHD' Revision History
 2025-01-23 Version 1.2.6
 - use unsigned numbers for images
 - improved stability of recordings size calculation
+
+2025-04-20 Version 1.2.7
+- added support for the new SetItemEvent(..., *Timer) of VDR 2.7.5
+- increased max. number of EPG images to 10
