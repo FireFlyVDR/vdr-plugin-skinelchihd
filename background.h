@@ -80,7 +80,7 @@ public:
    bool Update();
 };
 
-#define MAXEPGIMAGES 6
+#define MAXEPGIMAGES 10
 
 class cEpgImage : public cThread, cBgObject
 {
