@@ -81,6 +81,7 @@ public:
 };
 
 #define MAXEPGIMAGES 10
+static const char *const image_suffixes[] = { "jpeg", "jpg", "png", "webp", NULL };
 
 class cEpgImage : public cThread, cBgObject
 {
@@ -95,12 +96,14 @@ private:
    cString channelID;
    tEventID eventID;
    cString recordingPath;
+   cString imageFilename;
    cTimeMs epgimageTimer;
    int maxImage, currentImage;
    cOSDImage *imgEPG[MAXEPGIMAGES];
    cMutex mtxImages;
    cMutex mtxEventID;
    cCondWait condWait;
+   cString CheckForImage(cString imageFile);
 
 public:
    cEpgImage(cPixmap *Pixmap,int Width, int Height, int FrameSize);

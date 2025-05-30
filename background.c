@@ -369,61 +369,71 @@ void cEpgImage::Clear()
 }
 
 
-bool cEpgImage::PutEventID(const char *ChannelID, tEventID EventID)
+
+cString cEpgImage::CheckForImage(cString imageFile)
 {
-   DSYSLOG("skinelchiHD: cEpgImage::PutEventID(%s %u)", (const char *)ChannelID, EventID);
    int rc = -1;
    cString filename;
    struct stat statbuf;
 
-   mtxEventID.Lock();
-   channelID = cString(ChannelID);
-   eventID = EventID;
-   recordingPath = NULL;
-   mtxEventID.Unlock();
+   for (int i = 0; rc != 0 && image_suffixes[i]; i++) {
+      filename = cString::sprintf("%s.%s", *imageFile, image_suffixes[i]);
+      rc = stat(*filename, &statbuf); // 0 = found
+   }
 
-   if (eventID == 0) { // on empty eventID
+   return rc == 0 ? filename : cString();
+}
+
+
+
+bool cEpgImage::PutEventID(const char *ChannelID, tEventID EventID)
+{
+   DSYSLOG("skinelchiHD: cEpgImage::PutEventID(%s %u)", (const char *)ChannelID, EventID);
+   cString filename;
+
+   if (EventID == 0) { // on empty EventID
       if (active) {
          ElchiBackground->Del(this);
          active = false;
       }
    }
    else
-   {
-      filename = cString::sprintf("%s/%s_%u.jpg", ElchiConfig.GetEpgImageDir(), *channelID, eventID);
-      rc = stat(filename, &statbuf);
-      if (rc != 0)
-      {
-         filename = cString::sprintf("%s/%s_%u_0.jpg", ElchiConfig.GetEpgImageDir(), *channelID, eventID);
-         rc = stat(filename, &statbuf);
+   {  // check if at least one image file exists
+      filename = CheckForImage(cString::sprintf("%s/%s_%u_0", ElchiConfig.GetEpgImageDir(), ChannelID, EventID));
+      if (isempty(*filename)) {
+         filename = CheckForImage(cString::sprintf("%s/%s_%u", ElchiConfig.GetEpgImageDir(), ChannelID, EventID));
          /* eventID without channelID gives often wrong pictures because of same eventID on different channels
-          * therefore only active when no picture with channelID found and event-only is enabled in settings */
-         if (rc != 0 && ElchiConfig.EpgImageEventIdOnly == 1) {
-            filename = cString::sprintf("%s/%u.jpg", ElchiConfig.GetEpgImageDir(), eventID);
-            rc = stat(filename, &statbuf);
-            if (rc != 0) {
-               filename = cString::sprintf("%s/%u_0.jpg", ElchiConfig.GetEpgImageDir(), eventID);
-               rc = stat(filename, &statbuf);
-            }
-            if (rc == 0) channelID = NULL;
+          * therefore only active when no picture with channelID found and event-only images is enabled in settings */
+         if (isempty(*filename) && ElchiConfig.EpgImageEventIdOnly == 1) {
+            filename = CheckForImage(cString::sprintf("%s/%u_0", ElchiConfig.GetEpgImageDir(), EventID));
+            if (isempty(*filename))
+               filename = CheckForImage(cString::sprintf("%s/%u", ElchiConfig.GetEpgImageDir(), EventID));
          }
       }
 
       // start Thread only if image(s) exist
-      if (rc == 0) {
+      if (!isempty(*filename)) {
+         mtxEventID.Lock();
+         channelID = cString(ChannelID);
+         eventID = EventID;
+         recordingPath = NULL;
+         imageFilename = filename;
+         mtxEventID.Unlock();
+
          condWait.Signal();
          ElchiBackground->Add(this);
          active = true;
       }
+      DSYSLOG("skinelchiHD: cEpgImage::PutEventID(%s %u) found %s", ChannelID, EventID, isempty(*filename)?"none":*filename)
    }
 
-   return rc == 0;
+   return !isempty(filename);
 }
 
 
 bool cEpgImage::PutRecording(const char *RecPath)
 {
-   //DSYSLOG("skinelchiHD: cEpgImage::PutRecording (%s ?== %s)", (const char *)RecPath, *recordingPath)
+   DSYSLOG("skinelchiHD: cEpgImage::PutRecording (%s ?== %s)", (const char *)RecPath, *recordingPath)
    bool imagesAvailable = false;
    struct dirent *e;
    char *dot;
@@ -435,22 +445,22 @@ bool cEpgImage::PutRecording(const char *RecPath)
 
    // check if at least one image is available
    cReadDir dir(RecPath);
-   while ((e = dir.Next()) != NULL) {
-      if ((dot = strrchr(e->d_name, '.')) != NULL && (strlen(dot) == 4) ) {
-         if(strcasecmp(dot, ".jpg") == 0) {
-            imagesAvailable = true;
-            break;
+   while ((e = dir.Next()) != NULL && !imagesAvailable) {
+      if ((dot = strrchr(e->d_name, '.')) != NULL && (strlen(dot) >= 4)) {
+         for (int i = 0; !imagesAvailable && image_suffixes[i]; i++) {
+            imagesAvailable = strcasecmp(dot + 1, image_suffixes[i]) == 0;
          }
       }
    }
 
-   if (imagesAvailable)
-   {
+   if (imagesAvailable) {
       mtxEventID.Lock();
       channelID = NULL;
-      eventID = 65535;
-      recordingPath = cString(RecPath);
+      eventID = 65536;
+      recordingPath = RecPath;
+      imageFilename = NULL;
       mtxEventID.Unlock();
+
       condWait.Signal();  // start Thread
       ElchiBackground->Add(this);
       active = true;
@@ -503,60 +513,50 @@ void cEpgImage::Action(void)
 
       mtxEventID.Lock();  // enters at beginning or after wake up from PutEventID()
       tEventID currentEventID = eventID;
-      cString currentChannelID = cString(channelID);
-      cString currentRecordingPath = cString(recordingPath);
+      cString currentChannelID = channelID;
+      cString currentFilename = imageFilename;
+      cString currentRecordingPath = recordingPath;
       mtxEventID.Unlock();
 
       Clear();
 
       if (currentEventID > 0) {  // new task exists
-         cString filename;
          struct stat statbuf;
-         int rc = -1;
          cStringList recImages;
 
          // init image variables
-         if (isempty(currentRecordingPath))
+         if (isempty(*currentRecordingPath))
          {  // EPG image
-            if (*channelID) {
-               filename = cString::sprintf("%s/%s_%u.jpg", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID);
-               rc = stat(filename, &statbuf);
-               if ( rc != 0)
-                  filename = cString::sprintf("%s/%s_%u_0.jpg", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID);
-            }
-            else { /* Caution: eventID without channel gives often wrong pictures */
-               filename = cString::sprintf("%s/%u.jpg", ElchiConfig.GetEpgImageDir(), currentEventID);
-               rc = stat(filename, &statbuf);
-               if ( rc != 0)
-                  filename = cString::sprintf("%s/%u_0.jpg", ElchiConfig.GetEpgImageDir(), currentEventID);
-            }
-            rc = stat(filename, &statbuf);
+            //isyslog("skinelchiHD: cEpgImage::Action2 %u %s", maxImage, *currentFilename);
          }
          else
-         {  // recording image
-            cReadDir dir(currentRecordingPath);
+         {  // create sorted list of all recording images
+            cReadDir dir(*currentRecordingPath);
             struct dirent *e;
             char *dot;
-            rc = -1;
 
             while ((e = dir.Next()) != NULL) {
-               if ((dot = strrchr(e->d_name, '.')) != NULL && (strlen(dot) == 4) ) {
-                  if(strcasecmp(dot, ".jpg") == 0)
-                     recImages.Append(strdup(cString::sprintf("%s/%s", *recordingPath, e->d_name)));
+               if ((dot = strrchr(e->d_name, '.')) != NULL && (strlen(dot) >= 4) ) {
+                  for (int i = 0; image_suffixes[i]; i++) {
+                     if(strcasecmp(dot + 1, image_suffixes[i]) == 0) {
+                        recImages.Append(strdup(cString::sprintf("%s/%s", *recordingPath, e->d_name)));
+                        break;
+                     }
+                  }
                }
             }
             if (recImages.Size() > 0) {
                recImages.Sort();
-               filename = recImages[0];
-               rc = 0;
+               currentFilename = recImages[0];
             }
          }
 
          // loop over all images
-         while (rc == 0 && maxImage < MAXEPGIMAGES && Running()) { // start conversion only if at least one image exists
-            DSYSLOG2("skinelchiHD: cEpgImage::Action %u %s %u", rc, *filename, maxImage)
+         while (!isempty(*currentFilename) && maxImage < MAXEPGIMAGES && Running()) { // start conversion only if at least one image exists
+            DSYSLOG2("skinelchiHD: cEpgImage::Action %s %u", *currentFilename, maxImage)
+            //isyslog("skinelchiHD: cEpgImage::Action3 %u %s", maxImage, *currentFilename);
 
-            imgEPG[maxImage] = new cOSDImage(filename, w, h);
+            imgEPG[maxImage] = new cOSDImage(currentFilename, w, h);
 
             if (imgEPG[maxImage] != NULL && imgEPG[maxImage]->GetImage())
             {
@@ -567,19 +567,19 @@ void cEpgImage::Action(void)
             // init variables for next image
             if (isempty(currentRecordingPath))
             {  // EPG image
-               if (*channelID)
-                  filename = cString::sprintf("%s/%s_%u_%u.jpg", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID, maxImage);
+               if (!isempty(*channelID))
+                  currentFilename = CheckForImage(cString::sprintf("%s/%s_%u_%u", ElchiConfig.GetEpgImageDir(), *currentChannelID, currentEventID, maxImage));
                else
-                  filename = cString::sprintf("%s/%u_%u.jpg", ElchiConfig.GetEpgImageDir(), currentEventID, maxImage);
-               rc = stat(filename, &statbuf);
+                  if (ElchiConfig.EpgImageEventIdOnly == 1)
+                     currentFilename = CheckForImage(cString::sprintf("%s/%u_%u", ElchiConfig.GetEpgImageDir(), currentEventID, maxImage));
             }
             else
             {  // recording image
-               rc = -1;
                if (maxImage < recImages.Size()) {
-                  filename = recImages[maxImage];
-                  rc = 0;
+                  currentFilename = recImages[maxImage];
                }
+               else
+                  currentFilename = cString();
             }
          }
       }
