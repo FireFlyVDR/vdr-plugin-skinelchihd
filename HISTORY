@@ -29,7 +29,7 @@ VDR Plugin 'skinelchiHD' Revision History
 - added icon for inactive timers ('I', 'i') and for remote timers ('S') in EPG schedule menus
 - fixed wrong aligned scrolling text after channel switch
 - redesigned several symbols with different resolutions for better antialiasing
-- improved robustness of multihreading
+- improved robustness of multithreading
 - added option to use EPG images with eventID only (without channelID) (suggested by dile@VDR-Portal)
 - added support for for first EPG image ending with '_0' (suggested by dile@VDR-Portal)
 - fixed duplicate text in events and recording info in some special cases (thanks to dile@VDR-Portal for reporting)
@@ -107,3 +107,7 @@ VDR Plugin 'skinelchiHD' Revision History
 2025-04-20 Version 1.2.7
 - added support for the new SetItemEvent(..., *Timer) of VDR 2.7.5
 - increased max. number of EPG images to 10
+
+2025-05-30 Version 1.2.8
+- added support for additional EPG image suffixes, supports now jpg/jpeg/png/webp
+- optimized searching for corresponding EPG image
