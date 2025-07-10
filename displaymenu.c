@@ -313,6 +313,7 @@ void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, in
    int avgCharWidth = AvgCharWidth();
    if (!avgCharWidth) avgCharWidth = font->Width('8');
    int avgCharWidth2 = avgCharWidth / 2;
+   int timeWidth = avgCharWidth + font->Width("88:88");
 
    switch(menuCategory)
    {
@@ -333,9 +334,9 @@ void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, in
          /* symbol         */ tabs[0] = 0;
          /* Ch Number      */ tabs[1] = tabs[0] + elchiSymbols.Width(SYM_REC) + symbolGap;
          /* date/wday      */ tabs[2] = tabs[1] + avgCharWidth2 + (numdigits(cChannels::MaxNumber()) + 1) * avgCharWidth;
-         /* start time     */ tabs[3] = tabs[2] + avgCharWidth2 + 10 * avgCharWidth;
-         /* end time       */ tabs[4] = tabs[3] + avgCharWidth2 + 6 * avgCharWidth;
-         /* [@srv:]recName */ tabs[5] = tabs[4] + avgCharWidth2 + 6 * avgCharWidth;
+         /* start time     */ tabs[3] = tabs[2] + avgCharWidth2 + 8 * avgCharWidth;
+         /* end time       */ tabs[4] = tabs[3] + avgCharWidth2 + elchiSymbols.Width(SYM_VPS) + symbolGap + timeWidth;
+         /* [@srv:]recName */ tabs[5] = tabs[4] + avgCharWidth2 + timeWidth;
          break;
       case mcChannel:
          /* Ch Number      */ tabs[0] = 0;
@@ -987,8 +988,11 @@ bool cSkinElchiHDDisplayMenu::SetItemTimer(const cTimer *Timer, int Index, bool 
       pmMenu->DrawRectangle(cRect(x1 + tabs[0], y, tabs[1] - tabs[0], lh), clrTransparent);
       pmMenu->DrawText(cPoint(x1 + tabs[1], y), cString::sprintf("%d", Timer->Channel()->Number()), colorFg, colorBg, font, tabs[2] - tabs[1]);
       pmMenu->DrawText(cPoint(x1 + tabs[2], y), cString::sprintf("%s%s%s", *name, *name && **name ? " " : "", *day), colorFg, colorBg, font, tabs[3] - tabs[2]);
-      pmMenu->DrawText(cPoint(x1 + tabs[3], y), cString::sprintf("%02d:%02d", Timer->Start() / 100, Timer->Start() % 100), colorFg, colorBg, font, tabs[4] - tabs[3]);
+      pmMenu->DrawText(cPoint(x1 + tabs[3] + elchiSymbols.Width(SYM_VPS) + symbolGap, y), cString::sprintf("%02d:%02d", Timer->Start() / 100, Timer->Start() % 100), colorFg, colorBg, font, tabs[4] - tabs[3]);
       pmMenu->DrawText(cPoint(x1 + tabs[4], y), cString::sprintf("%02d:%02d", Timer->Stop() / 100, Timer->Stop() % 100), colorFg, colorBg, font, tabs[5] - tabs[4]);
+
+      if (Timer->HasFlags(tfVps))
+         pmMenu->DrawBitmap(cPoint(x1 + tabs[3], y + center(lh, elchiSymbols.Height(SYM_VPS))), elchiSymbols.Get(SYM_VPS, colorFg, colorBg));
 
       if (Timer->HasFlags(tfActive))
       {
