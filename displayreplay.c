@@ -68,21 +68,17 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
 
 
    if (OSDHeight >= 2160) {
-      Gap            = 12;
-      SymbolGap      = 12;
-      MarksWidth     = 4;
+      symbolGap      = 12;
+      wMarks         = 4;
    } else if (OSDHeight >= 1080) {
-      Gap            = 6;
-      SymbolGap      = 6;
-      MarksWidth     = 2;
+      symbolGap      = 6;
+      wMarks         = 2;
    } else if (OSDHeight >= 720) {
-      Gap            = 4;
-      SymbolGap      = 4;
-      MarksWidth     = 2;
-   } else {  // <  720 incl. 576
-      Gap            = 3;
-      SymbolGap      = 3;
-      MarksWidth     = 1;
+      symbolGap      = 4;
+      wMarks         = 2;
+   } else {  // < 720 incl. 576
+      symbolGap      = 3;
+      wMarks         = 1;
    }
 
    elchiSymbols.Refresh(OSDHeight);
@@ -90,20 +86,18 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    x9 = OSDsize.width;
    x6 = x9 - lh2 - smallfont->Width("00:00:00.00 / 00:00:00");
 
-   xSymbols[xSYM_AR]   = 2*lh + SymbolGap; 
-   xSymbols[xSYM_CUTTING]  = (ElchiConfig.showVideoInfo ? xSymbols[xSYM_AR] + elchiSymbols.Width(SYM_AR_HD) + SymbolGap : 2*lh + SymbolGap);
-   xSymbols[xSYM_REC]  = xSymbols[xSYM_CUTTING] + elchiSymbols.Width(SYM_CUTTING) + SymbolGap;
-   xSymbols[xSYM_FREW] = xSymbols[xSYM_REC] + elchiSymbols.Width(SYM_REC) + SymbolGap;
-   xSymbols[xSYM_SREW] = xSymbols[xSYM_FREW] + elchiSymbols.Width(SYM_FREW) + SymbolGap;
-   xSymbols[xSYM_PLAY] = xSymbols[xSYM_SREW] + elchiSymbols.Width(SYM_SREW) + SymbolGap;
-   xSymbols[xSYM_SFWD] = xSymbols[xSYM_PLAY] + elchiSymbols.Width(SYM_PLAY) + SymbolGap;
-   xSymbols[xSYM_FFWD] = xSymbols[xSYM_SFWD] + elchiSymbols.Width(SYM_SFWD) + SymbolGap;
+   xSymbols[xSYM_AR]   = 2*lh + symbolGap;
+   xSymbols[xSYM_CUTTING]  = (ElchiConfig.showVideoInfo ? xSymbols[xSYM_AR] + elchiSymbols.Width(SYM_AR_HD) + symbolGap : 2*lh + symbolGap);
+   xSymbols[xSYM_REC]  = xSymbols[xSYM_CUTTING] + elchiSymbols.Width(SYM_CUTTING) + symbolGap;
+   xSymbols[xSYM_FREW] = xSymbols[xSYM_REC] + elchiSymbols.Width(SYM_REC) + symbolGap;
+   xSymbols[xSYM_SREW] = xSymbols[xSYM_FREW] + elchiSymbols.Width(SYM_FREW) + symbolGap;
+   xSymbols[xSYM_PLAY] = xSymbols[xSYM_SREW] + elchiSymbols.Width(SYM_SREW) + symbolGap;
+   xSymbols[xSYM_SFWD] = xSymbols[xSYM_PLAY] + elchiSymbols.Width(SYM_PLAY) + symbolGap;
+   xSymbols[xSYM_FFWD] = xSymbols[xSYM_SFWD] + elchiSymbols.Width(SYM_SFWD) + symbolGap;
 
-   xMode = x9 - lh + lh2 - xSymbols[xSYM_FFWD] - elchiSymbols.Width(SYM_FFWD) - SymbolGap;
-   int wMode = x9 - xMode;
-
+   int wMode = lh - lh2 + xSymbols[xSYM_FFWD] + elchiSymbols.Width(SYM_FFWD) + symbolGap;
+   xMode = x9 - wMode;
    x4 = x6 - 2 * lh;
-   x2 = xMode;
 
    y0 = 0;
    y1 = lh;
@@ -163,7 +157,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
 
       if (Setup.ShowReplayMode) {
          pmMode->DrawSlope(cRect(0, 0, 2*lh, lh), clrBG, 3);
-         pmMode->DrawRectangle(cRect(2*lh, 0, x9 - xMode -2*lh, lh), clrBG);
+         pmMode->DrawRectangle(cRect(2*lh, 0, x9 - xMode - 2*lh, lh), clrBG);
          pmMode->DrawEllipse(cRect(wMode - lh2, lh - lh2, lh2, lh2), clrTransparent, -4);
       }
       else {
@@ -171,11 +165,11 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
       }
 
       const char *separator = " / ";
-      xTotalWidth = smallfont->Width("00:00:00");
-      xTotal = x9 - xTotalWidth - y1 / 2;
-      pmBG->DrawText(cPoint(xTotal - smallfont->Width(separator), y0), separator, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), smallfont);
-      xCurrentWidth = smallfont->Width("00:00:00.00");
-      xCurrent = xTotal - smallfont->Width(separator) - xCurrentWidth;
+      wTimeTotal = smallfont->Width("00:00:00");
+      xTimeTotal = x9 - wTimeTotal - y1 / 2;
+      pmBG->DrawText(cPoint(xTimeTotal - smallfont->Width(separator), y0), separator, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), smallfont);
+      wTimeCurrent = smallfont->Width("00:00:00.00");
+      xTimeCurrent = xTimeTotal - smallfont->Width(separator) - wTimeCurrent;
 
    }
    spmTitle = NULL;
@@ -402,13 +396,13 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
 
 void cSkinElchiHDDisplayReplay::DrawMark(int Width, int Pos, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent)
 {
-   int x = std::min(Pos, Width - MarksWidth);
-   pmProgressBar->DrawRectangle(cRect(x, 0, MarksWidth, Height), Theme.Color(clrReplayProgressMark));
+   int x = std::min(Pos, Width - wMarks);
+   pmProgressBar->DrawRectangle(cRect(x, 0, wMarks, Height), Theme.Color(clrReplayProgressMark));
    int d = Height / (Current ? 3 : 4);
    for (int i = 0; i <= d; i++)
    {
       int y = Start ? d - i : Height - d + i - 1;
-      int l = MarksWidth + 2*i;
+      int l = wMarks + 2*i;
       pmProgressBar->DrawRectangle(cRect(Pos - i, y, l, 1), Current ? Theme.Color(clrReplayProgressCurrent) : Theme.Color(clrReplayProgressMark));
    }
 }
@@ -420,12 +414,12 @@ void cSkinElchiHDDisplayReplay::DrawError(int Width, int Pos, int Height, tColor
    const int h = Height / 2;    // Mitte des waagrechten Strichs
    const int e = Height / 4;    // Abstand oben & unten
 
-   int x = std::min(Pos, Width - MarksWidth);
-   pmProgressBar->DrawRectangle(cRect(x, e - MarksWidth, MarksWidth, h + 2* MarksWidth), ColorError);   // senkrechter Strich
-   pmProgressBar->DrawRectangle(cRect(x - d, h, MarksWidth + d + d, MarksWidth), ColorError);  // waagrechter Strich in der Mitte
+   int x = std::min(Pos, Width - wMarks);
+   pmProgressBar->DrawRectangle(cRect(x, e - wMarks, wMarks, h + 2* wMarks), ColorError);   // senkrechter Strich
+   pmProgressBar->DrawRectangle(cRect(x - d, h, wMarks + d + d, wMarks), ColorError);  // waagrechter Strich in der Mitte
    for (int i = 1; i <= d; i++) {
-      pmProgressBar->DrawRectangle(cRect(x - d + i, h - i, d + d - i - i + MarksWidth, 1), ColorError); // Dreieck oben
-      pmProgressBar->DrawRectangle(cRect(x - d + i, h + i + 1, d + d - i - i + MarksWidth, 1), ColorError); // Dreieck unten
+      pmProgressBar->DrawRectangle(cRect(x - d + i, h - i, d + d - i - i + wMarks, 1), ColorError); // Dreieck oben
+      pmProgressBar->DrawRectangle(cRect(x - d + i, h + i + 1, d + d - i - i + wMarks, 1), ColorError); // Dreieck unten
    }
 }
 #endif
@@ -437,9 +431,9 @@ void cSkinElchiHDDisplayReplay::SetCurrent(const char *Current)
       int lenCurrent = strlen(Current);
 
       if (lenOldCurrent > lenCurrent)
-         pmBG->DrawRectangle(cRect(xCurrent, y0, xCurrentWidth - xTotalWidth - 1, lh), Theme.Color(clrBackground));
+         pmBG->DrawRectangle(cRect(xTimeCurrent, y0, wTimeCurrent - wTimeTotal, lh), Theme.Color(clrBackground));
 
-      pmBG->DrawText(cPoint(lenCurrent > 8 ? xCurrent : xCurrent + xCurrentWidth - xTotalWidth, y0), Current, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), cFont::GetFont(fontSml), lenCurrent > 8 ? xCurrentWidth : xTotalWidth, 0, taLeft);
+      pmBG->DrawText(cPoint(lenCurrent > 8 ? xTimeCurrent : xTimeCurrent + wTimeCurrent - wTimeTotal, y0), Current, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), cFont::GetFont(fontSml), lenCurrent > 8 ? wTimeCurrent : wTimeTotal, 0, taLeft);
       oldCurrent = Current;
       lenOldCurrent = lenCurrent;
       changed = true;
@@ -452,7 +446,7 @@ void cSkinElchiHDDisplayReplay::SetTotal(const char *Total)
 {
    DSYSLOG2("skinelchiHD: cSkinElchiHDDisplayReplay::SetTotal(%s)", Total)
 
-   pmBG->DrawText(cPoint(xTotal, y0), Total, Theme.Color(clrReplayTotal), Theme.Color(clrBackground), cFont::GetFont(fontSml), xTotalWidth, 0 ,taLeft);
+   pmBG->DrawText(cPoint(xTimeTotal, y0), Total, Theme.Color(clrReplayTotal), Theme.Color(clrBackground), cFont::GetFont(fontSml), wTimeTotal, 0 ,taLeft);
    changed = true;
 }
 
@@ -544,7 +538,7 @@ void cSkinElchiHDDisplayReplay::Flush(void)
       SetScrollTitle(cString::sprintf("%s %d%%", trVDR("Volume "), 100*volume / 255));
       int p = w * volume / 255;
       DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarUpper), cRect(lh2, y, p, lh - 2*lh4));
-      DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarLower), cRect(lh2+p, y, w - p, lh - 2*lh4));
+      DrawShadedRectangle(pmVolume, Theme.Color(clrVolumeBarLower), cRect(lh2 + p, y, w - p, lh - 2*lh4));
 
       changed = true;
       volumeTimer.Set(1500);

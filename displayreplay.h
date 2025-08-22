@@ -22,15 +22,15 @@ class cSkinElchiHDDisplayReplay : public cSkinDisplayReplay
 private:
    cOsd *osd;
    tColor clrBG;
-   int x0, x2, x3, x4, x6, x9, xMode;
+   int x0, x3, x4, x6, x9, xMode;
    int y0, y1, y2, y3;
    enum exSymbols { xSYM_AR, xSYM_CUTTING, xSYM_REC, xSYM_FREW, xSYM_SREW, xSYM_PLAY, xSYM_SFWD, xSYM_FFWD, xSYM_MAX};
    int xSymbols[xSYM_MAX];
    int ySymbols, ySymbolARcutRec;
 
-   int lh, lh2, lh4, lh8, MarksWidth;
-   int xCurrent, xTotal;
-   int xCurrentWidth, xTotalWidth;
+   int lh, lh2, lh4, lh8, wMarks;
+   int xTimeCurrent, xTimeTotal;
+   int wTimeCurrent, wTimeTotal;
    const cRecording *recording;
    const cMarks *marks;
    bool isRecording, isCutting, modeonly, changed, showMessage, showVolume;
@@ -46,8 +46,7 @@ private:
    int oldHeight;
    eVideoFormat oldVideoFormat;
 
-   int Gap;
-   int SymbolGap;
+   int symbolGap;
    void SetScrollTitle(const char *Title);
    int GetPos(int p, int width, int total) { return int(int64_t(p) * width / total); }
    void DrawMark(int Width, int Pos, int Height, bool Start, bool Current, tColor ColorMark, tColor ColorCurrent);

@@ -28,9 +28,9 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
    index = -1;
    offset = 0;
    numTracks = NumTracks;
-   int ItemsWidth = max(font->Width(Title), 20*smallfont->Width());
+   int wItems = max(font->Width(Title), 20*smallfont->Width());
    for (int i = 0; i < NumTracks; i++)
-      ItemsWidth = max(ItemsWidth, font->Width(Tracks[i]));
+      wItems = max(wItems, font->Width(Tracks[i]));
 
    tOSDsize OSDsize;
 
@@ -54,7 +54,7 @@ cSkinElchiHDDisplayTracks::cSkinElchiHDDisplayTracks(const char *Title, int NumT
 
    x0 = 0;
    x1 = x0 + lh2;
-   x4 = min(OSDsize.width, ItemsWidth + 2*lh);
+   x4 = min(OSDsize.width, wItems + 2*lh);
 
    x2 = x4 - lh;
    x3 = x4 - lh2;

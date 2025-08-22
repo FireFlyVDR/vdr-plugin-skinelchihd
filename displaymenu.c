@@ -142,7 +142,7 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    lh2 = lh / 2;
    x0 = 0;
    x1 = x0 + lh2;
-   x8 = x0 + OSDsize.width;
+   x8 = OSDsize.width;
    x6 = x8 - lh2;
    x5 = x8 - lh;
    int wTotal = OSDsize.width;
@@ -150,7 +150,7 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    y0 = 0;
    y2 = y0 + lh;
    y3 = y2 + lh;
-   y8 = y0 + OSDsize.height;
+   y8 = OSDsize.height;
    y6 = y8 - lh;
    y5 = y6 - lh;
    menuHeight = y5 - y3;
@@ -184,7 +184,7 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    osd = cOsdProvider::NewOsd(OSDsize.left, OSDsize.top);
    ElchiBackground->SetOSD(osd);
 
-   tArea Area[] = { { x0, y0, x8, y8, 32} };
+   tArea Area[] = { { x0, y0, x8 - 1, y8 - 1, 32} };
    if (oeOk != osd->SetAreas(Area, 1)) {
       Area[0].bpp = 8;
       if (oeOk != osd->SetAreas(Area, 1)) {
@@ -262,8 +262,8 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    pmButton3inactive->Fill(clrBG);
    pmButton3inactive->DrawEllipse(cRect(btn4 -btn3 - lh2, lh - lh2, lh2, lh2), clrTransparent, -4);
 
-   int titleWidth = x6 - x1 - font->Width(*DayDateTime()) - font->Width("  ");
-   spmTitle = new cScrollingPixmap(osd, cRect(x1, y0+(font->Height()-cFont::GetFont(fontSml)->Height())/2, titleWidth, cFont::GetFont(fontSml)->Height()),
+   int wTitle = x6 - x1 - font->Width(*DayDateTime()) - font->Width("  ");
+   spmTitle = new cScrollingPixmap(osd, cRect(x1, y0+(font->Height()-cFont::GetFont(fontSml)->Height())/2, wTitle, cFont::GetFont(fontSml)->Height()),
                                       cFont::GetFont(fontSml), MAXCHARS, Theme.Color(clrMenuTitleFg));
 }
 

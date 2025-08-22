@@ -31,7 +31,7 @@ private:
    int wEvTime, wEvText, wChNumber, wChName, wVsize, wDateTime, wChDateTime, wTimeBar;
    int hEvents;
    bool withInfo, isRecording, isCutting, showMessage, showVolume, sleeptimermessage;
-   int Gap, SymbolGap;
+   int gap, symbolGap;
    int lh, slh, lh2, lineOffset;
    tColor bg;
    char Channelnumber[6];
