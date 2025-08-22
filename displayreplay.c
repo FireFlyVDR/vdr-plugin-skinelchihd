@@ -37,6 +37,7 @@ cSkinElchiHDDisplayReplay::cSkinElchiHDDisplayReplay(bool ModeOnly)
    title = NULL;
    marks = NULL;
    oldCurrent = NULL;
+   lenOldCurrent = 0;
    oldVideoFormat = videofmt_unknown;
    oldWidth = -1;
    oldHeight = -1;
@@ -431,17 +432,16 @@ void cSkinElchiHDDisplayReplay::DrawError(int Width, int Pos, int Height, tColor
 
 void cSkinElchiHDDisplayReplay::SetCurrent(const char *Current)
 {
-   if (!*oldCurrent || strcmp(*oldCurrent, Current)) {
+   if (!lenOldCurrent || strcmp(*oldCurrent, Current)) {
       DSYSLOG2("skinelchiHD: cSkinElchiHDDisplayReplay::SetCurrent(%s)", Current)
-      int oldLength = *oldCurrent ? strlen(*oldCurrent) : 0;
-      int Length = strlen(Current);
-      oldCurrent = Current;
+      int lenCurrent = strlen(Current);
 
-      if (oldLength > Length)
+      if (lenOldCurrent > lenCurrent)
          pmBG->DrawRectangle(cRect(xCurrent, y0, xCurrentWidth - xTotalWidth - 1, lh), Theme.Color(clrBackground));
 
-      pmBG->DrawText(cPoint(Length > 8 ? xCurrent : xCurrent + xCurrentWidth - xTotalWidth, y0), Current, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), cFont::GetFont(fontSml), Length > 8 ? xCurrentWidth : xTotalWidth, 0, taLeft);
-
+      pmBG->DrawText(cPoint(lenCurrent > 8 ? xCurrent : xCurrent + xCurrentWidth - xTotalWidth, y0), Current, Theme.Color(clrReplayCurrent), Theme.Color(clrBackground), cFont::GetFont(fontSml), lenCurrent > 8 ? xCurrentWidth : xTotalWidth, 0, taLeft);
+      oldCurrent = Current;
+      lenOldCurrent = lenCurrent;
       changed = true;
    }
    else

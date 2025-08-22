@@ -39,6 +39,7 @@ private:
    cTimeMs volumeTimer;
    int volumechange;
    cString oldCurrent;
+   int lenOldCurrent;
    cString title;
    cString rectitle;
    int oldWidth;
