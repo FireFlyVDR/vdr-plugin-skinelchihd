@@ -92,6 +92,7 @@ cSkinElchiHDDisplayMenu::cSkinElchiHDDisplayMenu(void)
    lasttime.tv_sec = 0;
    showMessage = false;
    showVolume = false;
+   lastDiskUsageState = -1;
    menuCategory = mcUndefined;
    const cFont *font = cFont::GetFont(fontOsd);
    volumechange = ElchiStatus->GetVolumeChange(NULL);
@@ -509,7 +510,6 @@ void cSkinElchiHDDisplayMenu::SetTitle(const char *Title)
 {  ///< Sets the title of this menu to Title.
    DSYSLOG("skinelchiHD: DisplayMenu::SetTitle(%s)", Title)
    title = Title;
-   cVideoDiskUsage::HasChanged(lastDiskUsageState);
    DrawTitle();
 }
 
