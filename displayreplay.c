@@ -187,14 +187,6 @@ cSkinElchiHDDisplayReplay::~cSkinElchiHDDisplayReplay()
    DELETENULL(osd);
 }
 
-/*
-void cSkinElchiHDDisplayReplay::SetRecording(const cRecording *Recording)
-{
-   recording = Recording;
-   SetTitle( recording->Info()->Title() );
-}
-*/
-
 void cSkinElchiHDDisplayReplay::SetMarks(const cMarks *Marks)
 {
    DSYSLOG("skinelchiHD: cSkinElchiHDDisplayReplay::SetMarks")
@@ -379,7 +371,6 @@ void cSkinElchiHDDisplayReplay::SetProgress(int Current, int Total)
 
 #if APIVERSNUM >= 30004
          if (errors) {
-            tColor colorError = Theme.Color(clrReplayProgressMark);
             int LastPos = -1;
             for (int i = 0; i < errors->Size(); i++) {
                int p = errors->At(i);

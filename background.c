@@ -231,7 +231,7 @@ void cScrollingPixmap::SetOffset(int Offset)
    cRect newVPort = vPort;
    newVPort.SetX(vPort.X() + Offset + max(fh / TEXT_ALIGN_BORDER, 1));
    newVPort.SetWidth(vPort.Width() - Offset - 2* max(fh / TEXT_ALIGN_BORDER, 1));
-   
+
    if (active) {
       ElchiBackground->Del(this);
       active = false;
@@ -521,7 +521,6 @@ void cEpgImage::Action(void)
       Clear();
 
       if (currentEventID > 0) {  // new task exists
-         struct stat statbuf;
          cStringList recImages;
 
          // init image variables

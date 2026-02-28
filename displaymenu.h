@@ -58,7 +58,6 @@ private:
 
    u_int32_t eventID;
    int timercheck;
-   //int EventImages;
    int epgImageLines;
    cSize epgImageSize;
    timeval lasttime;
@@ -70,7 +69,6 @@ public:
    virtual ~cSkinElchiHDDisplayMenu();
    virtual void SetMenuCategory(eMenuCategory MenuCategory);
    virtual void SetTabs(int Tab1, int Tab2 = 0, int Tab3 = 0, int Tab4 = 0, int Tab5 = 0);
-   //virtual void SetMenuSortMode(eMenuSortMode MenuSortMode);
    virtual void Scroll(bool Up, bool Page);
    virtual int MaxItems(void);
    virtual void Clear(void);

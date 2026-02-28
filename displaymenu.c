@@ -1816,7 +1816,6 @@ void cSkinElchiHDDisplayMenu::SetText(const char *Text, bool FixedFont)
       scrlh = font->Height();
       scrollShownLines = (y5 - y3)/scrlh;
       scrollOffsetLines = 0;
-      int upperLines = 0;
 
       tw.Set(Text, font, x5 - x1);
       scrollTotalLines = tw.Lines();

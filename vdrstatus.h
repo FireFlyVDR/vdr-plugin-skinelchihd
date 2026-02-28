@@ -49,21 +49,14 @@ struct cVideoInfo
 class cSkinElchiStatus : public cStatus
 {
 private:
-   const cDevice *ChannelDevice[MAXDEVICES];
-   int ChannelNumber[MAXDEVICES];
    cList<cRecordingEntry> recordinglist;
    int recordingChange;
-   char *audioTrack;
-   const char *audioChannel;
-   const char * const *tracks;
-   //int audioTrackIndex;
-   //int audioChange;
    int volume;
    int volumeChange;
 protected:
    //virtual void ChannelChange(const cChannel *Channel);
    //virtual void TimerChange(const cTimer *Timer, eTimerChange Change);
-   virtual void ChannelSwitch(const cDevice *Device, int ChannelNumber, bool LiveView);
+   //virtual void ChannelSwitch(const cDevice *Device, int ChannelNumber, bool LiveView);
    virtual void Recording(const cDevice *Device, const char *Name, const char *FileName, bool On);
    //virtual void Replaying(const cControl *Control, const char *Name, const char *FileName, bool On);
    //virtual void MarksModified(const cMarks *Marks);
@@ -86,17 +79,7 @@ public:
    ~cSkinElchiStatus();
    int GetRecordingChange(int *numRecordings) { if (numRecordings) *numRecordings = recordinglist.Count(); return recordingChange; };   // used in channel
    cString GetRecordingsString(cString prefix);
-
-   //int GetVolumeChange(void) { return volumeChange; };        //used in channel, menu, replay
    int GetVolumeChange(int *newVolume) { if (newVolume) *newVolume = volume; return volumeChange; };        //used in channel, menu, replay
-   //int GetVolume(void) { return volume; };                    //used in channel, menu, replay
-
-   //const char *GetAudioTrack(void) { return audioTrack; };     // unused
-   //int GetAudioTrackIndex(void) { return audioTrackIndex; };   //unused
-
-   //const char *GetAudioChannel(void) { return audioChannel; }; // unused, but channel uses directly device query
-   //int GetAudioChange(void) { return audioChange; };
-
    void GetVideoInfo(cVideoInfo *videoinfo);                 //used in channel, replay
 };
 

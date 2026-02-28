@@ -12,7 +12,6 @@
 
 #include <vdr/skins.h>
 #include <vdr/tools.h>
-//#include "scroll.h"
 #include "config.h"
 #include "background.h"
 #include "vdrstatus.h"
@@ -57,7 +56,6 @@ private:
 public:
    cSkinElchiHDDisplayReplay(bool ModeOnly);
    virtual ~cSkinElchiHDDisplayReplay();
-   //virtual void SetRecording(const cRecording *Recording);
    virtual void SetMarks(const cMarks *Marks);
    virtual void SetTitle(const char *Title);
    virtual void SetMode(bool Play, bool Forward, int Speed);

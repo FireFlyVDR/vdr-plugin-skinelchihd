@@ -33,9 +33,6 @@ cRecordingEntry::~cRecordingEntry()
 cSkinElchiStatus::cSkinElchiStatus()
 {
    DSYSLOG("skinelchiHD cSkinElchiStatus()");
-   audioTrack = NULL;
-   audioChannel = NULL;
-   tracks = NULL;
    volumeChange = 0;
    recordingChange = 0;
 }
@@ -44,28 +41,6 @@ cSkinElchiStatus::cSkinElchiStatus()
 cSkinElchiStatus::~cSkinElchiStatus()
 {
    DSYSLOG("skinelchiHD ~cSkinElchiStatus()");
-   if (audioTrack) {
-      free(audioTrack);
-   }
-}
-
-
-void cSkinElchiStatus::ChannelSwitch(const cDevice * device, int channelNumber, bool Liveview)
-{  // Indicates a channel switch on the given DVB device.
-   // If ChannelNumber is 0, this is before the channel is being switched,
-   // otherwise ChannelNumber is the number of the channel that has been switched to.
-   int i = device->CardIndex();
-   ChannelDevice[i] = device;
-   ChannelNumber[i] = channelNumber;
-   if (!channelNumber && cDevice::ActualDevice()->CardIndex() == i) {
-      if (audioTrack) {
-         free(audioTrack);
-         audioTrack = NULL;
-      }
-      if (audioChannel) {
-         audioChannel = NULL;
-      }
-   }
 }
 
 
@@ -135,38 +110,7 @@ void cSkinElchiStatus::SetVolume(int Volume, bool Absolute)
    volumeChange++;
 }
 
-/*
-void cSkinElchiStatus::SetAudioTrack(int Index, const char * const *Tracks)
-{  // The audio track has been set to the one given by Index, which
-   // points into the Tracks array of strings. Tracks is NULL terminated.
-   //isyslog("skinelchiHD-Status: SetAudioTrack (%d, %s)", Index, tracks?(const char *)tracks[Index]:"NULL");
-   if (tracks) {
-      audioTrackIndex = Index + 1;
-      tracks = Tracks;
-      audioTrack = strdup(Tracks[Index]);
-   }
-   else
-      if (audioTrack) {
-         audioTrackIndex = 0;
-         tracks = NULL;
-         free(audioTrack);
-         audioTrack = NULL;
-      }
-}
 
-
-void cSkinElchiStatus::SetAudioChannel(int AudioChannel)
-{  // The audio channel has been set to the given value.
-   // 0=stereo, 1=left, 2=right, -1=no information available.
-   switch (AudioChannel) {
-     case -1: audioChannel = tr("Digital"); break;
-     case 0:  audioChannel = tr("Stereo"); break;
-     case 1:  audioChannel = tr("Left channel"); break;
-     case 2:  audioChannel = tr("Right channel"); break;
-     default: audioChannel = NULL;
-   }
-}
-*/
 void cSkinElchiStatus::GetVideoInfo(cVideoInfo *videoinfo)
 {
    int Width, Height;
