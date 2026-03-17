@@ -166,13 +166,13 @@ const char *cPluginSkinElchiHD::CommandLineHelp(void)
    // Return a string that describes all known command line options.
    return
           "  -e <EPGImageDir>, --epgimages=<ImageDir>  path to EPG images\n"
-          "                                            (default: '<CacheDir>/plugins/skinelchi/epgimages')\n"
+          "                                            (default: '<CacheDir>/plugins/skinelchihd/epgimages')\n"
 #ifdef GRAPHICSMAGICK
           "  -l <LogoPath>,  --logopath=<LogoPath>     path to channel logos (PNG format)\n"
 #else
           "  -l <LogoPath>,  --logopath=<LogoPath>     path to channel logos (SVG or PNG format)\n"
 #endif
-          "                                            (default: '<ResourceDir>/plugins/skinelchi/logos')\n";
+          "                                            (default: '<ResourceDir>/plugins/skinelchihd/logos')\n";
 }
 
 
