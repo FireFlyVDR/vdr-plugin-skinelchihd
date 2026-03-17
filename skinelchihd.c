@@ -218,6 +218,14 @@ bool cPluginSkinElchiHD::Start(void)
       return false;
    }
 
+   isyslog("skinElchiHD: using "
+#ifdef GRAPHICSMAGICK
+           "graphicsmagick"
+#else
+           "imagemagick"
+#endif
+           " for image rendering");
+
    // set default logo and epg image dir if not supplied by commandline arguments
    if (isempty(ElchiConfig.GetLogoBaseDir()))
       ElchiConfig.SetLogoBaseDir(cString::sprintf("%s/logos",cPlugin::ResourceDirectory(PLUGIN_NAME_I18N)));

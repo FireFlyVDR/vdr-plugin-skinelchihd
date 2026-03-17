@@ -231,12 +231,6 @@ void cSkinElchiHDSetup::Setup(void)
 {
    Add(new cOsdItem(tr("General"), osUser1));
    Add(new cOsdItem(tr("Channel Display"), osUser2));
-
-#ifdef GRAPHICSMAGICK
-   Add(new cOsdItem("image lib: GraphicsMagick", osUnknown, false));
-#else
-   Add(new cOsdItem("image lib: ImageMagick", osUnknown, false));
-#endif
 }
 
 eOSState cSkinElchiHDSetup::ProcessKey(eKeys Key)
