@@ -489,28 +489,36 @@ void cSkinElchiHDDisplayMenu::DrawImageFrame()
    }
 }
 
-void cSkinElchiHDDisplayMenu::DrawTitle(void)
+void cSkinElchiHDDisplayMenu::DrawTitle(bool Force)
 {
-   DSYSLOG("skinelchiHD: DisplayMenu::DrawTitle")
+   DSYSLOG("skinelchiHD: DisplayMenu::DrawTitle mc=%s %s", GetCategoryName(menuCategory), Force?"Forced":"")
 
-   if ((menuCategory == mcMain) || (menuCategory == mcRecording) || (menuCategory == mcTimer)) {
-
-      cVideoDiskUsage::HasChanged(lastDiskUsageState);
-      cString titleline = *cString::sprintf("%s - %s %d%% (%.1f GB - %d:%02d %s)", 
-                    *title, trVDR("Disk"), cVideoDiskUsage::UsedPercent(), cVideoDiskUsage::FreeMB()/1024.0,
-                    cVideoDiskUsage::FreeMinutes()/60, cVideoDiskUsage::FreeMinutes()%60, trVDR("free"));
-
-      spmTitle->SetText(titleline, cFont::GetFont(fontSml));
+   switch(menuCategory)
+   {
+      case mcMain:
+      case mcRecording:
+      case mcTimer:
+         {
+            if (cVideoDiskUsage::HasChanged(lastDiskUsageState) || Force) {
+               cString titleline = cString::sprintf("%s - %s %d%% (%.1f GB - %d:%02d %s)",
+                                   *title, trVDR("Disk"), cVideoDiskUsage::UsedPercent(), cVideoDiskUsage::FreeMB()/1024.0,
+                                   cVideoDiskUsage::FreeMinutes()/60, cVideoDiskUsage::FreeMinutes()%60, trVDR("free"));
+               spmTitle->SetText(titleline, cFont::GetFont(fontSml));
+            }
+            break;
+         }
+      default:
+         if (Force)
+            spmTitle->SetText(title, cFont::GetFont(fontSml));
+         break;
    }
-   else
-      spmTitle->SetText(title, cFont::GetFont(fontSml));
 }
 
 void cSkinElchiHDDisplayMenu::SetTitle(const char *Title)
 {  ///< Sets the title of this menu to Title.
    DSYSLOG("skinelchiHD: DisplayMenu::SetTitle(%s)", Title)
    title = Title;
-   DrawTitle();
+   DrawTitle(true);
 }
 
 void cSkinElchiHDDisplayMenu::SetButtons(const char *Red, const char *Green, const char *Yellow, const char *Blue)
@@ -1842,7 +1850,7 @@ int cSkinElchiHDDisplayMenu::GetTextAreaWidth(void) const
    ///< The default implementation returns 0. Therefore a caller of this method
    ///< must be prepared to receive 0 if the plugin doesn't implement this method.
 
-   return x5 - x1;  // x6 - x1
+   return x5 - x1;
 }
 
 const cFont *cSkinElchiHDDisplayMenu::GetTextAreaFont(bool FixedFont) const
@@ -1870,8 +1878,7 @@ void cSkinElchiHDDisplayMenu::Flush(void)
    ///if (lasttime.tv_sec) isyslog("skinelchiHD Menu: FlushDelta=%.2f msec", (((long long)tp1.tv_sec * 1000000 + tp1.tv_usec) - ((long long)lasttime.tv_sec * 1000000 + lasttime.tv_usec)) / 1000.0);
    //lasttime=tp1;
 
-   if (cVideoDiskUsage::HasChanged(lastDiskUsageState))
-      DrawTitle();
+   DrawTitle();
 
    const cFont *font = cFont::GetFont(fontOsd);
 
@@ -1912,8 +1919,6 @@ void cSkinElchiHDDisplayMenu::Flush(void)
       newVolumechange = ElchiStatus->GetVolumeChange(&volume);
       if (volumechange != newVolumechange) {
          volumechange = newVolumechange;
-//      if (ElchiStatus->GetVolumeChange(&newVolume) != volumechange) {
-//         volumechange = ElchiStatus->GetVolumeChange();
 
          LOCK_PIXMAPS;
          int wVolumeBar = (x5 - lh) * volume / 255;

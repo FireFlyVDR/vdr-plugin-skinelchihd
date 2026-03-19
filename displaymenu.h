@@ -25,7 +25,7 @@ private:
 
    void DrawScrollbar(int Total, int Offset, int Shown, int Top, int Height);
    void SetTextScrollbar(void);
-   void DrawTitle(void);
+   void DrawTitle(bool Force = false);
    void DrawImageFrame(void);
    void SetItemBackground(int Index, bool Current, bool Selectable, int xScrollArea);
    int scrollTotalLines, scrollShownLines, scrollOffsetLines, scrollbarTop, scrollbarHeight;
