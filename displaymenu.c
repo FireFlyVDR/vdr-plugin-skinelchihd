@@ -59,11 +59,15 @@ enum stream_content
    sc_audio_AC4       = 0x19, // stream content 0x09, extension 0x10
 };
 
-static char const *mcNames[] = { "mcUndefined", "mcUnknown", "mcMain", "mcSchedule", "mcScheduleNow", "mcScheduleNext", 
-                                 "mcChannel", "mcChannelEdit", "mcTimer", "mcTimerEdit", "mcRecording", "mcRecordingInfo", 
-                                 "mcRecordingEdit", "mcPlugin", "mcPluginSetup", "mcSetup", "mcSetupOsd", "mcSetupEpg", 
-                                 "mcSetupDvb", "mcSetupLnb", "mcSetupCam", "mcSetupRecord", "mcSetupReplay", "mcSetupMisc", 
-                                 "mcSetupPlugins", "mcCommand", "mcEvent", "mcText", "mcFolder", "mcCam" };
+static char const *mcNames[] = { "mcUndefined", "mcUnknown", "mcMain", "mcSchedule", "mcScheduleNow", "mcScheduleNext",
+                                 "mcChannel", "mcChannelEdit", "mcTimer", "mcTimerEdit", "mcRecording",
+#if defined(APIVERSNUM) && APIVERSNUM >= 30012
+                                 "mcRecordingDel",
+#endif
+                                 "mcRecordingInfo", "mcRecordingEdit", "mcPlugin", "mcPluginSetup", "mcSetup",
+                                 "mcSetupOsd", "mcSetupEpg", "mcSetupDvb", "mcSetupLnb", "mcSetupCam", "mcSetupRecord",
+                                 "mcSetupReplay", "mcSetupMisc", "mcSetupPlugins", "mcCommand", "mcEvent", "mcText",
+                                 "mcFolder", "mcCam" };
 
 const char* GetCategoryName(eMenuCategory category) { return mcNames[category+1]; }
 
@@ -319,6 +323,9 @@ void cSkinElchiHDDisplayMenu::SetTabs(int Tab1, int Tab2, int Tab3, int Tab4, in
    switch(menuCategory)
    {
       case mcRecording:
+#if defined(APIVERSNUM) && APIVERSNUM >= 30012
+      case mcRecordingDel:
+#endif
          /* 0 Date     */ tabs[0] = 0;
          /* 1 Time     */ tabs[1] = tabs[0] + 8 * avgCharWidth;
          /* 2 Duration */ tabs[2] = tabs[1] + avgCharWidth2 + 5 * avgCharWidth;
@@ -497,6 +504,9 @@ void cSkinElchiHDDisplayMenu::DrawTitle(bool Force)
    {
       case mcMain:
       case mcRecording:
+#if defined(APIVERSNUM) && APIVERSNUM >= 30012
+      case mcRecordingDel:
+#endif
       case mcTimer:
          {
             if (cVideoDiskUsage::HasChanged(lastDiskUsageState) || Force) {
@@ -636,9 +646,13 @@ void cSkinElchiHDDisplayMenu::SetItem(const char *Text, int Index, bool Current,
    DSYSLOG("skinelchiHD: DisplayMenu::SetItem(\"%s\",%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Text, Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5));
 
    if (menuCategory == mcSchedule || menuCategory == mcScheduleNow || menuCategory == mcScheduleNext ||
-       menuCategory == mcRecording || menuCategory == mcTimer)
-      isyslog("UNSUPPORTED - skinelchiHD: DisplayMenu::SetItem() category %s", GetCategoryName(menuCategory)); 
-   tColor ColorFg = Theme.Color(Current ? clrMenuItemCurrentFg : Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable); 
+       menuCategory == mcRecording ||
+#if defined(APIVERSNUM) && APIVERSNUM >= 30012
+       menuCategory == mcRecordingDel ||
+#endif
+       menuCategory == mcTimer)
+      esyslog("skinelchiHD: DisplayMenu::SetItem() UNSUPPORTED Category: %s", GetCategoryName(menuCategory));
+   tColor ColorFg = Theme.Color(Current ? clrMenuItemCurrentFg : Selectable ? clrMenuItemSelectable : clrMenuItemNonSelectable);
    const cFont *font = cFont::GetFont(fontOsd);
    int y = menuTop + Index * lh;
 
@@ -1113,7 +1127,11 @@ bool cSkinElchiHDDisplayMenu::SetItemRecording(const cRecording *Recording, int 
 
    DSYSLOG("skinelchiHD: DisplayMenu::SetItemRecording(%d,%s,%s) %s %d-%d-%d-%d-%d-%d", Index, Current ? "'Current'" : "'nonCurrent'", Selectable ? "'Selectable'" : "'nonSelectable'", GetCategoryName(menuCategory), Tab(0), Tab(1), Tab(2), Tab(3), Tab(4), Tab(5) )
 
-   if (menuCategory == mcRecording)
+   if (menuCategory == mcRecording
+#if defined(APIVERSNUM) && APIVERSNUM >= 30012
+       || menuCategory == mcRecordingDel
+#endif
+       )
    {
       const cFont *font = cFont::GetFont(fontOsd);
       tColor ColorFg;
@@ -1939,13 +1957,11 @@ void cSkinElchiHDDisplayMenu::Flush(void)
    }
 
 #ifdef DEBUG_TIMING
-   //DSYSLOG2("skinelchiHD: DisplayMenu::Flush()")
    gettimeofday(&tp1, NULL);
 #endif
    ElchiBackground->Flush();
 #ifdef DEBUG_TIMING
    gettimeofday(&tp2, NULL);
-   //dsyslog("skinelchiHD: DisplayMenu::osd->Flush() %4.3f ms",
    msec2 = (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000.0;
 #endif
 
