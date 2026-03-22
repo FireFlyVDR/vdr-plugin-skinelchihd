@@ -116,3 +116,12 @@ VDR Plugin 'skinelchiHD' Revision History
 - display VPS symbol for VPS timers in timer menu
 - optimized time update in Replay display
 - fix off-by-one OSD size in DisplayMenu and unify names of variables
+
+2026-03-22 Version 1.2.10
+- code cleanup, fixed typos
+- fix possible invalid lock sequence
+- make info about image renderer a syslog message
+- avoid unnecessary drawing of menu title
+- GraphicsMagick++ is now the default image renderer. Consider switching to it except
+  if you are using channel logos in SVG format
+- add support for new menu category of VDR 2.8.1+
