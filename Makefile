@@ -12,8 +12,8 @@
 
 PLUGIN = skinelchihd
 
-# External image lib to use: imagemagick or graphicsmagick
-IMAGELIB ?= imagemagick
+# image library to use: graphicsmagick (recommended) or imagemagick
+IMAGELIB ?= graphicsmagick
 
 ### The version number of this plugin (taken from the main source file):
 
@@ -33,7 +33,6 @@ TMPDIR ?= /tmp
 export CFLAGS   = $(call PKGCFG,cflags)
 export CXXFLAGS = $(call PKGCFG,cxxflags)
 CXXFLAGS += -std=c++11
-CXXFLAGS += -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable -Warray-bounds=2
 
 ### The version number of VDR's plugin API:
 
@@ -64,7 +63,7 @@ INCLUDES += $(shell pkg-config --cflags GraphicsMagick++)
 LIBS += $(shell pkg-config --libs GraphicsMagick++)
 DEFINES += -DGRAPHICSMAGICK
 else 
-$(error ERROR: IMAGELIB must be either imagemagick or graphicsmagick)
+$(error ERROR: IMAGELIB must be set either to graphicsmagick or imagemagick)
 endif
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'

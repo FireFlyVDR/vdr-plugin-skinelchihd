@@ -19,9 +19,14 @@ VDR features like True Color support.
 
 Requirements:
 -------------
-VDR 2.4.3+ (VDR 2.6.5+ requires at least skinElchiHD 1.2.4 due to conflicting declaration)
-GraphicsMagick++ or ImageMagick++ 7.x
-for SVG channel logos ImageMagick++ is required
+- VDR 2.4.3+
+     VDR 2.6.5+ requires at least SkinElchiHD 1.2.4 due to conflicting declaration
+     For VDR 2.8.1+ SkinElchiHD 1.2.10+ is recommended due to a new menu category
+- GraphicsMagick++ (recommended) or ImageMagick++ 7.x
+- Channel logos in PNG format are supported by both libraries, for SVG format ImageMagick++
+  is required
+- if Imagemagick++ refuses to load channel logos due to security reasons try another location
+  e.g. /usr/share/vdr/...
 
 
 Features:
@@ -29,7 +34,7 @@ Features:
 - True Color Support
 - shaded surface look
 - SD, HD and UHD Support (OSD, Channel Logos, Video stream info)
-- SVG channel logo support (True Color, scaled to required OSD resolution)
+- SVG channel logo support with ImageMagick++ (True Color, scaled to required OSD resolution)
 - EPG image support (True Color) for EPG and recordings
 - displays type of recording in Recordings Menu (HD, UHD)
 - multithreaded scrolling and image loading
@@ -43,10 +48,10 @@ The skinElchiHD plugin is compiled and installed the same way as any other plugi
 - tar xf vdr-skinelchihd-<version>.tar.bz2
 - ln -s skinelchihd-<version> skinelchihd
 - cd ../..
-- make plugins  [IMAGELIB=graphicsmagick]
+- make plugins  [IMAGELIB=imagemagick]
 
-Append "IMAGELIB=imagemagick" or "IMAGELIB=graphicsmagick" to the make command to build with the respective library. 
-Default (e.g. witout parameter) is ImageMagick++.
+Append "IMAGELIB=graphicsmagick" or "IMAGELIB=imagemagick" to the make command to build with the respective library.
+Beginning with SkinElchiHD 1.2.10 the default (e.g. without parameter) is graphicsmagick
 
 Copy the provided 50-skinelchihd.conf file to your VDR args dir (e.g. /etc/vdr/conf.d)
 and adapt it if required or use the parameters on the VDR commandline.
@@ -70,22 +75,20 @@ The path to the logo files can be set with a command line parameter:
 For displaying SVG channel logos ImagMagick++ is required.
 
 Images of EPG and recordings: 
-SkinElchiHD can display EPG images in JPEG format for both EPG events and recordings.
+SkinElchiHD can display EPG images in jpg/jpeg/png/webp format for both EPG events and recordings.
 The path to EPG images can be set with:
   -e <EPGImageDir>, --epgimages=<ImageDir>  path to EPG images
                                             (default: <CacheDir>/plugins/skinelchihd/epgimages)
 
-For the EPG the images need to follow the format "<SOURCE>_<EPGID>[_<No].jpg" 
-where <SOURCE> is the DVB source (e.g. S19.2E-1-1019-10301) and <EPGID> the ID
-of the EPG event. If there is more than one image then for the second and 
-further images an ascending Number <No> beginning with '1' is appended and
-skinElchiHD can display up to 5 images sequentially. Beginning with skinElchiHD 0.5.2
-the first EPG image can also have a number '0' appended to have a consistent numbering
-across all images. The time until the next images is dispalyed can be set via OSD in
-the Setup of the plugin.
+For the EPG the images need to follow the format "<SOURCE>_<EPGID>_<No>.jpg"
+where <SOURCE> is the DVB source (e.g. S19.2E-1-1019-10301), <EPGID> the ID
+of the EPG event and <No> is a number starting with 0 and up to 9.
+For compatibility with older EPG plugins the "_0" for the first image can be omitted.
+The images are shown automatically one after another and the time until switching to the next
+can be set in the plugins setup menu.
 
 For recording images they have to reside in the folder of the recording and
-need to end with ".jpg".
+need to end with one of jpg/jpeg/png/webp.
 
 
 Setup Options:
@@ -149,8 +152,8 @@ Channel Display
   choose if channel logos should be displayed and which size
 
 - search logos first as             SVG / PNG 
-  search the logo files first with extension .svg or .png. This option is only
-  available when compiled with ImageMagick++
+  search the logo files first with extension .svg or .png.
+  This option is only available when compiled with ImageMagick++
 
 - show signal bars:                 yes / no
   choose if signal bars should be displayed 
@@ -199,3 +202,4 @@ do
    fi
 done
 IFS=$OLDIFS
+
